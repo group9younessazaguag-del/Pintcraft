@@ -5,6 +5,10 @@ import Header from './components/Header';
 import { SettingsAndCustomizeControls, PinContentControls, CsvAndActionsControls } from './components/Controls';
 import TemplatePreview from './components/TemplatePreview';
 import ErrorIcon from './components/icons/ErrorIcon';
+import Footer from './components/Footer';
+import AboutPage from './components/pages/AboutPage';
+import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
+import TermsOfServicePage from './components/pages/TermsOfServicePage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -15,6 +19,43 @@ declare global {
     JSZip: any;
   }
 }
+
+const getCurrentPage = () => window.location.hash.replace('#', '') || 'home';
+
+
+const GeneratorInterface: React.FC<{ controlProps: any; previewRef: React.RefObject<HTMLDivElement>; templateData: TemplateData; apiError: { type: string; message: React.ReactNode } | null }> = ({ controlProps, previewRef, templateData, apiError }) => (
+    <div className="container mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="lg:col-span-1 space-y-8">
+            {apiError && (
+                <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start" role="alert">
+                    <div className="flex-shrink-0">
+                        <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500" />
+                    </div>
+                    <div className="ml-3">
+                        <p className="text-sm font-semibold">An error occurred</p>
+                        <p className="text-sm mt-1">{apiError.message}</p>
+                    </div>
+                </div>
+            )}
+            <SettingsAndCustomizeControls {...controlProps} />
+        </div>
+
+        <div className="lg:col-span-1 space-y-8">
+            <PinContentControls {...controlProps} />
+        </div>
+
+        <div className="lg:col-span-1 space-y-8">
+            <CsvAndActionsControls {...controlProps} />
+        </div>
+
+        <div className="lg:col-span-2 flex justify-center">
+            <div className="w-full max-w-md sticky top-24">
+                <TemplatePreview ref={previewRef} data={templateData} />
+            </div>
+        </div>
+    </div>
+);
+
 
 const App: React.FC = () => {
   const [templateData, setTemplateData] = useState<TemplateData>({
@@ -46,9 +87,19 @@ const App: React.FC = () => {
   const [originalCsvHeaders, setOriginalCsvHeaders] = useState<string[]>([]);
   const [fullCsvData, setFullCsvData] = useState<{ [key: string]: string }[]>([]);
   const [generatedAssets, setGeneratedAssets] = useState<{ zip: Blob; csv: Blob } | null>(null);
+  const [page, setPage] = useState(getCurrentPage());
 
 
   const previewRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleHashChange = () => {
+        setPage(getCurrentPage());
+        window.scrollTo(0, 0);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   useEffect(() => {
     if (currentRowIndex !== null && csvData[currentRowIndex]) {
@@ -596,43 +647,29 @@ const App: React.FC = () => {
     generatedAssets: generatedAssets,
     onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
   };
+  
+  const renderPage = () => {
+    switch(page) {
+        case 'about':
+            return <AboutPage />;
+        case 'privacy':
+            return <PrivacyPolicyPage />;
+        case 'terms':
+            return <TermsOfServicePage />;
+        case 'home':
+        default:
+            return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
+    }
+  };
 
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
-        <div className="container mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-1 space-y-8">
-             {apiError && (
-                <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start" role="alert">
-                    <div className="flex-shrink-0">
-                        <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500" />
-                    </div>
-                    <div className="ml-3">
-                        <p className="text-sm font-semibold">An error occurred</p>
-                        <p className="text-sm mt-1">{apiError.message}</p>
-                    </div>
-                </div>
-            )}
-            <SettingsAndCustomizeControls {...controlProps} />
-          </div>
-
-          <div className="lg:col-span-1 space-y-8">
-             <PinContentControls {...controlProps} />
-          </div>
-
-          <div className="lg:col-span-1 space-y-8">
-            <CsvAndActionsControls {...controlProps} />
-          </div>
-
-          <div className="lg:col-span-2 flex justify-center">
-            <div className="w-full max-w-md sticky top-24">
-                <TemplatePreview ref={previewRef} data={templateData} />
-            </div>
-          </div>
-        </div>
+        {renderPage()}
       </main>
+      <Footer />
     </div>
   );
 };
