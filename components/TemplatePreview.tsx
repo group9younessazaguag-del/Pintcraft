@@ -15,26 +15,37 @@ const BackgroundImage: React.FC<{ imageUrl: string | null }> = ({ imageUrl }) =>
 const ClassicTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
     return (
-        <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins text-gray-800 p-6">
+        <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins text-white p-8 text-center">
             <BackgroundImage imageUrl={backgroundImage} />
-            {/* If no background image, use a subtle gray background like the screenshot */}
-            {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
+            {!backgroundImage && <div className="absolute inset-0 bg-slate-700"></div>}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
             
-            <div className="relative z-10 w-full max-w-sm bg-white p-8 shadow-xl text-center rounded-lg">
+            <div className="relative z-10 w-full flex flex-col items-center">
                  {subtitle && (
-                    <p className="text-xs tracking-[0.2em] mb-3 font-semibold text-gray-500 uppercase">
+                    <p 
+                        className="text-base tracking-widest mb-4 font-light opacity-90"
+                        style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.7)' }}
+                    >
                         {subtitle}
                     </p>
                 )}
                 {title && (
-                    <h2 className="font-anton uppercase text-4xl sm:text-5xl leading-tight tracking-normal break-words">
+                    <h2 
+                        className="font-bold text-5xl md:text-6xl lg:text-7xl leading-tight tracking-tight break-words"
+                        style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}
+                    >
                         {title}
                     </h2>
                 )}
                  {website && (
-                    <p className="mt-6 text-xs font-bold tracking-[0.15em] text-gray-400 uppercase">
-                        {website}
-                    </p>
+                    <div className="w-full max-w-xs mt-8 pt-4 border-t border-white/30">
+                        <p 
+                            className="text-sm font-semibold tracking-[0.2em] opacity-80"
+                            style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.7)' }}
+                        >
+                            {website}
+                        </p>
+                    </div>
                 )}
             </div>
         </div>
@@ -353,14 +364,14 @@ const TrendyCollageTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
             <div className="relative z-10 text-center flex flex-col items-center">
                  {title && (
                     <h2 
-                        className="font-anton uppercase text-5xl sm:text-6xl md:text-7xl leading-none tracking-tight text-white bg-stone-800 px-6 py-4"
+                        className="font-anton uppercase text-4xl sm:text-5xl leading-none tracking-tight text-white bg-stone-800 px-4 py-2"
                         style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}
                     >
                         {title}
                     </h2>
                 )}
                 {subtitle && (
-                    <p className="text-lg tracking-widest mt-4 font-light text-gray-800 bg-[#F4EFEA]/80 px-4 py-1">
+                    <p className="text-base tracking-widest mt-2 font-light text-gray-800 bg-[#F4EFEA]/80 px-3 py-1">
                         {subtitle}
                     </p>
                 )}
@@ -415,34 +426,152 @@ const RetroVibesTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 const ProductSpotlightTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     return (
-        <div className="w-full h-full flex flex-col relative font-poppins p-4 sm:p-6 bg-gray-100">
-            {/* Main Product Image */}
-            <div className="w-full h-3/5 relative rounded-xl overflow-hidden shadow-lg">
+        <div className="w-full h-full flex flex-col justify-end relative font-poppins p-4 sm:p-5 bg-slate-200">
+             {/* The main background image fills the pin, behind the white card */}
+            <BackgroundImage imageUrl={backgroundImage} />
+            {/* Adds a subtle dark overlay if an image is present, to help the card stand out */}
+            {backgroundImage && <div className="absolute inset-0 bg-black/10"></div>}
+
+            {/* White Content Card */}
+            <div className="relative z-10 bg-white w-full rounded-2xl p-4 shadow-lg flex items-end">
+                <div className="flex-1 pr-3">
+                    {title && (
+                        <h2 className="font-bold text-2xl sm:text-3xl leading-tight tracking-tighter text-gray-800 break-words">{title}</h2>
+                    )}
+                    {website && (
+                        <p className="mt-2 text-xs font-semibold tracking-widest text-gray-500 uppercase">{website}</p>
+                    )}
+                </div>
+                <div className="w-1/3 flex flex-col items-center">
+                    <div className="w-full aspect-square relative rounded-lg overflow-hidden shadow-inner bg-slate-200 border-2 border-white">
+                        <BackgroundImage imageUrl={backgroundImage2} />
+                    </div>
+                    {subtitle && (
+                        <p className="mt-2 text-center text-[10px] font-bold text-white bg-pink-500 px-2 py-1 rounded-full shadow-md transform translate-y-1">
+                            {subtitle}
+                        </p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const InfographicTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage } = data;
+    const listItems = subtitle.split(',').map(item => item.trim()).filter(Boolean);
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins text-gray-800 bg-gray-50">
+            <BackgroundImage imageUrl={backgroundImage} />
+            {backgroundImage && <div className="absolute inset-0 bg-white/80 backdrop-blur-sm"></div>}
+            <div className="relative z-10 flex flex-col h-full p-8">
+                {title && (
+                    <h2 className="font-anton uppercase text-4xl md:text-5xl text-center leading-tight tracking-tight mb-8">
+                        {title}
+                    </h2>
+                )}
+                {listItems.length > 0 && (
+                    <ol className="space-y-4 text-lg">
+                        {listItems.map((item, index) => (
+                            <li key={index} className="flex items-start">
+                                <span className="mr-4 mt-1 flex-shrink-0 bg-rose-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-md">{index + 1}</span>
+                                <span>{item}</span>
+                            </li>
+                        ))}
+                    </ol>
+                )}
+                <div className="flex-grow"></div>
+                {website && (
+                    <p className="mt-8 text-center text-sm font-bold tracking-[0.2em] text-gray-400">
+                        {website}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const QuoteOverlayTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage } = data;
+    return (
+        <div className="w-full h-full flex flex-col justify-center items-center relative font-serif p-8">
+            <BackgroundImage imageUrl={backgroundImage} />
+            <div className="absolute inset-0 bg-black/30"></div>
+            <div className="relative z-10 text-center text-white max-w-md bg-black/20 backdrop-blur-md p-8 rounded-lg">
+                {title && (
+                    <h2 className="text-4xl md:text-5xl leading-tight font-medium">
+                        "{title}"
+                    </h2>
+                )}
+                {subtitle && (
+                    <p className="text-lg tracking-wider mt-6 font-sans font-bold uppercase text-white/80">
+                        — {subtitle}
+                    </p>
+                )}
+            </div>
+             {website && (
+                <p className="absolute bottom-6 text-sm font-sans font-semibold tracking-[0.15em] text-white/60">
+                    {website}
+                </p>
+            )}
+        </div>
+    );
+};
+
+const ShopTheLookTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2, backgroundImage3 } = data;
+    return (
+        <div className="w-full h-full grid grid-rows-3 font-poppins bg-white">
+            <div className="row-span-2 relative">
                 <BackgroundImage imageUrl={backgroundImage} />
                 <div className="absolute inset-0 bg-gray-200 -z-10"></div>
             </div>
-
-            {/* Content Area */}
-            <div className="flex-grow flex items-center mt-4 sm:mt-6">
-                <div className="flex-1 pr-3 sm:pr-4">
-                     {title && (
-                        <h2 className="font-bold text-3xl sm:text-4xl md:text-5xl leading-tight tracking-tighter text-gray-800 break-words">{title}</h2>
-                    )}
-                    {website && (
-                        <p className="mt-2 text-xs sm:text-sm font-semibold tracking-widest text-gray-500 uppercase">{website}</p>
-                    )}
-                </div>
-                {/* Secondary Image / CTA */}
-                <div className="w-2/5 flex flex-col items-center justify-center">
-                    <div className="w-full aspect-square relative rounded-lg overflow-hidden shadow-md border-4 border-white">
-                         <BackgroundImage imageUrl={backgroundImage2} />
-                         <div className="absolute inset-0 bg-gray-200 -z-10"></div>
+            <div className="row-span-1 p-4 flex flex-col justify-center bg-gray-50 border-t border-gray-200">
+                <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                        {title && <h2 className="font-bold text-3xl leading-tight text-gray-800">{title}</h2>}
+                        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+                        {website && <p className="mt-2 text-xs font-bold tracking-widest text-gray-400">{website}</p>}
                     </div>
-                     {subtitle && (
-                        <p className="mt-2 text-center text-xs sm:text-sm font-bold text-white bg-pink-500 px-3 py-1 rounded-full shadow-md">{subtitle}</p>
-                    )}
+                    <div className="w-1/3 flex gap-2">
+                        <div className="aspect-square flex-1 relative rounded-md overflow-hidden bg-gray-200 border-2 border-white shadow-md">
+                             <BackgroundImage imageUrl={backgroundImage2} />
+                        </div>
+                        <div className="aspect-square flex-1 relative rounded-md overflow-hidden bg-gray-200 border-2 border-white shadow-md">
+                             <BackgroundImage imageUrl={backgroundImage3} />
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+const BeforeAfterTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    return (
+        <div className="w-full h-full flex relative font-poppins text-white">
+            {/* Left side (Before) */}
+            <div className="w-1/2 h-full relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                <div className="absolute inset-0 bg-black/30"></div>
+                <div className="absolute top-4 left-4 bg-white/80 text-black text-xs font-bold uppercase px-2 py-1 rounded">BEFORE</div>
+            </div>
+            {/* Right side (After) */}
+            <div className="w-1/2 h-full relative">
+                 <BackgroundImage imageUrl={backgroundImage2} />
+                 <div className="absolute inset-0 bg-black/10"></div>
+                 <div className="absolute top-4 right-4 bg-white text-black text-xs font-bold uppercase px-2 py-1 rounded">AFTER</div>
+            </div>
+
+            {/* Center Content */}
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-10">
+                <div className="bg-black/40 backdrop-blur-sm p-6 rounded-lg">
+                    {title && <h2 className="font-anton uppercase text-4xl md:text-5xl leading-tight" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>{title}</h2>}
+                    {subtitle && <p className="mt-2 text-sm tracking-widest" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 text-xs font-bold tracking-widest text-white/70">{website}</p>}
         </div>
     );
 };
@@ -479,6 +608,14 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
         return <RetroVibesTemplate data={data} />;
       case 'product-spotlight':
         return <ProductSpotlightTemplate data={data} />;
+      case 'infographic':
+        return <InfographicTemplate data={data} />;
+      case 'quote-overlay':
+        return <QuoteOverlayTemplate data={data} />;
+      case 'shop-the-look':
+        return <ShopTheLookTemplate data={data} />;
+      case 'before-after':
+        return <BeforeAfterTemplate data={data} />;
       default:
         return <ClassicTemplate data={data} />;
     }
@@ -487,7 +624,7 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
   return (
     <div 
         ref={ref} 
-        className="w-full bg-slate-200 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-black/5"
+        className="w-full bg-white rounded-2xl shadow-lg overflow-hidden ring-1 ring-slate-200"
         style={{ aspectRatio: aspectRatio }}
     >
         {renderTemplate()}

@@ -1,13 +1,16 @@
-
 import React from 'react';
+import PinIcon from './icons/PinIcon';
 
 const Header: React.FC = () => {
   return (
-    <header className="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+    <header className="bg-white/70 backdrop-blur-lg sticky top-0 z-50 border-b border-slate-200">
       <div className="container mx-auto px-4 md:px-8 py-4">
-        <h1 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-yellow-500">
-          ✨ Pinterest Pin Template Generator
-        </h1>
+        <div className="flex items-center gap-3">
+            <PinIcon className="w-7 h-7 text-pink-500" />
+            <h1 className="text-xl font-semibold tracking-tight text-slate-800">
+              Pinterest Pin Generator
+            </h1>
+        </div>
       </div>
     </header>
   );

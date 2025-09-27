@@ -1,10 +1,10 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import type { TemplateData, CsvRow, ImageStyle } from './types';
 import Header from './components/Header';
-import Controls from './components/Controls';
+import { SettingsAndCustomizeControls, PinContentControls, CsvAndActionsControls } from './components/Controls';
 import TemplatePreview from './components/TemplatePreview';
+import ErrorIcon from './components/icons/ErrorIcon';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -24,7 +24,7 @@ const App: React.FC = () => {
     backgroundImage: null,
     backgroundImage2: null,
     backgroundImage3: null,
-    templateId: 'classic',
+    templateId: 'product-spotlight',
     pinSize: 'long',
     imagePrompt: '',
     imageModel: 'imagen-4.0-generate-001',
@@ -38,7 +38,7 @@ const App: React.FC = () => {
   const [isGeneratingImage, setIsGeneratingImage] = useState<{ [key: number]: boolean }>({});
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [currentRowIndex, setCurrentRowIndex] = useState<number | null>(null);
-  const [apiError, setApiError] = useState<string>('');
+  const [apiError, setApiError] = useState<{ type: string; message: React.ReactNode } | null>(null);
 
   // State for bulk generation
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
@@ -68,13 +68,13 @@ const App: React.FC = () => {
   }, [currentRowIndex, csvData]);
 
   const handleFieldChange = (field: keyof TemplateData, value: string) => {
-    if (apiError) setApiError('');
+    if (apiError) setApiError(null);
     if (generatedAssets) setGeneratedAssets(null);
     setTemplateData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleImageUpload = (file: File, imageNumber: 1 | 2 | 3) => {
-    if (apiError) setApiError('');
+    if (apiError) setApiError(null);
     if (generatedAssets) setGeneratedAssets(null);
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -95,11 +95,11 @@ const App: React.FC = () => {
   };
 
   const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false) => {
-    setApiError('');
+    setApiError(null);
     if (!templateData.apiKey) {
         const msg = 'Please enter your Google AI API Key in the Model Settings section.';
         if (throwOnError) throw new Error(msg);
-        setApiError(msg);
+        setApiError({ type: 'generic', message: msg });
         return;
     }
 
@@ -107,7 +107,7 @@ const App: React.FC = () => {
     if (!userPrompt) {
         const msg = 'Please enter a Title or an Image Prompt to generate an image.';
         if (throwOnError) throw new Error(msg);
-        setApiError(msg);
+        setApiError({ type: 'generic', message: msg });
         return;
     }
 
@@ -139,13 +139,14 @@ const App: React.FC = () => {
             setTemplateData(prev => ({ ...prev, [field]: imageUrl }));
             
             // Success, so we clear any lingering error and exit the retry loop
-            setApiError('');
+            setApiError(null);
             setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
             return; // Exit the function on success
 
         } catch (error: any) {
             console.error(`Error generating image (attempt ${attempt + 1}):`, error);
-            const errorString = JSON.stringify(error);
+            const errorBody = error.error || error;
+            const errorString = JSON.stringify(errorBody);
             const isServiceUnavailable = errorString.includes('UNAVAILABLE') || errorString.includes('503');
 
             attempt++;
@@ -157,7 +158,6 @@ const App: React.FC = () => {
                 continue; // Go to the next iteration of the loop
             }
 
-            // If it's not a retryable error, or if we've exhausted retries:
             const isQuotaError = errorString.includes('RESOURCE_EXHAUSTED') || errorString.includes('quota');
             
             if (throwOnError) {
@@ -166,13 +166,42 @@ const App: React.FC = () => {
                 throw new Error('Failed to generate image');
             }
 
-            let errorMessage = 'Failed to generate image. Please check the console for more details.';
+            let errorMessage: React.ReactNode = 'Failed to generate image. Please check the console for more details.';
+            let errorType = 'generic';
+
             if (isQuotaError) {
-                errorMessage = 'API Quota Exceeded. You may have hit the free tier limit. Please check your billing and quota settings.';
+                errorType = 'quota';
+                let helpLink = '';
+                try {
+                    const details = errorBody.details;
+                    if (details && Array.isArray(details)) {
+                        const helpDetail = details.find(d => d['@type'] === 'type.googleapis.com/google.rpc.Help' && d.links && d.links.length > 0 && d.links[0].url);
+                        if (helpDetail) {
+                            helpLink = helpDetail.links[0].url;
+                        }
+                    }
+                } catch (parseError) {
+                    console.error("Could not parse help link from error object:", parseError);
+                }
+
+                errorMessage = (
+                    <>
+                        API Quota Exceeded. You may have hit your usage limit. Please check your plan and billing details.
+                        {helpLink && (
+                            <>
+                                {' '}
+                                <a href={helpLink} target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900">
+                                    Learn more here.
+                                </a>
+                            </>
+                        )}
+                    </>
+                );
             } else if (isServiceUnavailable) {
+                errorType = 'service';
                 errorMessage = 'The image generation service is temporarily unavailable. Please try again in a few moments.';
             }
-            setApiError(errorMessage);
+            setApiError({ type: errorType, message: errorMessage });
             break; // Exit the loop on non-retryable error or max retries
         }
     }
@@ -203,7 +232,7 @@ const App: React.FC = () => {
       })
       .catch((err) => {
         console.error('Oops, something went wrong!', err);
-        setApiError('Could not generate image. Please try again.');
+        setApiError({ type: 'generic', message: 'Could not generate image. Please try again.'});
       })
       .finally(() => {
         setIsLoading(false);
@@ -235,14 +264,14 @@ const App: React.FC = () => {
   };
 
   const handleCsvUpload = (file: File) => {
-    if (apiError) setApiError('');
+    if (apiError) setApiError(null);
     if (generatedAssets) setGeneratedAssets(null);
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
       const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
       if (lines.length < 2) {
-        setApiError("CSV must have a header row and at least one data row.");
+        setApiError({ type: 'generic', message: "CSV must have a header row and at least one data row."});
         return;
       }
 
@@ -261,7 +290,7 @@ const App: React.FC = () => {
 
 
       if (!titleHeader) {
-        setApiError("CSV must contain a 'Title' or 'Title of recipes' column.");
+        setApiError({ type: 'generic', message: "CSV must contain a 'Title' or 'Title of recipes' column."});
         return;
       }
 
@@ -311,7 +340,7 @@ const App: React.FC = () => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex + 1);
+      setCurrentRowIndex(currentRowIndex - 1);
     }
   };
 
@@ -349,14 +378,14 @@ const App: React.FC = () => {
   };
 
   const handleAutoGenerateAll = async () => {
-    setApiError('');
+    setApiError(null);
     setGeneratedAssets(null);
     if (csvData.length === 0) {
-      setApiError('Please upload a CSV file first.');
+      setApiError({ type: 'generic', message: 'Please upload a CSV file first.'});
       return;
     }
      if (!templateData.apiKey) {
-      setApiError('Please enter your Google AI API Key in the Model Settings section before starting a bulk generation.');
+      setApiError({ type: 'generic', message: 'Please enter your Google AI API Key in the Model Settings section before starting a bulk generation.'});
       return;
     }
 
@@ -370,7 +399,7 @@ const App: React.FC = () => {
     const pinsPerDayNum = Math.max(1, parseInt(pinsPerDay.toString(), 10) || 1);
     const start = new Date(startDate);
     if (isNaN(start.getTime())) {
-        setApiError('Invalid start date. Please select a valid date.');
+        setApiError({ type: 'generic', message: 'Invalid start date. Please select a valid date.'});
         setIsBulkGenerating(false);
         return;
     }
@@ -403,9 +432,11 @@ const App: React.FC = () => {
             const prompt = currentData.imagePrompt;
             if (prompt) {
                 await handleGenerateImage(1, true);
-                const templateNeeds2Images = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight'].includes(templateData.templateId);
+                
+                const templateNeeds2Images = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look'].includes(templateData.templateId);
                 if (templateNeeds2Images) await handleGenerateImage(2, true);
-                const templateNeeds3Images = templateData.templateId === 'clean-grid';
+
+                const templateNeeds3Images = ['clean-grid', 'shop-the-look'].includes(templateData.templateId);
                 if (templateNeeds3Images) await handleGenerateImage(3, true);
             }
             await sleep(100);
@@ -545,36 +576,58 @@ const App: React.FC = () => {
     setBulkMessage('');
   };
 
+  const controlProps = {
+    data: templateData,
+    onFieldChange: handleFieldChange,
+    onImageUpload: handleImageUpload,
+    onGenerateImage: handleGenerateImage,
+    onDownload: handleDownload,
+    isLoading: isLoading,
+    isGeneratingImage: isGeneratingImage,
+    onCsvUpload: handleCsvUpload,
+    onNextRow: handleNextRow,
+    onPrevRow: handlePrevRow,
+    csvData: csvData,
+    currentRowIndex: currentRowIndex,
+    onAutoGenerateAll: handleAutoGenerateAll,
+    isBulkGenerating: isBulkGenerating,
+    bulkMessage: bulkMessage,
+    apiError: apiError,
+    generatedAssets: generatedAssets,
+    onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
+  };
+
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
-        <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <Controls
-              data={templateData}
-              onFieldChange={handleFieldChange}
-              onImageUpload={handleImageUpload}
-              onGenerateImage={handleGenerateImage}
-              onDownload={handleDownload}
-              isLoading={isLoading}
-              isGeneratingImage={isGeneratingImage}
-              onCsvUpload={handleCsvUpload}
-              onNextRow={handleNextRow}
-              onPrevRow={handlePrevRow}
-              csvData={csvData}
-              currentRowIndex={currentRowIndex}
-              onAutoGenerateAll={handleAutoGenerateAll}
-              isBulkGenerating={isBulkGenerating}
-              bulkMessage={bulkMessage}
-              apiError={apiError}
-              generatedAssets={generatedAssets}
-              onDownloadGeneratedAssets={handleDownloadGeneratedAssets}
-            />
+        <div className="container mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div className="lg:col-span-1 space-y-8">
+             {apiError && (
+                <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start" role="alert">
+                    <div className="flex-shrink-0">
+                        <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500" />
+                    </div>
+                    <div className="ml-3">
+                        <p className="text-sm font-semibold">An error occurred</p>
+                        <p className="text-sm mt-1">{apiError.message}</p>
+                    </div>
+                </div>
+            )}
+            <SettingsAndCustomizeControls {...controlProps} />
           </div>
-          <div className="lg:col-span-2 flex items-start justify-center">
-            <div className="w-full max-w-lg">
+
+          <div className="lg:col-span-1 space-y-8">
+             <PinContentControls {...controlProps} />
+          </div>
+
+          <div className="lg:col-span-1 space-y-8">
+            <CsvAndActionsControls {...controlProps} />
+          </div>
+
+          <div className="lg:col-span-2 flex justify-center">
+            <div className="w-full max-w-md sticky top-24">
                 <TemplatePreview ref={previewRef} data={templateData} />
             </div>
           </div>
