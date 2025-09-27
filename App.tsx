@@ -88,10 +88,32 @@ const App: React.FC = () => {
   const [fullCsvData, setFullCsvData] = useState<{ [key: string]: string }[]>([]);
   const [generatedAssets, setGeneratedAssets] = useState<{ zip: Blob; csv: Blob } | null>(null);
   const [page, setPage] = useState(getCurrentPage());
-
-
+  const [lastCompletedRowIndex, setLastCompletedRowIndex] = useState<number | null>(null);
+  const [inProgressCsvData, setInProgressCsvData] = useState<{[key: string]: string}[]>([]);
+  
+  const zipRef = useRef<any>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   
+  const handleResetBulkGeneration = useCallback(() => {
+    setLastCompletedRowIndex(null);
+    setInProgressCsvData([]);
+    zipRef.current = null;
+    setBulkMessage('');
+    setGeneratedAssets(null);
+    if (apiError?.type === 'quota') {
+        setApiError(null);
+    }
+  }, [apiError?.type]);
+
+  useEffect(() => {
+    if (lastCompletedRowIndex !== null) {
+      handleResetBulkGeneration();
+      setBulkMessage("Settings changed. Please start a new bulk generation.");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateData.templateId, templateData.pinSize, templateData.website, templateData.mediaUrlPrefix, csvData]);
+
+
   useEffect(() => {
     const handleHashChange = () => {
         setPage(getCurrentPage());
@@ -145,6 +167,60 @@ const App: React.FC = () => {
       vibrant: 'An incredibly vibrant and colorful image. Saturated colors, high contrast, energetic, and eye-catching.',
   };
 
+  const getApiErrorDetails = (error: any): { isQuotaError: boolean; isServiceUnavailable: boolean; helpLink: string } => {
+    let errorBody: any = null;
+    let isQuotaError = false;
+    let isServiceUnavailable = false;
+    let helpLink = '';
+
+    try {
+        if (typeof error === 'object' && error !== null) {
+            // Case 1: The error object has a nested `error` property (e.g., from a fetch response)
+            if (error.error) {
+                errorBody = error.error;
+            } 
+            // Case 2: The error object IS the error payload itself
+            else if (error.code && error.status) {
+                errorBody = error;
+            }
+            // Case 3: The error object's `message` property is a JSON string
+            else if (typeof error.message === 'string') {
+                try {
+                    const parsedMessage = JSON.parse(error.message);
+                    if (parsedMessage.error) {
+                        errorBody = parsedMessage.error;
+                    }
+                } catch (e) {
+                    // Not a JSON string, ignore and proceed
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Could not extract detailed error body:", e);
+    }
+    
+    if (errorBody) {
+        const status = errorBody.status;
+        const code = errorBody.code;
+        isQuotaError = status === 'RESOURCE_EXHAUSTED' || code === 429;
+        isServiceUnavailable = status === 'UNAVAILABLE' || code === 503;
+
+        if (isQuotaError && errorBody.details && Array.isArray(errorBody.details)) {
+            try {
+                const helpDetail = errorBody.details.find((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.Help' && d.links && d.links.length > 0 && d.links[0].url);
+                if (helpDetail) {
+                    helpLink = helpDetail.links[0].url;
+                }
+            } catch (e) {
+                console.error("Could not parse help link from error details:", e);
+            }
+        }
+    }
+
+    return { isQuotaError, isServiceUnavailable, helpLink };
+  };
+
+
   const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false) => {
     setApiError(null);
     if (!templateData.apiKey) {
@@ -189,27 +265,23 @@ const App: React.FC = () => {
             const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
             setTemplateData(prev => ({ ...prev, [field]: imageUrl }));
             
-            // Success, so we clear any lingering error and exit the retry loop
             setApiError(null);
             setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
-            return; // Exit the function on success
+            return; 
 
         } catch (error: any) {
             console.error(`Error generating image (attempt ${attempt + 1}):`, error);
-            const errorBody = error.error || error;
-            const errorString = JSON.stringify(errorBody);
-            const isServiceUnavailable = errorString.includes('UNAVAILABLE') || errorString.includes('503');
-
+            
+            const { isQuotaError, isServiceUnavailable, helpLink } = getApiErrorDetails(error);
+            
             attempt++;
 
             if (isServiceUnavailable && attempt < MAX_RETRIES) {
-                const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s
+                const delay = Math.pow(2, attempt) * 1000;
                 console.log(`Service unavailable. Retrying in ${delay / 1000} seconds...`);
                 await sleep(delay);
-                continue; // Go to the next iteration of the loop
+                continue; 
             }
-
-            const isQuotaError = errorString.includes('RESOURCE_EXHAUSTED') || errorString.includes('quota');
             
             if (throwOnError) {
                 if (isQuotaError) throw new Error('API Quota Exceeded');
@@ -222,19 +294,6 @@ const App: React.FC = () => {
 
             if (isQuotaError) {
                 errorType = 'quota';
-                let helpLink = '';
-                try {
-                    const details = errorBody.details;
-                    if (details && Array.isArray(details)) {
-                        const helpDetail = details.find(d => d['@type'] === 'type.googleapis.com/google.rpc.Help' && d.links && d.links.length > 0 && d.links[0].url);
-                        if (helpDetail) {
-                            helpLink = helpDetail.links[0].url;
-                        }
-                    }
-                } catch (parseError) {
-                    console.error("Could not parse help link from error object:", parseError);
-                }
-
                 errorMessage = (
                     <>
                         API Quota Exceeded. You may have hit your usage limit. Please check your plan and billing details.
@@ -253,11 +312,10 @@ const App: React.FC = () => {
                 errorMessage = 'The image generation service is temporarily unavailable. Please try again in a few moments.';
             }
             setApiError({ type: errorType, message: errorMessage });
-            break; // Exit the loop on non-retryable error or max retries
+            break;
         }
     }
 
-    // This will only be reached if all retries fail or a non-retryable error occurs
     setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
 };
 
@@ -270,8 +328,8 @@ const App: React.FC = () => {
 
     window.htmlToImage.toPng(previewRef.current, { 
         cacheBust: true,
-        pixelRatio: 2, // for higher resolution
-        fetchRequestInit: { mode: 'cors' } // Fix for CORS issue with Google Fonts
+        pixelRatio: 2,
+        fetchRequestInit: { mode: 'cors' }
       })
       .then((dataUrl) => {
         const link = document.createElement('a');
@@ -299,7 +357,7 @@ const App: React.FC = () => {
         if (char === '"') {
             if (inQuotes && line[i+1] === '"') {
                 current += '"';
-                i++; // Skip next quote
+                i++;
             } else {
                 inQuotes = !inQuotes;
             }
@@ -315,8 +373,7 @@ const App: React.FC = () => {
   };
 
   const handleCsvUpload = (file: File) => {
-    if (apiError) setApiError(null);
-    if (generatedAssets) setGeneratedAssets(null);
+    handleResetBulkGeneration();
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
@@ -334,7 +391,6 @@ const App: React.FC = () => {
 
       const titleHeader = headerMap['title'] || headerMap['title of recipes'];
       const boardHeader = headerMap['pinterest board'] || headerMap['board'];
-      // const linkHeader = headerMap['link'] || headerMap['website'] || headerMap['site'];
       const imagePromptHeader = headerMap['image prompt'];
       const descriptionHeader = headerMap['description'];
       const keywordsHeader = headerMap['keywords'];
@@ -420,15 +476,15 @@ const App: React.FC = () => {
       return keywords;
     } catch (error: any) {
       console.error(`Failed to generate keywords for title: "${title}"`, error);
-      const errorString = JSON.stringify(error);
-      if (errorString.includes('RESOURCE_EXHAUSTED') || errorString.includes('quota')) {
+      const { isQuotaError } = getApiErrorDetails(error);
+      if (isQuotaError) {
           throw new Error('API Quota Exceeded');
       }
       throw new Error(`Failed to generate keywords for "${title}"`);
     }
   };
 
-  const handleAutoGenerateAll = async () => {
+  const handleBulkGeneration = async (resume = false) => {
     setApiError(null);
     setGeneratedAssets(null);
     if (csvData.length === 0) {
@@ -441,10 +497,19 @@ const App: React.FC = () => {
     }
 
     setIsBulkGenerating(true);
-    setBulkMessage('Starting bulk generation...');
+    const startIndex = resume && lastCompletedRowIndex !== null ? lastCompletedRowIndex + 1 : 0;
+    
+    if (startIndex === 0) {
+        setBulkMessage('Starting bulk generation...');
+        zipRef.current = new window.JSZip();
+        setInProgressCsvData(JSON.parse(JSON.stringify(fullCsvData)));
+        setLastCompletedRowIndex(null);
+    } else {
+        setBulkMessage(`Resuming from row ${startIndex + 1}...`);
+    }
 
-    const zip = new window.JSZip();
-    const updatedFullCsvData = JSON.parse(JSON.stringify(fullCsvData));
+    const zip = zipRef.current;
+    const currentRunCsvData = [...inProgressCsvData];
     
     const { pinsPerDay, startDate } = templateData;
     const pinsPerDayNum = Math.max(1, parseInt(pinsPerDay.toString(), 10) || 1);
@@ -458,28 +523,29 @@ const App: React.FC = () => {
 
     const mediaUrlHeaderKey = 'Media URL';
     const publishDateHeaderKey = 'Publish date';
-
+    
+    let i = startIndex;
     try {
-        for (let i = 0; i < csvData.length; i++) {
+        for (i = startIndex; i < csvData.length; i++) {
             const currentData = csvData[i];
             setBulkMessage(`Processing row ${i + 1} of ${csvData.length}: ${currentData.title}`);
             setCurrentRowIndex(i);
             await sleep(100);
             
             const originalKeywordsHeader = originalCsvHeaders.find(h => h.toLowerCase().trim() === 'keywords');
-            let currentKeywords = originalKeywordsHeader ? updatedFullCsvData[i][originalKeywordsHeader] : '';
+            let currentKeywords = originalKeywordsHeader ? currentRunCsvData[i][originalKeywordsHeader] : '';
 
             if (!currentKeywords) {
-                setBulkMessage(`Row ${i + 1}: Generating keywords for "${currentData.title}"`);
+                setBulkMessage(`Row ${i + 1}: Generating keywords...`);
                 const generatedKeywords = await generateKeywords(currentData.title);
                 const targetKeywordsHeader = originalKeywordsHeader || 'Keywords';
-                updatedFullCsvData[i][targetKeywordsHeader] = generatedKeywords;
+                currentRunCsvData[i][targetKeywordsHeader] = generatedKeywords;
                 if (!originalCsvHeaders.some(h => h.toLowerCase().trim() === 'keywords')) {
                     originalCsvHeaders.push('Keywords');
                 }
             }
             
-            setBulkMessage(`Row ${i + 1}: Generating images for "${currentData.title}"`);
+            setBulkMessage(`Row ${i + 1}: Generating images...`);
             const prompt = currentData.imagePrompt;
             if (prompt) {
                 await handleGenerateImage(1, true);
@@ -493,11 +559,7 @@ const App: React.FC = () => {
             await sleep(100);
 
             if (previewRef.current) {
-                const dataUrl = await window.htmlToImage.toPng(previewRef.current, { 
-                    cacheBust: true, 
-                    pixelRatio: 2,
-                    fetchRequestInit: { mode: 'cors' } // Fix for CORS issue with Google Fonts
-                });
+                const dataUrl = await window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2, fetchRequestInit: { mode: 'cors' }});
                 const safeTitle = currentData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
                 const filename = `pin_${i + 1}_${safeTitle}.png`;
 
@@ -506,22 +568,17 @@ const App: React.FC = () => {
 
                 const prefix = templateData.mediaUrlPrefix.endsWith('/') ? templateData.mediaUrlPrefix : `${templateData.mediaUrlPrefix}/`;
                 const imageUrl = `${prefix}${filename}`;
-                updatedFullCsvData[i][mediaUrlHeaderKey] = imageUrl;
+                currentRunCsvData[i][mediaUrlHeaderKey] = imageUrl;
 
                 const daysToAdd = Math.floor(i / pinsPerDayNum);
                 const publishDate = new Date(start);
                 publishDate.setDate(start.getDate() + daysToAdd);
 
-                // Distribute pins throughout a daily 9am-5pm window
                 const pinIndexInDay = i % pinsPerDayNum;
                 const startHour = 9;
                 const endHour = 17;
                 const totalHoursInWindow = endHour - startHour;
-                
-                // If only one pin per day, schedule it at the start time.
-                // Otherwise, distribute evenly between start and end times.
                 const hourIncrement = pinsPerDayNum > 1 ? totalHoursInWindow / (pinsPerDayNum - 1) : 0;
-                
                 const publishHourFloat = startHour + (pinIndexInDay * hourIncrement);
                 const publishHour = Math.floor(publishHourFloat);
                 const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
@@ -534,14 +591,14 @@ const App: React.FC = () => {
                 const hour = publishDate.getHours().toString().padStart(2, '0');
                 const minute = publishDate.getMinutes().toString().padStart(2, '0');
                 const formattedPublishDate = `${year}-${month}-${day}T${hour}:${minute}:00`;
-                updatedFullCsvData[i][publishDateHeaderKey] = formattedPublishDate;
+                currentRunCsvData[i][publishDateHeaderKey] = formattedPublishDate;
             }
+            setInProgressCsvData([...currentRunCsvData]);
+            setLastCompletedRowIndex(i);
             await sleep(100);
         }
 
         setBulkMessage('Finalizing files...');
-        
-        // Prepare CSV
         const outputHeaders = ['Title', 'Media URL', 'Pinterest board', 'Description', 'Link', 'Publish date', 'Keywords'];
 
         const getOriginalHeader = (canonicalName: string): string | undefined => {
@@ -556,21 +613,15 @@ const App: React.FC = () => {
         };
 
         const csvRows = [outputHeaders.join(',')];
-        updatedFullCsvData.forEach(row => {
+        currentRunCsvData.forEach(row => {
             const values = outputHeaders.map(header => {
                 let value = '';
-                if (header === 'Media URL') {
-                    value = row[mediaUrlHeaderKey] || '';
-                } else if (header === 'Publish date') {
-                    value = row[publishDateHeaderKey] || '';
-                } else if (header === 'Link') {
-                    value = templateData.website;
-                }
+                if (header === 'Media URL') value = row[mediaUrlHeaderKey] || '';
+                else if (header === 'Publish date') value = row[publishDateHeaderKey] || '';
+                else if (header === 'Link') value = templateData.website;
                 else {
                     const originalHeader = getOriginalHeader(header);
-                    if (originalHeader) {
-                        value = row[originalHeader] || '';
-                    }
+                    if (originalHeader) value = row[originalHeader] || '';
                 }
                 const escaped = value.includes(',') || value.includes('"') ? `"${value.replace(/"/g, '""')}"` : value;
                 return escaped;
@@ -580,21 +631,35 @@ const App: React.FC = () => {
 
         const csvString = csvRows.join('\n');
         const csvBlob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-        
-        // Prepare ZIP
         const zipContent = await zip.generateAsync({ type: 'blob' });
 
         setGeneratedAssets({ zip: zipContent, csv: csvBlob });
         setBulkMessage('Generation complete! Your files are ready to download.');
+        handleResetBulkGeneration();
 
     } catch (e: any) {
         console.error('Bulk generation failed:', e);
-        const rowIndex = currentRowIndex !== null ? currentRowIndex + 1 : 'current';
-        let finalMessage = `An error occurred on row ${rowIndex}: ${e.message}. Bulk generation stopped.`;
+        const rowIndex = i + 1;
+        
         if (e.message === 'API Quota Exceeded') {
-            finalMessage = `API Quota Exceeded on row ${rowIndex}. Bulk generation stopped. Please check your billing/quota settings.`;
+            const quotaMessage = `API Quota Exceeded on row ${rowIndex}. Bulk generation has been paused.`;
+            const richQuotaMessage = (
+                <>
+                    {quotaMessage}
+                    {' '}
+                    <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900">
+                        Learn more here.
+                    </a>
+                </>
+            );
+            setApiError({ type: 'quota', message: richQuotaMessage });
+            setBulkMessage(quotaMessage);
+        } else {
+            const simpleFinalMessage = `An error occurred on row ${rowIndex}: ${e.message}. Bulk generation stopped.`;
+            setApiError({ type: 'generic', message: simpleFinalMessage });
+            setBulkMessage(simpleFinalMessage);
         }
-        setBulkMessage(finalMessage);
+        
         setGeneratedAssets(null);
     } finally {
         setIsBulkGenerating(false);
@@ -604,7 +669,6 @@ const App: React.FC = () => {
   const handleDownloadGeneratedAssets = () => {
     if (!generatedAssets) return;
 
-    // Download ZIP
     const zipLink = document.createElement('a');
     zipLink.href = URL.createObjectURL(generatedAssets.zip);
     zipLink.download = 'pinterest_pins.zip';
@@ -613,7 +677,6 @@ const App: React.FC = () => {
     document.body.removeChild(zipLink);
     URL.revokeObjectURL(zipLink.href);
 
-    // Download CSV
     const csvLink = document.createElement('a');
     csvLink.href = URL.createObjectURL(generatedAssets.csv);
     csvLink.setAttribute('download', 'pinterest_bulk_with_media_urls.csv');
@@ -622,7 +685,6 @@ const App: React.FC = () => {
     document.body.removeChild(csvLink);
     URL.revokeObjectURL(csvLink.href);
 
-    // Reset state after download
     setGeneratedAssets(null);
     setBulkMessage('');
   };
@@ -640,12 +702,14 @@ const App: React.FC = () => {
     onPrevRow: handlePrevRow,
     csvData: csvData,
     currentRowIndex: currentRowIndex,
-    onAutoGenerateAll: handleAutoGenerateAll,
+    onBulkGeneration: handleBulkGeneration,
     isBulkGenerating: isBulkGenerating,
     bulkMessage: bulkMessage,
     apiError: apiError,
     generatedAssets: generatedAssets,
     onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
+    lastCompletedRowIndex: lastCompletedRowIndex,
+    onResetBulkGeneration: handleResetBulkGeneration,
   };
   
   const renderPage = () => {

@@ -24,12 +24,14 @@ export interface ControlsProps {
   onPrevRow: () => void;
   csvData: CsvRow[];
   currentRowIndex: number | null;
-  onAutoGenerateAll: () => void;
+  onBulkGeneration: (resume: boolean) => void;
   isBulkGenerating: boolean;
   bulkMessage: string;
   apiError: { type: string; message: React.ReactNode } | null;
   generatedAssets: { zip: Blob; csv: Blob } | null;
   onDownloadGeneratedAssets: () => void;
+  lastCompletedRowIndex: number | null;
+  onResetBulkGeneration: () => void;
 }
 
 const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
@@ -219,12 +221,14 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
     onPrevRow,
     csvData,
     currentRowIndex,
-    onAutoGenerateAll,
+    onBulkGeneration,
     isBulkGenerating,
     bulkMessage,
     apiError,
     generatedAssets,
-    onDownloadGeneratedAssets
+    onDownloadGeneratedAssets,
+    lastCompletedRowIndex,
+    onResetBulkGeneration
 }) => {
     const handleCsvFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -236,6 +240,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
     const needsImage2 = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look'].includes(data.templateId);
     const needsImage3 = ['clean-grid', 'shop-the-look'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
+    const hasPausedJob = lastCompletedRowIndex !== null;
 
     return (
         <>
@@ -318,18 +323,39 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
                     <InputField data={data} onFieldChange={onFieldChange} id="mediaUrlPrefix" label="Media URL Prefix" placeholder="e.g., http://yourwebsite.com/images/" />
                     <p className="text-xs text-slate-500 mt-1.5">This URL will be prefixed to the generated image filenames in the CSV.</p>
                 </div>
-                <button
-                    onClick={onAutoGenerateAll}
-                    disabled={isBulkGenerating || csvData.length === 0 || isQuotaError}
-                    className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
-                >
-                    {isBulkGenerating ? (
-                    <>
-                        <LoadingSpinner className="mr-3" />
-                        Generating...
-                    </>
-                    ) : '✨ Generate All Pins & CSV'}
-                </button>
+                <div className="space-y-2">
+                    {hasPausedJob ? (
+                        <button
+                            onClick={() => onBulkGeneration(true)}
+                            disabled={isBulkGenerating || isQuotaError}
+                            className="w-full flex items-center justify-center px-4 py-2.5 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                        >
+                            {isBulkGenerating ? (
+                                <><LoadingSpinner className="mr-3" /> Resuming...</>
+                            ) : (
+                                `Resume from Row ${lastCompletedRowIndex + 2}`
+                            )}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => onBulkGeneration(false)}
+                            disabled={isBulkGenerating || csvData.length === 0 || isQuotaError}
+                            className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                        >
+                            {isBulkGenerating ? (
+                                <><LoadingSpinner className="mr-3" /> Generating...</>
+                            ) : '✨ Generate All Pins & CSV'}
+                        </button>
+                    )}
+                    {hasPausedJob && !isBulkGenerating && (
+                         <button
+                            onClick={onResetBulkGeneration}
+                            className="w-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 py-2 rounded-lg transition-colors"
+                        >
+                            Cancel and Start Over
+                        </button>
+                    )}
+                </div>
                 {bulkMessage && (
                     <p className="text-sm text-center text-slate-600 bg-slate-100 p-3 rounded-lg border border-slate-200 mt-2">{bulkMessage}</p>
                 )}
