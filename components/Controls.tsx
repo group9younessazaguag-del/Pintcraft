@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -13,7 +14,7 @@ import LoadingSpinner from './icons/LoadingSpinner';
 
 export interface ControlsProps {
   data: TemplateData;
-  onFieldChange: (field: keyof TemplateData, value: string) => void;
+  onFieldChange: (field: keyof TemplateData, value: any) => void;
   onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void;
   onGenerateImage: (imageNumber: 1 | 2 | 3) => void;
   onDownload: () => void;
@@ -47,7 +48,7 @@ const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: Re
 );
 
 
-const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string) => void; id: 'title' | 'subtitle' | 'website' | 'imagePrompt' | 'apiKey' | 'mediaUrlPrefix' | 'pinsPerDay', label: string, type?: string, placeholder?: string, min?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min }) => (
+const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string) => void; id: 'title' | 'subtitle' | 'website' | 'imagePrompt' | 'mediaUrlPrefix' | 'pinsPerDay', label: string, type?: string, placeholder?: string, min?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min }) => (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
       <input
@@ -127,7 +128,7 @@ const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { 
     );
   };
 
-export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange }) => {
+export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, apiError }) => {
     const options: {templates: {id: TemplateId, name: string}[], sizes: {id: PinSize, name:string}[]} = {
         templates: [
           { id: 'classic', name: 'Classic' },
@@ -152,14 +153,28 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
           { id: 'long', name: 'Long (9:16)' },
         ],
       };
+      
+    const isQuotaError = apiError?.type === 'quota';
 
     return (
         <>
             <ControlCard icon={<SettingsIcon />} title="Model Settings">
-                <div>
-                    <InputField data={data} onFieldChange={onFieldChange} id="apiKey" label="Google AI API Key" type="password" placeholder="Enter your API key" />
-                    <p className="text-xs text-slate-500 mt-1.5">Your API key is stored locally in your browser and is not shared.</p>
-                </div>
+                {/* FIX: Removed API key input to adhere to guidelines. API key is now handled by environment variable. */}
+                <p className="text-sm text-slate-600">
+                    The application uses a pre-configured Google AI API key.
+                    Select your desired image generation model below.
+                </p>
+                {isQuotaError && (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-lg">
+                        <p className="text-sm font-semibold">API Key Has Reached Its Quota</p>
+                        <p className="text-sm mt-1">
+                            Free accounts have low daily image generation limits. 
+                            <a href="https://ai.google.dev/pricing" target="_blank" rel="noopener noreferrer" className="underline font-bold ml-1 hover:text-amber-950">
+                                Learn about pricing.
+                            </a>
+                        </p>
+                    </div>
+                )}
                 <SelectField value={data.imageModel} onChange={(value) => onFieldChange('imageModel', value)} id="imageModel" label="Image Generation Model">
                     <option value="imagen-4.0-generate-001">Imagen 4.0</option>
                 </SelectField>

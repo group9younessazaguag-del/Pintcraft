@@ -1,14 +1,14 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { GoogleGenAI } from '@google/genai';
-import type { TemplateData, CsvRow, ImageStyle } from './types';
+import type { TemplateData, CsvRow } from './types';
 import Header from './components/Header';
-import { SettingsAndCustomizeControls, PinContentControls, CsvAndActionsControls } from './components/Controls';
-import TemplatePreview from './components/TemplatePreview';
-import ErrorIcon from './components/icons/ErrorIcon';
 import Footer from './components/Footer';
 import AboutPage from './components/pages/AboutPage';
 import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './components/pages/TermsOfServicePage';
+import { generateImage, generateKeywords as generateKeywordsApi } from './services/googleAi';
+import useLocalStorage from './hooks/useLocalStorage';
+import GeneratorInterface from './components/GeneratorInterface';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -22,43 +22,7 @@ declare global {
 
 const getCurrentPage = () => window.location.hash.replace('#', '') || 'home';
 
-
-const GeneratorInterface: React.FC<{ controlProps: any; previewRef: React.RefObject<HTMLDivElement>; templateData: TemplateData; apiError: { type: string; message: React.ReactNode } | null }> = ({ controlProps, previewRef, templateData, apiError }) => (
-    <div className="container mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-1 space-y-8">
-            {apiError && (
-                <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start" role="alert">
-                    <div className="flex-shrink-0">
-                        <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500" />
-                    </div>
-                    <div className="ml-3">
-                        <p className="text-sm font-semibold">An error occurred</p>
-                        <p className="text-sm mt-1">{apiError.message}</p>
-                    </div>
-                </div>
-            )}
-            <SettingsAndCustomizeControls {...controlProps} />
-        </div>
-
-        <div className="lg:col-span-1 space-y-8">
-            <PinContentControls {...controlProps} />
-        </div>
-
-        <div className="lg:col-span-1 space-y-8">
-            <CsvAndActionsControls {...controlProps} />
-        </div>
-
-        <div className="lg:col-span-2 flex justify-center">
-            <div className="w-full max-w-md sticky top-24">
-                <TemplatePreview ref={previewRef} data={templateData} />
-            </div>
-        </div>
-    </div>
-);
-
-
-const App: React.FC = () => {
-  const [templateData, setTemplateData] = useState<TemplateData>({
+const initialTemplateData: TemplateData = {
     title: 'GARLIC HERB MOZZARELLA BITES',
     subtitle: 'QUICK & EASY APPETIZER',
     website: 'YOURWEBSITE.COM',
@@ -73,8 +37,12 @@ const App: React.FC = () => {
     mediaUrlPrefix: 'http://yourwebsite.com/images/',
     pinsPerDay: 3,
     startDate: new Date().toISOString().split('T')[0],
-    apiKey: '',
-  });
+};
+
+
+const App: React.FC = () => {
+  const [templateData, setTemplateData] = useLocalStorage<TemplateData>('templateData', initialTemplateData);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState<{ [key: number]: boolean }>({});
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
@@ -93,7 +61,7 @@ const App: React.FC = () => {
   
   const zipRef = useRef<any>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  
+
   const handleResetBulkGeneration = useCallback(() => {
     setLastCompletedRowIndex(null);
     setInProgressCsvData([]);
@@ -132,17 +100,18 @@ const App: React.FC = () => {
         subtitle: subtitle || prev.subtitle,
         website: website || prev.website,
         imagePrompt: imagePrompt || '',
-        // Reset images when changing rows to avoid confusion
         backgroundImage: null,
         backgroundImage2: null,
         backgroundImage3: null,
       }));
     }
-  }, [currentRowIndex, csvData]);
+  }, [currentRowIndex, csvData, setTemplateData]);
 
-  const handleFieldChange = (field: keyof TemplateData, value: string) => {
+  const handleFieldChange = (field: keyof TemplateData, value: any) => {
     if (apiError) setApiError(null);
     if (generatedAssets) setGeneratedAssets(null);
+
+    // FIX: Removed API key handling from UI, per guidelines.
     setTemplateData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -157,79 +126,9 @@ const App: React.FC = () => {
     reader.readAsDataURL(file);
   };
   
-  const stylePromptMap: { [key in ImageStyle]: string } = {
-      photorealistic: 'A hyper-realistic, professional photograph. Cinematic lighting, dramatic, highly detailed, photorealistic.',
-      realistic: 'A realistic, true-to-life image. Natural lighting, sharp focus, high fidelity, looking like a real photograph.',
-      fantasy: 'A vibrant digital painting in a fantasy art style. Epic, illustrative, highly detailed, magical.',
-      anime: 'A high-quality anime style artwork. Vibrant colors, clean lines, detailed characters, Japanese animation style.',
-      minimalist: 'A minimalist and clean product shot. Simple background, soft lighting, focus on the subject.',
-      vintage: 'A retro-style photograph with a vintage film look. Grainy texture, faded colors, nostalgic feel.',
-      vibrant: 'An incredibly vibrant and colorful image. Saturated colors, high contrast, energetic, and eye-catching.',
-  };
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  const getApiErrorDetails = (error: any): { isQuotaError: boolean; isServiceUnavailable: boolean; helpLink: string } => {
-    let errorBody: any = null;
-    let isQuotaError = false;
-    let isServiceUnavailable = false;
-    let helpLink = '';
-
-    try {
-        if (typeof error === 'object' && error !== null) {
-            // Case 1: The error object has a nested `error` property (e.g., from a fetch response)
-            if (error.error) {
-                errorBody = error.error;
-            } 
-            // Case 2: The error object IS the error payload itself
-            else if (error.code && error.status) {
-                errorBody = error;
-            }
-            // Case 3: The error object's `message` property is a JSON string
-            else if (typeof error.message === 'string') {
-                try {
-                    const parsedMessage = JSON.parse(error.message);
-                    if (parsedMessage.error) {
-                        errorBody = parsedMessage.error;
-                    }
-                } catch (e) {
-                    // Not a JSON string, ignore and proceed
-                }
-            }
-        }
-    } catch (e) {
-        console.error("Could not extract detailed error body:", e);
-    }
-    
-    if (errorBody) {
-        const status = errorBody.status;
-        const code = errorBody.code;
-        isQuotaError = status === 'RESOURCE_EXHAUSTED' || code === 429;
-        isServiceUnavailable = status === 'UNAVAILABLE' || code === 503;
-
-        if (isQuotaError && errorBody.details && Array.isArray(errorBody.details)) {
-            try {
-                const helpDetail = errorBody.details.find((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.Help' && d.links && d.links.length > 0 && d.links[0].url);
-                if (helpDetail) {
-                    helpLink = helpDetail.links[0].url;
-                }
-            } catch (e) {
-                console.error("Could not parse help link from error details:", e);
-            }
-        }
-    }
-
-    return { isQuotaError, isServiceUnavailable, helpLink };
-  };
-
-
-  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false) => {
-    setApiError(null);
-    if (!templateData.apiKey) {
-        const msg = 'Please enter your Google AI API Key in the Model Settings section.';
-        if (throwOnError) throw new Error(msg);
-        setApiError({ type: 'generic', message: msg });
-        return;
-    }
-
+  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false): Promise<void> => {
     const userPrompt = templateData.imagePrompt || templateData.title;
     if (!userPrompt) {
         const msg = 'Please enter a Title or an Image Prompt to generate an image.';
@@ -239,98 +138,66 @@ const App: React.FC = () => {
     }
 
     setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: true }));
+    setApiError(null);
 
-    const MAX_RETRIES = 3;
-    let attempt = 0;
-
-    while (attempt < MAX_RETRIES) {
-        try {
-            const ai = new GoogleGenAI({ apiKey: templateData.apiKey });
-            const aspectRatio = templateData.pinSize === 'standard' ? '3:4' : '9:16';
-            const styleDescription = stylePromptMap[templateData.imageStyle] || stylePromptMap.photorealistic;
-            const enhancedPrompt = `${styleDescription} For a Pinterest pin about: ${userPrompt}.`;
-
-            const response = await ai.models.generateImages({
-                model: templateData.imageModel,
-                prompt: enhancedPrompt,
-                config: {
-                    numberOfImages: 1,
-                    outputMimeType: 'image/jpeg',
-                    aspectRatio: aspectRatio,
-                },
-            });
-
-            const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
-            const imageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
-            const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
-            setTemplateData(prev => ({ ...prev, [field]: imageUrl }));
-            
-            setApiError(null);
-            setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
-            return; 
-
-        } catch (error: any) {
-            console.error(`Error generating image (attempt ${attempt + 1}):`, error);
-            
-            const { isQuotaError, isServiceUnavailable, helpLink } = getApiErrorDetails(error);
-            
-            attempt++;
-
-            if (isServiceUnavailable && attempt < MAX_RETRIES) {
-                const delay = Math.pow(2, attempt) * 1000;
-                console.log(`Service unavailable. Retrying in ${delay / 1000} seconds...`);
-                await sleep(delay);
-                continue; 
-            }
-            
-            if (throwOnError) {
-                if (isQuotaError) throw new Error('API Quota Exceeded');
-                if (isServiceUnavailable) throw new Error('Image generation service is temporarily unavailable. Please try again later.');
-                throw new Error('Failed to generate image');
-            }
-
-            let errorMessage: React.ReactNode = 'Failed to generate image. Please check the console for more details.';
-            let errorType = 'generic';
-
-            if (isQuotaError) {
-                errorType = 'quota';
-                errorMessage = (
-                    <>
-                        API Quota Exceeded. You may have hit your usage limit. Please check your plan and billing details.
-                        {helpLink && (
-                            <>
-                                {' '}
-                                <a href={helpLink} target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900">
-                                    Learn more here.
-                                </a>
-                            </>
-                        )}
-                    </>
-                );
-            } else if (isServiceUnavailable) {
-                errorType = 'service';
-                errorMessage = 'The image generation service is temporarily unavailable. Please try again in a few moments.';
-            }
-            setApiError({ type: errorType, message: errorMessage });
-            break;
+    try {
+        const aspectRatio = templateData.pinSize === 'standard' ? '3:4' : '9:16';
+        // FIX: Removed API key parameter. Service now uses environment variable.
+        const imageUrl = await generateImage(
+            userPrompt,
+            templateData.imageModel,
+            templateData.imageStyle,
+            aspectRatio
+        );
+        const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
+        setTemplateData(prev => ({ ...prev, [field]: imageUrl }));
+    } catch (error: any) {
+        // FIX: Removed API key rotation logic as only one key from env is used.
+        console.error(`Error generating image:`, error);
+        if (throwOnError) {
+            throw error; // Re-throw for bulk processor
         }
+
+        let errorMessage: React.ReactNode = error.message || 'Failed to generate image.';
+        if (error.type === 'quota') {
+            errorMessage = (
+                <>
+                    {/* FIX: Updated quota error message for a single API key. */}
+                    API Quota Exceeded. You may have hit your usage limit.
+                    {error.helpLink && (
+                        <a href={error.helpLink} target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900 ml-1">
+                            Learn more here.
+                        </a>
+                    )}
+                </>
+            );
+        }
+        setApiError({ type: error.type || 'generic', message: errorMessage });
+    } finally {
+        setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
     }
+  };
 
-    setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
-};
-
+  const handleGenerateKeywords = useCallback(async (title: string): Promise<string> => {
+    // FIX: Removed complex key-rotation logic to align with single environment variable API key.
+    try {
+        const keywords = await generateKeywordsApi(title);
+        return keywords;
+    } catch (error: any) {
+        if (error.type === 'quota') {
+            setBulkMessage(`Keyword generation failed due to quota limit.`);
+        } else {
+            setBulkMessage(`Keyword generation failed: ${error.message}`);
+        }
+        throw error;
+    }
+  }, [setBulkMessage]);
 
   const handleDownload = useCallback(() => {
-    if (previewRef.current === null) {
-      return;
-    }
+    if (previewRef.current === null) return;
     setIsLoading(true);
 
-    window.htmlToImage.toPng(previewRef.current, { 
-        cacheBust: true,
-        pixelRatio: 2,
-        fetchRequestInit: { mode: 'cors' }
-      })
+    window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2, fetchRequestInit: { mode: 'cors' }})
       .then((dataUrl) => {
         const link = document.createElement('a');
         const safeTitle = templateData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
@@ -343,9 +210,7 @@ const App: React.FC = () => {
         console.error('Oops, something went wrong!', err);
         setApiError({ type: 'generic', message: 'Could not generate image. Please try again.'});
       })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      .finally(() => setIsLoading(false));
   }, [previewRef, templateData.title, currentRowIndex]);
 
   const parseCsvLine = (line: string): string[] => {
@@ -451,39 +316,6 @@ const App: React.FC = () => {
     }
   };
 
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-  
-  const generateKeywords = async (title: string): Promise<string> => {
-    if (!title) return '';
-    if (!templateData.apiKey) {
-      throw new Error('API Key is missing. Please add it in the Model Settings section.');
-    }
-
-    try {
-      const ai = new GoogleGenAI({ apiKey: templateData.apiKey });
-      const prompt = `You are a Pinterest SEO expert. Based on the pin title "${title}", generate a comma-separated list of 5-10 highly relevant keywords that users would search for on Pinterest. Focus on long-tail keywords and popular search terms. Do not include hashtags, quotes, or any other text, just the keywords. Example output: recipe, easy recipe, dinner ideas, healthy food`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
-
-      const keywords = response.text
-        .trim()
-        .replace(/\n/g, ', ')
-        .replace(/, ,/g, ',')
-        .replace(/['"]+/g, '');
-      return keywords;
-    } catch (error: any) {
-      console.error(`Failed to generate keywords for title: "${title}"`, error);
-      const { isQuotaError } = getApiErrorDetails(error);
-      if (isQuotaError) {
-          throw new Error('API Quota Exceeded');
-      }
-      throw new Error(`Failed to generate keywords for "${title}"`);
-    }
-  };
-
   const handleBulkGeneration = async (resume = false) => {
     setApiError(null);
     setGeneratedAssets(null);
@@ -491,11 +323,8 @@ const App: React.FC = () => {
       setApiError({ type: 'generic', message: 'Please upload a CSV file first.'});
       return;
     }
-     if (!templateData.apiKey) {
-      setApiError({ type: 'generic', message: 'Please enter your Google AI API Key in the Model Settings section before starting a bulk generation.'});
-      return;
-    }
-
+    // FIX: Removed check for API keys in UI, per guidelines.
+    
     setIsBulkGenerating(true);
     const startIndex = resume && lastCompletedRowIndex !== null ? lastCompletedRowIndex + 1 : 0;
     
@@ -537,7 +366,7 @@ const App: React.FC = () => {
 
             if (!currentKeywords) {
                 setBulkMessage(`Row ${i + 1}: Generating keywords...`);
-                const generatedKeywords = await generateKeywords(currentData.title);
+                const generatedKeywords = await handleGenerateKeywords(currentData.title);
                 const targetKeywordsHeader = originalKeywordsHeader || 'Keywords';
                 currentRunCsvData[i][targetKeywordsHeader] = generatedKeywords;
                 if (!originalCsvHeaders.some(h => h.toLowerCase().trim() === 'keywords')) {
@@ -548,7 +377,7 @@ const App: React.FC = () => {
             setBulkMessage(`Row ${i + 1}: Generating images...`);
             const prompt = currentData.imagePrompt;
             if (prompt) {
-                await handleGenerateImage(1, true);
+                 await handleGenerateImage(1, true);
                 
                 const templateNeeds2Images = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look'].includes(templateData.templateId);
                 if (templateNeeds2Images) await handleGenerateImage(2, true);
@@ -641,7 +470,7 @@ const App: React.FC = () => {
         console.error('Bulk generation failed:', e);
         const rowIndex = i + 1;
         
-        if (e.message === 'API Quota Exceeded') {
+        if (e.type === 'quota') {
             const quotaMessage = `API Quota Exceeded on row ${rowIndex}. Bulk generation has been paused.`;
             const richQuotaMessage = (
                 <>
