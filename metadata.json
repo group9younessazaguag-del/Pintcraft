@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Pinterest Pin Template Generator",
+  "description": "An application to automatically generate Pinterest pin images from templates by allowing users to upload their own background images and add custom text overlays.",
+  "requestFramePermissions": []
+}
