@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -16,9 +15,11 @@ export interface ControlsProps {
   onFieldChange: (field: keyof TemplateData, value: any) => void;
   onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void;
   onGenerateImage: (imageNumber: 1 | 2 | 3) => void;
+  onGenerateDescription: () => void;
   onDownload: () => void;
   isLoading: boolean;
   isGeneratingImage: { [key: number]: boolean };
+  isGeneratingDescription: boolean;
   onCsvUpload: (file: File) => void;
   onNextRow: () => void;
   onPrevRow: () => void;
@@ -50,18 +51,19 @@ const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: Re
 );
 
 
-const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string) => void; id: 'title' | 'subtitle' | 'website' | 'imagePrompt' | 'mediaUrlPrefix' | 'pinsPerDay', label: string, type?: string, placeholder?: string, min?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min }) => (
+const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string) => void; id: 'title' | 'subtitle' | 'website' | 'imagePrompt' | 'mediaUrlPrefix' | 'pinsPerDay' | 'imageModel' | 'textModel', label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
       <input
         type={type}
         id={id}
-        value={data[id] || ''}
+        value={data[id as 'title' | 'subtitle' | 'website' | 'imagePrompt' | 'mediaUrlPrefix' | 'pinsPerDay' | 'imageModel' | 'textModel'] || ''}
         onChange={(e) => onFieldChange(id, e.target.value)}
         className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 transition-colors duration-200"
         placeholder={placeholder}
         min={min}
       />
+      {description && <p className="text-xs text-slate-500 mt-1.5">{description}</p>}
     </div>
 );
 
@@ -98,9 +100,8 @@ const ToggleButtonGrid: React.FC<{ label: string; options: {id: string; name: st
 );
 
 
-const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { [key: number]: boolean }; onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void; onGenerateImage: (imageNumber: 1 | 2 | 3) => void; isBulkGenerating: boolean; isQuotaError: boolean; isApiKeyFromEnv: boolean; userApiKey: string}> = ({ id, label, isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError, isApiKeyFromEnv, userApiKey }) => {
+const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { [key: number]: boolean }; onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void; onGenerateImage: (imageNumber: 1 | 2 | 3) => void; isBulkGenerating: boolean; isConfigured: boolean;}> = ({ id, label, isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isConfigured }) => {
     const isGenerating = isGeneratingImage[id];
-    const isConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
     return (
         <div>
         <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
@@ -116,8 +117,9 @@ const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { 
             <button
                 type="button"
                 onClick={() => onGenerateImage(id)}
-                disabled={isGenerating || isBulkGenerating || isQuotaError || !isConfigured}
-                className="flex-1 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed transition-colors duration-200"
+                disabled={isGenerating || isBulkGenerating}
+                title={isConfigured ? 'Generate a high-quality image with AI' : 'Generate a basic placeholder image (add an API key to use AI)'}
+                className="flex-1 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
             >
               {isGenerating ? (
                 <>
@@ -158,6 +160,8 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
       };
       
     const [apiKeyInput, setApiKeyInput] = useState(userApiKey);
+    const [isKeyVisible, setIsKeyVisible] = useState(false);
+    const isConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
 
     useEffect(() => {
         setApiKeyInput(userApiKey);
@@ -174,51 +178,106 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 
     return (
         <>
-            <ControlCard icon={<SettingsIcon />} title="Model Settings">
+            <ControlCard icon={<SettingsIcon />} title="AI Configuration">
                 <div>
-                    <label htmlFor="apiKeyInput" className="block text-sm font-medium text-slate-600 mb-1.5">API Key</label>
-                    <div className="flex gap-2">
+                    <label htmlFor="apiKeyInput" className="block text-sm font-medium text-slate-600 mb-1.5">Google AI API Key</label>
+                    <div className="relative">
                         <input
                             id="apiKeyInput"
-                            type="text"
+                            type={isKeyVisible ? 'text' : 'password'}
                             value={apiKeyInput}
                             onChange={(e) => setApiKeyInput(e.target.value)}
-                            placeholder={isApiKeyFromEnv && !userApiKey ? 'Using secure environment key (override here)' : 'Enter your Google AI API key'}
-                            className="flex-grow w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            placeholder={isApiKeyFromEnv && !userApiKey ? 'Using secure environment key' : 'Enter your API key'}
+                            className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                         />
+                         <button
+                            type="button"
+                            onClick={() => setIsKeyVisible(!isKeyVisible)}
+                            className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500"
+                            aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
+                        >
+                            {isKeyVisible ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                </svg>
+                            ) : (
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074L3.707 2.293zM10 12a2 2 0 110-4 2 2 0 010 4z" clipRule="evenodd" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
+                     <div className="flex gap-2 mt-2">
                         <button
                             onClick={handleSaveKey}
-                            className="px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
+                            className="flex-1 px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
                         >
                             Save
                         </button>
+                        {userApiKey && (
+                            <button
+                                onClick={handleClearKey}
+                                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
+                            >
+                                Clear
+                            </button>
+                        )}
                     </div>
-                    <div className="mt-2 text-xs">
+                    <div className="mt-3 text-xs space-y-2">
                         {userApiKey ? (
-                            <div className="flex justify-between items-center text-green-900 bg-green-50 border border-green-200 p-2 rounded-lg">
-                                <span className="font-semibold">Key is saved in your browser.</span>
-                                <button onClick={handleClearKey} className="underline font-semibold hover:text-green-900/80">
-                                    Clear Key
-                                </button>
-                            </div>
+                             <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">
+                                Your API key is saved in this browser.
+                            </p>
                         ) : isApiKeyFromEnv ? (
                             <p className="text-slate-600 p-2 bg-slate-100 rounded-lg border border-slate-200">
-                                A secure environment key is active. Saving a key here will override it for this browser.
+                                A secure environment key is active. Saving a key here will override it.
                             </p>
                         ) : (
-                            <p className="text-red-600 font-medium">
-                                API Key is required to use AI features.
+                             <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium">
+                                <strong>API Key Recommended:</strong> Add a key to enable high-quality AI image and text generation.
                             </p>
                         )}
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:text-pink-800 hover:underline pt-2 w-full text-left block">
-                            Get a Google AI API Key
+                        
+                        <div className="!mt-4 text-sm space-y-3">
+                            {isConfigured ? (
+                                <>
+                                    <InputField
+                                        data={data}
+                                        onFieldChange={onFieldChange as (field: 'imageModel', value: string) => void}
+                                        id="imageModel"
+                                        label="Image Generation Model"
+                                    />
+                                    <InputField
+                                        data={data}
+                                        onFieldChange={onFieldChange as (field: 'textModel', value: string) => void}
+                                        id="textModel"
+                                        label="Text Generation Model"
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 mb-1.5">Image Generation Mode</label>
+                                        <p className="text-sm text-slate-800 font-medium bg-slate-100 p-3 rounded-lg border border-slate-200 text-center">
+                                            Built-in Placeholder Generator
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 mb-1.5">Text Generation Mode</label>
+                                        <p className="text-sm text-slate-800 font-medium bg-slate-100 p-3 rounded-lg border border-slate-200 text-center">
+                                            Free AI Placeholder Generator
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:text-pink-800 hover:underline !mt-3 w-full text-left block">
+                            Get a Google AI API Key &rarr;
                         </a>
                     </div>
                 </div>
-
-                <SelectField value={data.imageModel} onChange={(value) => onFieldChange('imageModel', value)} id="imageModel" label="Image Generation Model">
-                    <option value="imagen-4.0-generate-001">Imagen 4.0</option>
-                </SelectField>
             </ControlCard>
              <ControlCard icon={<PaletteIcon />} title="Customize Your Pin">
                 <ToggleButtonGrid 
@@ -239,27 +298,46 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 };
 
 
-export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange }) => {
-    const styleOptions = [
-        { id: 'photorealistic', name: 'Photorealistic' },
-        { id: 'realistic', name: 'Realistic' },
-        { id: 'fantasy', name: 'Fantasy Art' },
-        { id: 'anime', name: 'Anime' },
-        { id: 'minimalist', name: 'Minimalist' },
-        { id: 'vintage', name: 'Vintage' },
-        { id: 'vibrant', name: 'Vibrant' },
-    ];
+export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, isApiKeyFromEnv, userApiKey, onGenerateDescription, isGeneratingDescription, isBulkGenerating }) => {
+    const isConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
+    const imagePromptDescription = isConfigured
+        ? "Describe the image you want our AI to create. Be descriptive for the best results."
+        : "This text will be used for the placeholder image. Add an API key to generate images with AI.";
+
     return (
         <ControlCard icon={<PinContentIcon />} title="Pin Content">
-            <InputField data={data} onFieldChange={onFieldChange} id="title" label="Title" />
-            <InputField data={data} onFieldChange={onFieldChange} id="subtitle" label="Pinterest Board" />
-            <InputField data={data} onFieldChange={onFieldChange} id="website" label="Link" />
-            <InputField data={data} onFieldChange={onFieldChange} id="imagePrompt" label="Image Prompt (optional)" />
-            <SelectField value={data.imageStyle} onChange={(value) => onFieldChange('imageStyle', value)} id="imageStyle" label="Image Style">
-                {styleOptions.map(option => (
-                    <option key={option.id} value={option.id}>{option.name}</option>
-                ))}
-            </SelectField>
+            <InputField data={data} onFieldChange={onFieldChange as (field: 'title', value: string) => void} id="title" label="Title" />
+            <InputField data={data} onFieldChange={onFieldChange as (field: 'subtitle', value: string) => void} id="subtitle" label="Pinterest Board" />
+            <InputField data={data} onFieldChange={onFieldChange as (field: 'website', value: string) => void} id="website" label="Link" />
+            <div>
+                <label htmlFor="description" className="block text-sm font-medium text-slate-600 mb-1.5">Description</label>
+                <textarea
+                    id="description"
+                    value={data.description || ''}
+                    onChange={(e) => onFieldChange('description', e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 transition-colors duration-200"
+                    rows={4}
+                    placeholder="A short, enticing description of your pin."
+                />
+                <button
+                    type="button"
+                    onClick={onGenerateDescription}
+                    disabled={isGeneratingDescription || isBulkGenerating}
+                    title={isConfigured ? 'Generate a high-quality description with AI' : 'Generate a basic placeholder description'}
+                    className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                >
+                    {isGeneratingDescription ? (
+                        <><LoadingSpinner className="mr-2"/> Generating...</>
+                    ) : '✨ Generate Description'}
+                </button>
+            </div>
+            <InputField 
+                data={data} 
+                onFieldChange={onFieldChange as (field: 'imagePrompt', value: string) => void}
+                id="imagePrompt" 
+                label="Image Prompt (optional)"
+                description={imagePromptDescription}
+            />
         </ControlCard>
     );
 };
@@ -313,7 +391,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
                         onChange={handleCsvFileSelect}
                         className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-600 hover:file:bg-pink-100 cursor-pointer transition-colors duration-200"
                     />
-                    <p className="text-xs text-slate-500 mt-1.5">Needs 'Title' column. 'Pinterest Board', 'Link', 'Description', and 'Keywords' are used if available.</p>
+                    <p className="text-xs text-slate-500 mt-1.5">Needs 'Title'. 'Description' is used if available, or auto-generated if empty.</p>
                 </div>
                 {csvData.length > 0 && currentRowIndex !== null && (
                     <div className="flex items-center justify-between bg-slate-100 p-2 rounded-lg border border-slate-200">
@@ -345,12 +423,12 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
             </ControlCard>
 
              <ControlCard icon={<ImagesIcon />} title="Images">
-                <ImageUpload id={1} label="Background Image 1" {...{isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError, isApiKeyFromEnv, userApiKey}}/>
+                <ImageUpload id={1} label="Background Image 1" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={isConfigured} />
                 {needsImage2 && (
-                    <ImageUpload id={2} label="Background Image 2" {...{isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError, isApiKeyFromEnv, userApiKey}}/>
+                    <ImageUpload id={2} label="Background Image 2" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={isConfigured} />
                 )}
                 {needsImage3 && (
-                    <ImageUpload id={3} label="Background Image 3" {...{isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError, isApiKeyFromEnv, userApiKey}}/>
+                    <ImageUpload id={3} label="Background Image 3" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={isConfigured} />
                 )}
              </ControlCard>
 
@@ -366,7 +444,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
 
             <ControlCard icon={<BulkIcon />} title="Bulk Actions">
                 <div className="grid grid-cols-2 gap-4">
-                    <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
+                    <InputField data={data} onFieldChange={onFieldChange as (field: 'pinsPerDay', value: string) => void} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
                     <div>
                         <label htmlFor="startDate" className="block text-sm font-medium text-slate-600 mb-1.5">Start Date</label>
                         <input
@@ -379,14 +457,14 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
                     </div>
                 </div>
                 <div>
-                    <InputField data={data} onFieldChange={onFieldChange} id="mediaUrlPrefix" label="Media URL Prefix" placeholder="e.g., http://yourwebsite.com/images/" />
+                    <InputField data={data} onFieldChange={onFieldChange as (field: 'mediaUrlPrefix', value: string) => void} id="mediaUrlPrefix" label="Media URL Prefix" placeholder="e.g., http://yourwebsite.com/images/" />
                     <p className="text-xs text-slate-500 mt-1.5">This URL will be prefixed to the generated image filenames in the CSV.</p>
                 </div>
                 <div className="space-y-2">
                     {hasPausedJob ? (
                         <button
                             onClick={() => onBulkGeneration(true)}
-                            disabled={isBulkGenerating || isQuotaError || !isConfigured}
+                            disabled={isBulkGenerating || isQuotaError}
                             className="w-full flex items-center justify-center px-4 py-2.5 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                         >
                             {isBulkGenerating ? (
@@ -398,7 +476,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
                     ) : (
                         <button
                             onClick={() => onBulkGeneration(false)}
-                            disabled={isBulkGenerating || csvData.length === 0 || isQuotaError || !isConfigured}
+                            disabled={isBulkGenerating || csvData.length === 0 || isQuotaError}
                             className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                         >
                             {isBulkGenerating ? (

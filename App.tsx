@@ -1,4 +1,3 @@
-
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow } from './types';
 import Header from './components/Header';
@@ -6,7 +5,7 @@ import Footer from './components/Footer';
 import AboutPage from './components/pages/AboutPage';
 import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './components/pages/TermsOfServicePage';
-import { generateImage, generateKeywords as generateKeywordsApi } from './services/googleAi';
+import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription } from './services/googleAi';
 import useLocalStorage from './hooks/useLocalStorage';
 import GeneratorInterface from './components/GeneratorInterface';
 
@@ -22,30 +21,40 @@ declare global {
 
 const getCurrentPage = () => window.location.hash.replace('#', '') || 'home';
 
-const initialTemplateData: TemplateData = {
+type PersistedData = Omit<TemplateData, 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3'>;
+
+const initialPersistedData: PersistedData = {
     title: 'GARLIC HERB MOZZARELLA BITES',
     subtitle: 'QUICK & EASY APPETIZER',
     website: 'YOURWEBSITE.COM',
-    backgroundImage: null,
-    backgroundImage2: null,
-    backgroundImage3: null,
     templateId: 'product-spotlight',
     pinSize: 'long',
     imagePrompt: '',
-    imageModel: 'imagen-4.0-generate-001',
-    imageStyle: 'photorealistic',
+    description: 'These garlic herb mozzarella bites are the perfect easy appetizer! They\'re cheesy, flavorful, and so simple to make. Get the recipe now!',
     mediaUrlPrefix: 'http://yourwebsite.com/images/',
     pinsPerDay: 3,
     startDate: new Date().toISOString().split('T')[0],
+    imageModel: 'gemini-2.5-flash-image-preview',
+    textModel: 'gemini-2.5-flash',
+};
+
+const initialImageData = {
+    backgroundImage: null,
+    backgroundImage2: null,
+    backgroundImage3: null,
 };
 
 
 const App: React.FC = () => {
-  const [templateData, setTemplateData] = useLocalStorage<TemplateData>('templateData', initialTemplateData);
+  const [persistedData, setPersistedData] = useLocalStorage<PersistedData>('templateData', initialPersistedData);
+  const [imageData, setImageData] = useState(initialImageData);
+  const templateData: TemplateData = { ...persistedData, ...imageData };
+
   const [userApiKey, setUserApiKey] = useLocalStorage('userApiKey', '');
 
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState<{ [key: number]: boolean }>({});
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [currentRowIndex, setCurrentRowIndex] = useState<number | null>(null);
   const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
@@ -112,25 +121,34 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (currentRowIndex !== null && csvData[currentRowIndex]) {
-      const { title, subtitle, website, imagePrompt } = csvData[currentRowIndex];
-      setTemplateData(prev => ({
+      const { title, subtitle, website, imagePrompt, description } = csvData[currentRowIndex];
+      setPersistedData(prev => ({
         ...prev,
         title: title || prev.title,
         subtitle: subtitle || prev.subtitle,
         website: website || prev.website,
         imagePrompt: imagePrompt || '',
+        description: description || '',
+      }));
+      setImageData({
         backgroundImage: null,
         backgroundImage2: null,
         backgroundImage3: null,
-      }));
+      });
     }
-  }, [currentRowIndex, csvData, setTemplateData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRowIndex, csvData]);
 
   const handleFieldChange = (field: keyof TemplateData, value: any) => {
     if (apiError) setApiError(null);
     if (generatedAssets) setGeneratedAssets(null);
-
-    setTemplateData(prev => ({ ...prev, [field]: value }));
+    
+    const imageFields: (keyof TemplateData)[] = ['backgroundImage', 'backgroundImage2', 'backgroundImage3'];
+    if (imageFields.includes(field)) {
+      setImageData(prev => ({ ...prev, [field]: value }));
+    } else {
+      setPersistedData(prev => ({ ...prev, [field as keyof PersistedData]: value }));
+    }
   };
 
   const handleImageUpload = (file: File, imageNumber: 1 | 2 | 3) => {
@@ -139,7 +157,7 @@ const App: React.FC = () => {
     const reader = new FileReader();
     reader.onloadend = () => {
       const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
-      setTemplateData(prev => ({ ...prev, [field]: reader.result as string }));
+      setImageData(prev => ({ ...prev, [field]: reader.result as string }));
     };
     reader.readAsDataURL(file);
   };
@@ -147,14 +165,6 @@ const App: React.FC = () => {
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false): Promise<void> => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      const msg = 'Please set your API key in the Model Settings to generate images.';
-      if (throwOnError) throw new Error(msg);
-      setApiError({ type: 'generic', message: msg });
-      return;
-    }
-
     const userPrompt = templateData.imagePrompt || templateData.title;
     if (!userPrompt) {
         const msg = 'Please enter a Title or an Image Prompt to generate an image.';
@@ -166,24 +176,36 @@ const App: React.FC = () => {
     setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: true }));
     setApiError(null);
 
+    const apiKey = getApiKey();
+    const aspectRatio = templateData.pinSize === 'standard' ? '3:4' : '9:16';
+
     try {
-        const aspectRatio = templateData.pinSize === 'standard' ? '3:4' : '9:16';
-        const imageUrl = await generateImage(
-            apiKey,
-            userPrompt,
-            templateData.imageModel,
-            templateData.imageStyle,
-            aspectRatio
-        );
+        let imageUrl: string;
+        if (apiKey) {
+            // Use AI generation if key is available
+            imageUrl = await generateImage(
+                apiKey,
+                templateData.imageModel,
+                userPrompt,
+                aspectRatio
+            );
+        } else {
+            // Fallback to placeholder generation
+            imageUrl = await generatePlaceholderImage(
+                userPrompt,
+                aspectRatio
+            );
+        }
+        
         const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
-        setTemplateData(prev => ({ ...prev, [field]: imageUrl }));
+        setImageData(prev => ({ ...prev, [field]: imageUrl }));
     } catch (error: any) {
         console.error(`Error generating image:`, error);
         if (throwOnError) {
             throw error; // Re-throw for bulk processor
         }
-        setApiError({ 
-            type: error.type || 'generic', 
+        setApiError({
+            type: error.type || 'generic',
             message: error.message || 'Failed to generate image.',
             helpLink: error.helpLink
         });
@@ -192,26 +214,42 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGenerateKeywords = useCallback(async (title: string): Promise<string> => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        const msg = 'API key is not set. Cannot generate keywords.';
-        setBulkMessage(msg);
-        throw new Error(msg);
+  const handleGenerateDescription = async (throwOnError = false): Promise<void> => {
+    const title = templateData.title;
+    if (!title) {
+        const msg = 'Please enter a Title to generate a description.';
+        if (throwOnError) throw new Error(msg);
+        setApiError({ type: 'generic', message: msg });
+        return;
     }
 
+    setIsGeneratingDescription(true);
+    setApiError(null);
+
+    const apiKey = getApiKey();
+
     try {
-        const keywords = await generateKeywordsApi(apiKey, title);
-        return keywords;
-    } catch (error: any) {
-        if (error.type === 'quota') {
-            setBulkMessage(`Keyword generation failed due to quota limit.`);
+        let newDescription: string;
+        if (apiKey) {
+            newDescription = await generateDescription(apiKey, templateData.textModel, title, templateData.subtitle);
         } else {
-            setBulkMessage(`Keyword generation failed: ${error.message}`);
+            newDescription = generatePlaceholderDescription(title, templateData.subtitle);
         }
-        throw error;
+        handleFieldChange('description', newDescription);
+    } catch (error: any) {
+        console.error(`Error generating description:`, error);
+        if (throwOnError) {
+            throw error;
+        }
+        setApiError({
+            type: error.type || 'generic',
+            message: error.message || 'Failed to generate description.',
+            helpLink: error.helpLink
+        });
+    } finally {
+        setIsGeneratingDescription(false);
     }
-  }, [getApiKey, setBulkMessage]);
+  };
 
   const handleDownload = useCallback(() => {
     if (previewRef.current === null) return;
@@ -314,6 +352,7 @@ const App: React.FC = () => {
               subtitle: row[boardHeader] || '',
               website: '',
               imagePrompt: prompt,
+              description: row[descriptionHeader] || '',
           };
       });
       
@@ -339,29 +378,38 @@ const App: React.FC = () => {
   const handleBulkGeneration = async (resume = false) => {
     setApiError(null);
     setGeneratedAssets(null);
-    if (!getApiKey()) {
-        setApiError({ type: 'generic', message: 'Please set your API key to start bulk generation.' });
-        return;
-    }
     if (csvData.length === 0) {
       setApiError({ type: 'generic', message: 'Please upload a CSV file first.'});
       return;
     }
+
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        if (!window.confirm("You don't have an API key set. Only basic placeholder images and descriptions will be created. Do you want to continue?")) {
+            return;
+        }
+    }
+    
+    const dataForGeneration = [...csvData];
+    const fullDataForGeneration = JSON.parse(JSON.stringify(fullCsvData));
     
     setIsBulkGenerating(true);
     const startIndex = resume && lastCompletedRowIndex !== null ? lastCompletedRowIndex + 1 : 0;
     
+    let currentRunCsvData;
+
     if (startIndex === 0) {
         setBulkMessage('Starting bulk generation...');
         zipRef.current = new window.JSZip();
-        setInProgressCsvData(JSON.parse(JSON.stringify(fullCsvData)));
+        setInProgressCsvData(fullDataForGeneration);
         setLastCompletedRowIndex(null);
+        currentRunCsvData = fullDataForGeneration; // Use the snapshot directly for this run
     } else {
         setBulkMessage(`Resuming from row ${startIndex + 1}...`);
+        currentRunCsvData = [...inProgressCsvData]; // For a resumed run, we MUST use the state
     }
 
     const zip = zipRef.current;
-    const currentRunCsvData = [...inProgressCsvData];
     
     const { pinsPerDay, startDate } = templateData;
     const pinsPerDayNum = Math.max(1, parseInt(pinsPerDay.toString(), 10) || 1);
@@ -375,28 +423,32 @@ const App: React.FC = () => {
 
     const mediaUrlHeaderKey = 'Media URL';
     const publishDateHeaderKey = 'Publish date';
-    
+    const descriptionHeaderKey = Object.keys(currentRunCsvData[0] || {}).find(k => k.toLowerCase().trim() === 'description') || 'Description';
+
     let i = startIndex;
     try {
-        for (i = startIndex; i < csvData.length; i++) {
-            const currentData = csvData[i];
-            setBulkMessage(`Processing row ${i + 1} of ${csvData.length}: ${currentData.title}`);
+        for (i = startIndex; i < dataForGeneration.length; i++) {
+            const currentData = dataForGeneration[i];
+            setBulkMessage(`Processing row ${i + 1} of ${dataForGeneration.length}: ${currentData.title}`);
             setCurrentRowIndex(i);
             await sleep(100);
-            
-            const originalKeywordsHeader = originalCsvHeaders.find(h => h.toLowerCase().trim() === 'keywords');
-            let currentKeywords = originalKeywordsHeader ? currentRunCsvData[i][originalKeywordsHeader] : '';
 
-            if (!currentKeywords) {
-                setBulkMessage(`Row ${i + 1}: Generating keywords...`);
-                const generatedKeywords = await handleGenerateKeywords(currentData.title);
-                const targetKeywordsHeader = originalKeywordsHeader || 'Keywords';
-                currentRunCsvData[i][targetKeywordsHeader] = generatedKeywords;
-                if (!originalCsvHeaders.some(h => h.toLowerCase().trim() === 'keywords')) {
-                    originalCsvHeaders.push('Keywords');
-                }
+            if (!currentRunCsvData[i]) {
+                throw new Error(`Data mismatch error at row ${i + 1}. Please restart the bulk generation.`);
             }
             
+            // Generate description if missing
+            let description = currentData.description;
+            if (!description) {
+                setBulkMessage(`Row ${i + 1}: Generating description...`);
+                if (apiKey) {
+                    description = await generateDescription(apiKey, templateData.textModel, currentData.title, currentData.subtitle);
+                } else {
+                    description = generatePlaceholderDescription(currentData.title, currentData.subtitle);
+                }
+                currentRunCsvData[i][descriptionHeaderKey] = description;
+            }
+
             setBulkMessage(`Row ${i + 1}: Generating images...`);
             const prompt = currentData.imagePrompt;
             if (prompt) {
@@ -451,7 +503,7 @@ const App: React.FC = () => {
         }
 
         setBulkMessage('Finalizing files...');
-        const outputHeaders = ['Title', 'Media URL', 'Pinterest board', 'Description', 'Link', 'Publish date', 'Keywords'];
+        const outputHeaders = ['Title', 'Media URL', 'Pinterest board', 'Description', 'Link', 'Publish date'];
 
         const getOriginalHeader = (canonicalName: string): string | undefined => {
             const lowerCanonical = canonicalName.toLowerCase();
@@ -487,7 +539,6 @@ const App: React.FC = () => {
 
         setGeneratedAssets({ zip: zipContent, csv: csvBlob });
         setBulkMessage('Generation complete! Your files are ready to download.');
-        handleResetBulkGeneration();
 
     } catch (e: any) {
         console.error('Bulk generation failed:', e);
@@ -527,8 +578,7 @@ const App: React.FC = () => {
     document.body.removeChild(csvLink);
     URL.revokeObjectURL(csvLink.href);
 
-    setGeneratedAssets(null);
-    setBulkMessage('');
+    handleResetBulkGeneration();
   };
 
   const controlProps = {
@@ -536,9 +586,11 @@ const App: React.FC = () => {
     onFieldChange: handleFieldChange,
     onImageUpload: handleImageUpload,
     onGenerateImage: handleGenerateImage,
+    onGenerateDescription: handleGenerateDescription,
     onDownload: handleDownload,
     isLoading: isLoading,
     isGeneratingImage: isGeneratingImage,
+    isGeneratingDescription: isGeneratingDescription,
     onCsvUpload: handleCsvUpload,
     onNextRow: handleNextRow,
     onPrevRow: handlePrevRow,

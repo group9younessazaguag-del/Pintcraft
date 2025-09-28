@@ -1,6 +1,4 @@
-
-import { GoogleGenAI } from '@google/genai';
-import type { ImageStyle } from '../types';
+import { GoogleGenAI, Modality } from '@google/genai';
 
 // Helper to parse complex API errors
 const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic', message: string, helpLink?: string } => {
@@ -71,88 +69,204 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
     return { type: 'generic', message, helpLink: helpLink || undefined };
 };
 
-
-const stylePromptMap: { [key in ImageStyle]: string } = {
-    photorealistic: 'A hyper-realistic, professional photograph. Cinematic lighting, dramatic, highly detailed, photorealistic.',
-    realistic: 'A realistic, true-to-life image. Natural lighting, sharp focus, high fidelity, looking like a real photograph.',
-    fantasy: 'A vibrant digital painting in a fantasy art style. Epic, illustrative, highly detailed, magical.',
-    anime: 'A high-quality anime style artwork. Vibrant colors, clean lines, detailed characters, Japanese animation style.',
-    minimalist: 'A minimalist and clean product shot. Simple background, soft lighting, focus on the subject.',
-    vintage: 'A retro-style photograph with a vintage film look. Grainy texture, faded colors, nostalgic feel.',
-    vibrant: 'An incredibly vibrant and colorful image. Saturated colors, high contrast, energetic, and eye-catching.',
-};
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 export const generateImage = async (
     apiKey: string,
-    prompt: string,
     model: string,
-    style: ImageStyle,
+    prompt: string,
     aspectRatio: '3:4' | '9:16'
 ): Promise<string> => {
-    const MAX_RETRIES = 3;
-    let attempt = 0;
-    
-    while (attempt < MAX_RETRIES) {
-        try {
-            const ai = new GoogleGenAI({ apiKey });
-            const styleDescription = stylePromptMap[style] || stylePromptMap.photorealistic;
-            const enhancedPrompt = `${styleDescription} For a Pinterest pin about: ${prompt}.`;
-
-            const response = await ai.models.generateImages({
-                model: model,
-                prompt: enhancedPrompt,
-                config: {
-                    numberOfImages: 1,
-                    outputMimeType: 'image/jpeg',
-                    aspectRatio: aspectRatio,
-                },
-            });
-
-            const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
-            return `data:image/jpeg;base64,${base64ImageBytes}`;
-        } catch (error: any) {
-            console.error(`Error generating image (attempt ${attempt + 1}):`, error);
-            const errorDetails = getApiErrorDetails(error);
-
-            if (errorDetails.type === 'service' && attempt < MAX_RETRIES - 1) {
-                const delay = Math.pow(2, attempt) * 1000;
-                console.log(`Service unavailable. Retrying in ${delay / 1000} seconds...`);
-                await sleep(delay);
-                attempt++;
-            } else {
-                const specificError = new Error(errorDetails.message);
-                (specificError as any).type = errorDetails.type;
-                (specificError as any).helpLink = errorDetails.helpLink;
-                throw specificError;
-            }
-        }
-    }
-    throw new Error('Failed to generate image after multiple retries.');
-};
-
-export const generateKeywords = async (apiKey: string, title: string): Promise<string> => {
-    if (!title) return '';
     try {
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `You are a Pinterest SEO expert. Based on the pin title "${title}", generate a comma-separated list of 5-10 highly relevant keywords that users would search for on Pinterest. Focus on long-tail keywords and popular search terms. Do not include hashtags, quotes, or any other text, just the keywords. Example output: recipe, easy recipe, dinner ideas, healthy food`;
+
+        // Create a small, neutral base image for the AI to edit from.
+        const width = 300;
+        const height = aspectRatio === '3:4' ? 400 : 533;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Failed to create canvas context.');
+        }
+        ctx.fillStyle = '#cccccc'; // A neutral gray
+        ctx.fillRect(0, 0, width, height);
+        const baseImage = canvas.toDataURL('image/jpeg');
+        const base64Data = baseImage.split(',')[1];
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
+            model: model,
+            contents: {
+                parts: [
+                    {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: 'image/jpeg',
+                        },
+                    },
+                    {
+                        // Instruct the model to generate a new image based on the prompt, ignoring the placeholder.
+                        text: `Generate a new, complete image based on the following description, ignoring the placeholder background image: "${prompt}". The final image should be in a ${aspectRatio === '3:4' ? 'portrait' : 'tall portrait'} orientation.`,
+                    },
+                ],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
         });
+        
+        const imagePart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
 
-        return response.text
-            .trim()
-            .replace(/\n/g, ', ')
-            .replace(/, ,/g, ',')
-            .replace(/['"]+/g, '');
+        if (imagePart && imagePart.inlineData) {
+            return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+        }
+        
+        const textPart = response.candidates?.[0]?.content?.parts?.find(part => part.text);
+        if (textPart && textPart.text) {
+             throw new Error(`AI model returned text instead of an image: ${textPart.text}`);
+        }
+
+        throw new Error('The AI model did not return a valid image. Please try again.');
+
     } catch (error: any) {
-        console.error(`Failed to generate keywords for title: "${title}"`, error);
+        console.error('Error generating image with AI:', error);
         const errorDetails = getApiErrorDetails(error);
         const specificError = new Error(errorDetails.message);
         (specificError as any).type = errorDetails.type;
+        (specificError as any).helpLink = errorDetails.helpLink;
         throw specificError;
     }
+};
+
+export const generateDescription = async (
+    apiKey: string,
+    model: string,
+    title: string,
+    subtitle: string
+): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Write a short, engaging Pinterest description for a pin with the title "${title}" and board "${subtitle}". The description should be under 250 characters, use natural language, include 3-5 relevant hashtags, and end with a clear call to action.`;
+        
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+        });
+
+        const text = response.text?.trim();
+
+        if (!text) {
+            throw new Error('The AI model returned an empty description.');
+        }
+        return text;
+
+    } catch (error: any) {
+        console.error('Error generating description with AI:', error);
+        const errorDetails = getApiErrorDetails(error);
+        const specificError = new Error(errorDetails.message);
+        (specificError as any).type = errorDetails.type;
+        (specificError as any).helpLink = errorDetails.helpLink;
+        throw specificError;
+    }
+};
+
+export const generatePlaceholderDescription = (
+    title: string,
+    subtitle: string
+): string => {
+    const cleanedTitle = title.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9\s]/g, '').split(' ').filter(Boolean);
+    const hashtags = cleanedTitle.slice(0, 3).map(word => `#${word}`).join(' ');
+
+    const templates = [
+        `Discover everything you need to know about ${title}! This pin is perfect for your '${subtitle}' board. Find more tips and ideas on our website! ${hashtags}`,
+        `Looking for ${title}? You've come to the right place! Get inspired for your '${subtitle}' collection. Click through to learn more. ${hashtags}`,
+        `Save this pin! An essential guide to ${title}. A great addition to your '${subtitle}' board. Visit our site for the full story! ${hashtags}`
+    ];
+    
+    // Pick a template based on title length to add variety
+    const index = title.length % templates.length;
+    return templates[index];
+};
+
+
+export const generatePlaceholderImage = async (
+    prompt: string,
+    aspectRatio: '3:4' | '9:16'
+): Promise<string> => {
+    const width = 600;
+    const height = aspectRatio === '3:4' ? 800 : 1067;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        throw new Error('Failed to create canvas context.');
+    }
+
+    // Create a unique gradient based on the prompt
+    const hash = prompt.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+    const c1 = `hsl(${hash % 360}, 70%, 85%)`;
+    const c2 = `hsl(${(hash * 7) % 360}, 70%, 90%)`;
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, c1);
+    gradient.addColorStop(1, c2);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Add text
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    const words = prompt.toUpperCase().split(' ');
+    let lines: string[] = [];
+    let currentLine = words[0] || '';
+
+    // Set an initial font size and fit text within the canvas width
+    let fontSize = 100;
+    ctx.font = `900 ${fontSize}px Poppins, sans-serif`;
+
+    for (let i = 1; i < words.length; i++) {
+        const testLine = `${currentLine} ${words[i]}`;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > width * 0.85) {
+            lines.push(currentLine);
+            currentLine = words[i];
+        } else {
+            currentLine = testLine;
+        }
+    }
+    lines.push(currentLine);
+
+    // Recalculate font size based on the longest line to ensure it fits
+    const longestLine = lines.reduce((a, b) => a.length > b.length ? a : b, '');
+    const textWidth = ctx.measureText(longestLine).width;
+    if (textWidth > width * 0.85) {
+        fontSize *= (width * 0.85) / textWidth;
+    }
+    
+    // Final check for total text height
+    const lineHeight = fontSize * 1.1;
+    const totalTextHeight = lines.length * lineHeight;
+    if (totalTextHeight > height * 0.8) {
+        fontSize *= (height * 0.8) / totalTextHeight;
+    }
+
+    ctx.font = `900 ${fontSize}px Poppins, sans-serif`;
+    
+    const finalLineHeight = fontSize * 1.1;
+    const startY = (height - (lines.length - 1) * finalLineHeight) / 2;
+    
+    // Draw the final text with a subtle shadow
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+
+    lines.forEach((line, i) => {
+        ctx.fillText(line, width / 2, startY + i * finalLineHeight);
+    });
+
+    return canvas.toDataURL('image/png');
 };
