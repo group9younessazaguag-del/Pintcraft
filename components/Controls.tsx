@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
 import SettingsIcon from './icons/SettingsIcon';
@@ -10,7 +10,6 @@ import ImagesIcon from './icons/ImagesIcon';
 import ActionsIcon from './icons/ActionsIcon';
 import BulkIcon from './icons/BulkIcon';
 import LoadingSpinner from './icons/LoadingSpinner';
-
 
 export interface ControlsProps {
   data: TemplateData;
@@ -28,11 +27,14 @@ export interface ControlsProps {
   onBulkGeneration: (resume: boolean) => void;
   isBulkGenerating: boolean;
   bulkMessage: string;
-  apiError: { type: string; message: React.ReactNode } | null;
+  apiError: { type: string; message: string; helpLink?: string } | null;
   generatedAssets: { zip: Blob; csv: Blob } | null;
   onDownloadGeneratedAssets: () => void;
   lastCompletedRowIndex: number | null;
   onResetBulkGeneration: () => void;
+  onSetUserApiKey: (key: string) => void;
+  isApiKeyFromEnv: boolean;
+  userApiKey: string;
 }
 
 const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
@@ -96,8 +98,9 @@ const ToggleButtonGrid: React.FC<{ label: string; options: {id: string; name: st
 );
 
 
-const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { [key: number]: boolean }; onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void; onGenerateImage: (imageNumber: 1 | 2 | 3) => void; isBulkGenerating: boolean; isQuotaError: boolean;}> = ({ id, label, isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError }) => {
+const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { [key: number]: boolean }; onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void; onGenerateImage: (imageNumber: 1 | 2 | 3) => void; isBulkGenerating: boolean; isQuotaError: boolean; isApiKeyFromEnv: boolean; userApiKey: string}> = ({ id, label, isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError, isApiKeyFromEnv, userApiKey }) => {
     const isGenerating = isGeneratingImage[id];
+    const isConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
     return (
         <div>
         <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
@@ -113,7 +116,7 @@ const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { 
             <button
                 type="button"
                 onClick={() => onGenerateImage(id)}
-                disabled={isGenerating || isBulkGenerating || isQuotaError}
+                disabled={isGenerating || isBulkGenerating || isQuotaError || !isConfigured}
                 className="flex-1 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {isGenerating ? (
@@ -128,7 +131,7 @@ const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { 
     );
   };
 
-export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, apiError }) => {
+export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetUserApiKey, isApiKeyFromEnv, userApiKey }) => {
     const options: {templates: {id: TemplateId, name: string}[], sizes: {id: PinSize, name:string}[]} = {
         templates: [
           { id: 'classic', name: 'Classic' },
@@ -154,27 +157,65 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
         ],
       };
       
-    const isQuotaError = apiError?.type === 'quota';
+    const [apiKeyInput, setApiKeyInput] = useState(userApiKey);
+
+    useEffect(() => {
+        setApiKeyInput(userApiKey);
+    }, [userApiKey]);
+
+    const handleSaveKey = () => {
+        onSetUserApiKey(apiKeyInput.trim());
+    };
+
+    const handleClearKey = () => {
+        setApiKeyInput('');
+        onSetUserApiKey('');
+    };
 
     return (
         <>
             <ControlCard icon={<SettingsIcon />} title="Model Settings">
-                {/* FIX: Removed API key input to adhere to guidelines. API key is now handled by environment variable. */}
-                <p className="text-sm text-slate-600">
-                    The application uses a pre-configured Google AI API key.
-                    Select your desired image generation model below.
-                </p>
-                {isQuotaError && (
-                    <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-lg">
-                        <p className="text-sm font-semibold">API Key Has Reached Its Quota</p>
-                        <p className="text-sm mt-1">
-                            Free accounts have low daily image generation limits. 
-                            <a href="https://ai.google.dev/pricing" target="_blank" rel="noopener noreferrer" className="underline font-bold ml-1 hover:text-amber-950">
-                                Learn about pricing.
-                            </a>
-                        </p>
+                <div>
+                    <label htmlFor="apiKeyInput" className="block text-sm font-medium text-slate-600 mb-1.5">API Key</label>
+                    <div className="flex gap-2">
+                        <input
+                            id="apiKeyInput"
+                            type="text"
+                            value={apiKeyInput}
+                            onChange={(e) => setApiKeyInput(e.target.value)}
+                            placeholder={isApiKeyFromEnv && !userApiKey ? 'Using secure environment key (override here)' : 'Enter your Google AI API key'}
+                            className="flex-grow w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        />
+                        <button
+                            onClick={handleSaveKey}
+                            className="px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
+                        >
+                            Save
+                        </button>
                     </div>
-                )}
+                    <div className="mt-2 text-xs">
+                        {userApiKey ? (
+                            <div className="flex justify-between items-center text-green-900 bg-green-50 border border-green-200 p-2 rounded-lg">
+                                <span className="font-semibold">Key is saved in your browser.</span>
+                                <button onClick={handleClearKey} className="underline font-semibold hover:text-green-900/80">
+                                    Clear Key
+                                </button>
+                            </div>
+                        ) : isApiKeyFromEnv ? (
+                            <p className="text-slate-600 p-2 bg-slate-100 rounded-lg border border-slate-200">
+                                A secure environment key is active. Saving a key here will override it for this browser.
+                            </p>
+                        ) : (
+                            <p className="text-red-600 font-medium">
+                                API Key is required to use AI features.
+                            </p>
+                        )}
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:text-pink-800 hover:underline pt-2 w-full text-left block">
+                            Get a Google AI API Key
+                        </a>
+                    </div>
+                </div>
+
                 <SelectField value={data.imageModel} onChange={(value) => onFieldChange('imageModel', value)} id="imageModel" label="Image Generation Model">
                     <option value="imagen-4.0-generate-001">Imagen 4.0</option>
                 </SelectField>
@@ -243,7 +284,9 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
     generatedAssets,
     onDownloadGeneratedAssets,
     lastCompletedRowIndex,
-    onResetBulkGeneration
+    onResetBulkGeneration,
+    isApiKeyFromEnv,
+    userApiKey,
 }) => {
     const handleCsvFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -256,6 +299,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
     const needsImage3 = ['clean-grid', 'shop-the-look'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;
+    const isConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
 
     return (
         <>
@@ -301,12 +345,12 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
             </ControlCard>
 
              <ControlCard icon={<ImagesIcon />} title="Images">
-                <ImageUpload id={1} label="Background Image 1" {...{isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError}}/>
+                <ImageUpload id={1} label="Background Image 1" {...{isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError, isApiKeyFromEnv, userApiKey}}/>
                 {needsImage2 && (
-                    <ImageUpload id={2} label="Background Image 2" {...{isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError}}/>
+                    <ImageUpload id={2} label="Background Image 2" {...{isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError, isApiKeyFromEnv, userApiKey}}/>
                 )}
                 {needsImage3 && (
-                    <ImageUpload id={3} label="Background Image 3" {...{isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError}}/>
+                    <ImageUpload id={3} label="Background Image 3" {...{isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isQuotaError, isApiKeyFromEnv, userApiKey}}/>
                 )}
              </ControlCard>
 
@@ -342,7 +386,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
                     {hasPausedJob ? (
                         <button
                             onClick={() => onBulkGeneration(true)}
-                            disabled={isBulkGenerating || isQuotaError}
+                            disabled={isBulkGenerating || isQuotaError || !isConfigured}
                             className="w-full flex items-center justify-center px-4 py-2.5 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                         >
                             {isBulkGenerating ? (
@@ -354,7 +398,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
                     ) : (
                         <button
                             onClick={() => onBulkGeneration(false)}
-                            disabled={isBulkGenerating || csvData.length === 0 || isQuotaError}
+                            disabled={isBulkGenerating || csvData.length === 0 || isQuotaError || !isConfigured}
                             className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                         >
                             {isBulkGenerating ? (

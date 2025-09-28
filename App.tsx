@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -42,12 +42,14 @@ const initialTemplateData: TemplateData = {
 
 const App: React.FC = () => {
   const [templateData, setTemplateData] = useLocalStorage<TemplateData>('templateData', initialTemplateData);
+  const [userApiKey, setUserApiKey] = useLocalStorage('userApiKey', '');
 
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState<{ [key: number]: boolean }>({});
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [currentRowIndex, setCurrentRowIndex] = useState<number | null>(null);
-  const [apiError, setApiError] = useState<{ type: string; message: React.ReactNode } | null>(null);
+  const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
+  const [isApiKeyFromEnv, setIsApiKeyFromEnv] = useState(false);
 
   // State for bulk generation
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
@@ -61,6 +63,23 @@ const App: React.FC = () => {
   
   const zipRef = useRef<any>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (process.env.API_KEY && process.env.API_KEY.length > 5) {
+        setIsApiKeyFromEnv(true);
+    }
+  }, []);
+
+  const getApiKey = useCallback((): string | undefined => {
+    // Prioritize user-provided key from local storage over the environment variable.
+    if (userApiKey && userApiKey.length > 5) {
+      return userApiKey;
+    }
+    if (process.env.API_KEY && process.env.API_KEY.length > 5) {
+      return process.env.API_KEY;
+    }
+    return undefined;
+  }, [userApiKey]);
 
   const handleResetBulkGeneration = useCallback(() => {
     setLastCompletedRowIndex(null);
@@ -111,7 +130,6 @@ const App: React.FC = () => {
     if (apiError) setApiError(null);
     if (generatedAssets) setGeneratedAssets(null);
 
-    // FIX: Removed API key handling from UI, per guidelines.
     setTemplateData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -129,6 +147,14 @@ const App: React.FC = () => {
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false): Promise<void> => {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      const msg = 'Please set your API key in the Model Settings to generate images.';
+      if (throwOnError) throw new Error(msg);
+      setApiError({ type: 'generic', message: msg });
+      return;
+    }
+
     const userPrompt = templateData.imagePrompt || templateData.title;
     if (!userPrompt) {
         const msg = 'Please enter a Title or an Image Prompt to generate an image.';
@@ -142,8 +168,8 @@ const App: React.FC = () => {
 
     try {
         const aspectRatio = templateData.pinSize === 'standard' ? '3:4' : '9:16';
-        // FIX: Removed API key parameter. Service now uses environment variable.
         const imageUrl = await generateImage(
+            apiKey,
             userPrompt,
             templateData.imageModel,
             templateData.imageStyle,
@@ -152,36 +178,30 @@ const App: React.FC = () => {
         const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
         setTemplateData(prev => ({ ...prev, [field]: imageUrl }));
     } catch (error: any) {
-        // FIX: Removed API key rotation logic as only one key from env is used.
         console.error(`Error generating image:`, error);
         if (throwOnError) {
             throw error; // Re-throw for bulk processor
         }
-
-        let errorMessage: React.ReactNode = error.message || 'Failed to generate image.';
-        if (error.type === 'quota') {
-            errorMessage = (
-                <>
-                    {/* FIX: Updated quota error message for a single API key. */}
-                    API Quota Exceeded. You may have hit your usage limit.
-                    {error.helpLink && (
-                        <a href={error.helpLink} target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900 ml-1">
-                            Learn more here.
-                        </a>
-                    )}
-                </>
-            );
-        }
-        setApiError({ type: error.type || 'generic', message: errorMessage });
+        setApiError({ 
+            type: error.type || 'generic', 
+            message: error.message || 'Failed to generate image.',
+            helpLink: error.helpLink
+        });
     } finally {
         setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
     }
   };
 
   const handleGenerateKeywords = useCallback(async (title: string): Promise<string> => {
-    // FIX: Removed complex key-rotation logic to align with single environment variable API key.
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        const msg = 'API key is not set. Cannot generate keywords.';
+        setBulkMessage(msg);
+        throw new Error(msg);
+    }
+
     try {
-        const keywords = await generateKeywordsApi(title);
+        const keywords = await generateKeywordsApi(apiKey, title);
         return keywords;
     } catch (error: any) {
         if (error.type === 'quota') {
@@ -191,7 +211,7 @@ const App: React.FC = () => {
         }
         throw error;
     }
-  }, [setBulkMessage]);
+  }, [getApiKey, setBulkMessage]);
 
   const handleDownload = useCallback(() => {
     if (previewRef.current === null) return;
@@ -319,11 +339,14 @@ const App: React.FC = () => {
   const handleBulkGeneration = async (resume = false) => {
     setApiError(null);
     setGeneratedAssets(null);
+    if (!getApiKey()) {
+        setApiError({ type: 'generic', message: 'Please set your API key to start bulk generation.' });
+        return;
+    }
     if (csvData.length === 0) {
       setApiError({ type: 'generic', message: 'Please upload a CSV file first.'});
       return;
     }
-    // FIX: Removed check for API keys in UI, per guidelines.
     
     setIsBulkGenerating(true);
     const startIndex = resume && lastCompletedRowIndex !== null ? lastCompletedRowIndex + 1 : 0;
@@ -470,25 +493,15 @@ const App: React.FC = () => {
         console.error('Bulk generation failed:', e);
         const rowIndex = i + 1;
         
+        let message: string;
         if (e.type === 'quota') {
-            const quotaMessage = `API Quota Exceeded on row ${rowIndex}. Bulk generation has been paused.`;
-            const richQuotaMessage = (
-                <>
-                    {quotaMessage}
-                    {' '}
-                    <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-red-900">
-                        Learn more here.
-                    </a>
-                </>
-            );
-            setApiError({ type: 'quota', message: richQuotaMessage });
-            setBulkMessage(quotaMessage);
+            message = `API Quota Exceeded on row ${rowIndex}. Bulk generation has been paused.`;
         } else {
-            const simpleFinalMessage = `An error occurred on row ${rowIndex}: ${e.message}. Bulk generation stopped.`;
-            setApiError({ type: 'generic', message: simpleFinalMessage });
-            setBulkMessage(simpleFinalMessage);
+            message = `An error occurred on row ${rowIndex}: ${e.message}. Bulk generation stopped.`;
         }
         
+        setApiError({ type: e.type || 'generic', message: message, helpLink: e.helpLink });
+        setBulkMessage(message);
         setGeneratedAssets(null);
     } finally {
         setIsBulkGenerating(false);
@@ -539,6 +552,9 @@ const App: React.FC = () => {
     onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
     lastCompletedRowIndex: lastCompletedRowIndex,
     onResetBulkGeneration: handleResetBulkGeneration,
+    onSetUserApiKey: setUserApiKey,
+    isApiKeyFromEnv: isApiKeyFromEnv,
+    userApiKey: userApiKey,
   };
   
   const renderPage = () => {

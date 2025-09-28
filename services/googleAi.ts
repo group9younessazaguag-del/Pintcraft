@@ -5,8 +5,15 @@ import type { ImageStyle } from '../types';
 // Helper to parse complex API errors
 const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic', message: string, helpLink?: string } => {
     let errorBody: any = null;
-    let isQuotaError = false;
-    let isServiceUnavailable = false;
+    let message: string = 'An unknown error occurred.';
+    if (typeof error?.message === 'string') {
+        try {
+            JSON.parse(error.message);
+        } catch (e) {
+            message = error.message;
+        }
+    }
+    
     let helpLink = '';
 
     try {
@@ -29,22 +36,39 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
     }
     
     if (errorBody) {
-        isQuotaError = errorBody.status === 'RESOURCE_EXHAUSTED' || errorBody.code === 429;
-        isServiceUnavailable = errorBody.status === 'UNAVAILABLE' || errorBody.code === 503;
+        message = errorBody.message || message;
+    }
 
-        if (isQuotaError && errorBody.details && Array.isArray(errorBody.details)) {
-            try {
-                const helpDetail = errorBody.details.find((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.Help');
-                if (helpDetail && helpDetail.links && helpDetail.links[0]?.url) {
-                    helpLink = helpDetail.links[0].url;
-                }
-            } catch (e) { /* ignore */ }
+    if (typeof message === 'string') {
+        const urlRegex = /(https?:\/\/[^\s]+)/;
+        const match = message.match(urlRegex);
+        if (match) {
+            helpLink = match[0].replace(/[.,\\]$/, '');
         }
     }
 
-    if (isQuotaError) return { type: 'quota', message: 'API Quota Exceeded.', helpLink };
-    if (isServiceUnavailable) return { type: 'service', message: 'Image generation service is temporarily unavailable.' };
-    return { type: 'generic', message: error.message || 'An unknown error occurred.' };
+    if (!helpLink && errorBody?.details && Array.isArray(errorBody.details)) {
+        try {
+            const helpDetail = errorBody.details.find((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.Help');
+            if (helpDetail && helpDetail.links && helpDetail.links[0]?.url) {
+                helpLink = helpDetail.links[0].url;
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    if (errorBody) {
+        const isQuotaError = errorBody.status === 'RESOURCE_EXHAUSTED' || errorBody.code === 429;
+        const isServiceUnavailable = errorBody.status === 'UNAVAILABLE' || errorBody.code === 503;
+        
+        if (isQuotaError) {
+            return { type: 'quota', message: 'API Quota Exceeded.', helpLink: helpLink || undefined };
+        }
+        if (isServiceUnavailable) {
+            return { type: 'service', message: 'Image generation service is temporarily unavailable.', helpLink: helpLink || undefined };
+        }
+    }
+
+    return { type: 'generic', message, helpLink: helpLink || undefined };
 };
 
 
@@ -61,6 +85,7 @@ const stylePromptMap: { [key in ImageStyle]: string } = {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const generateImage = async (
+    apiKey: string,
     prompt: string,
     model: string,
     style: ImageStyle,
@@ -71,8 +96,7 @@ export const generateImage = async (
     
     while (attempt < MAX_RETRIES) {
         try {
-            // FIX: Initialize with API_KEY from environment variables as per guidelines.
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const ai = new GoogleGenAI({ apiKey });
             const styleDescription = stylePromptMap[style] || stylePromptMap.photorealistic;
             const enhancedPrompt = `${styleDescription} For a Pinterest pin about: ${prompt}.`;
 
@@ -98,7 +122,6 @@ export const generateImage = async (
                 await sleep(delay);
                 attempt++;
             } else {
-                // FIX: Removed key rotation logic; now we throw on any un-retryable error, including quota.
                 const specificError = new Error(errorDetails.message);
                 (specificError as any).type = errorDetails.type;
                 (specificError as any).helpLink = errorDetails.helpLink;
@@ -109,11 +132,10 @@ export const generateImage = async (
     throw new Error('Failed to generate image after multiple retries.');
 };
 
-export const generateKeywords = async (title: string): Promise<string> => {
+export const generateKeywords = async (apiKey: string, title: string): Promise<string> => {
     if (!title) return '';
     try {
-        // FIX: Initialize with API_KEY from environment variables as per guidelines.
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+        const ai = new GoogleGenAI({ apiKey });
         const prompt = `You are a Pinterest SEO expert. Based on the pin title "${title}", generate a comma-separated list of 5-10 highly relevant keywords that users would search for on Pinterest. Focus on long-tail keywords and popular search terms. Do not include hashtags, quotes, or any other text, just the keywords. Example output: recipe, easy recipe, dinner ideas, healthy food`;
 
         const response = await ai.models.generateContent({

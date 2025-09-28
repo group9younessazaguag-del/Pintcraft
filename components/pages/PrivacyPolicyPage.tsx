@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 const PrivacyPolicyPage: React.FC = () => {
@@ -18,12 +19,16 @@ const PrivacyPolicyPage: React.FC = () => {
         
         <h3>Google AI API Key</h3>
         <p>
-          To use the AI image and text generation features, you must provide your own Google AI API Key. We are committed to handling this key with the utmost respect for your security and privacy:
+          To use the AI image and text generation features, you must provide your own Google AI API Key. We are committed to handling this key with the utmost respect for your security and privacy.
+        </p>
+        <p>
+          If an API key is not configured securely in the application's environment, you will be prompted to enter one in the user interface.
         </p>
         <ul>
-          <li><strong>Local Storage Only:</strong> Your API key is stored exclusively in your web browser's local storage. It is never transmitted to, stored on, or logged by our servers or any third-party service, other than being sent directly from your browser to the Google AI API for authentication.</li>
-          <li><strong>Your Control:</strong> You have full control over your API key. You can clear it at any time by clearing your browser's site data for this application.</li>
-          <li><strong>Security:</strong> By keeping the key on your local device, we eliminate the risk of it being compromised from our end. You are responsible for keeping your API key secure. Do not share it publicly.</li>
+          <li><strong>Local Storage:</strong> If you enter an API key in the input field, it is stored exclusively in your web browser's local storage. This allows you to use the application without re-entering the key on every visit.</li>
+          <li><strong>Not Sent to Our Servers:</strong> Your API key is <strong>never</strong> transmitted to, stored on, or logged by our servers. It is used directly from your browser to communicate with the Google AI API for authentication.</li>
+          <li><strong>Your Control:</strong> You have full control over your API key. You can view, change, or clear it from the "Model Settings" panel at any time. Clearing your browser's site data will also remove the key.</li>
+          <li><strong>Security Responsibility:</strong> By storing the key in your browser, you accept responsibility for its security. We recommend using this feature only on a trusted, personal computer and avoiding public or shared devices. For the highest level of security, configure the key as an environment variable.</li>
         </ul>
 
         <h2>Information Google Collects</h2>
