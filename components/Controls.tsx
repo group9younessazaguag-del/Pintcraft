@@ -16,10 +16,12 @@ export interface ControlsProps {
   onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void;
   onGenerateImage: (imageNumber: 1 | 2 | 3) => void;
   onGenerateDescription: () => void;
+  onGenerateKeywords: () => void;
   onDownload: () => void;
   isLoading: boolean;
   isGeneratingImage: { [key: number]: boolean };
   isGeneratingDescription: boolean;
+  isGeneratingKeywords: boolean;
   onCsvUpload: (file: File) => void;
   onNextRow: () => void;
   onPrevRow: () => void;
@@ -51,13 +53,13 @@ const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: Re
 );
 
 
-const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string) => void; id: 'title' | 'subtitle' | 'website' | 'imagePrompt' | 'mediaUrlPrefix' | 'pinsPerDay' | 'imageModel' | 'textModel', label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
+const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
       <input
         type={type}
         id={id}
-        value={data[id as 'title' | 'subtitle' | 'website' | 'imagePrompt' | 'mediaUrlPrefix' | 'pinsPerDay' | 'imageModel' | 'textModel'] || ''}
+        value={data[id] as string || ''}
         onChange={(e) => onFieldChange(id, e.target.value)}
         className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 transition-colors duration-200"
         placeholder={placeholder}
@@ -244,13 +246,13 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                                 <>
                                     <InputField
                                         data={data}
-                                        onFieldChange={onFieldChange as (field: 'imageModel', value: string) => void}
+                                        onFieldChange={onFieldChange}
                                         id="imageModel"
                                         label="Image Generation Model"
                                     />
                                     <InputField
                                         data={data}
-                                        onFieldChange={onFieldChange as (field: 'textModel', value: string) => void}
+                                        onFieldChange={onFieldChange}
                                         id="textModel"
                                         label="Text Generation Model"
                                     />
@@ -298,7 +300,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 };
 
 
-export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, isApiKeyFromEnv, userApiKey, onGenerateDescription, isGeneratingDescription, isBulkGenerating }) => {
+export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, isApiKeyFromEnv, userApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, isBulkGenerating }) => {
     const isConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
     const imagePromptDescription = isConfigured
         ? "Describe the image you want our AI to create. Be descriptive for the best results."
@@ -306,9 +308,9 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
 
     return (
         <ControlCard icon={<PinContentIcon />} title="Pin Content">
-            <InputField data={data} onFieldChange={onFieldChange as (field: 'title', value: string) => void} id="title" label="Title" />
-            <InputField data={data} onFieldChange={onFieldChange as (field: 'subtitle', value: string) => void} id="subtitle" label="Pinterest Board" />
-            <InputField data={data} onFieldChange={onFieldChange as (field: 'website', value: string) => void} id="website" label="Link" />
+            <InputField data={data} onFieldChange={onFieldChange} id="title" label="Title" />
+            <InputField data={data} onFieldChange={onFieldChange} id="subtitle" label="Pinterest Board" />
+            <InputField data={data} onFieldChange={onFieldChange} id="website" label="Link" />
             <div>
                 <label htmlFor="description" className="block text-sm font-medium text-slate-600 mb-1.5">Description</label>
                 <textarea
@@ -331,9 +333,31 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     ) : '✨ Generate Description'}
                 </button>
             </div>
+             <div>
+                <label htmlFor="keywords" className="block text-sm font-medium text-slate-600 mb-1.5">Keywords</label>
+                <textarea
+                    id="keywords"
+                    value={data.keywords || ''}
+                    onChange={(e) => onFieldChange('keywords', e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 transition-colors duration-200"
+                    rows={3}
+                    placeholder="Comma-separated keywords for your pin."
+                />
+                <button
+                    type="button"
+                    onClick={onGenerateKeywords}
+                    disabled={isGeneratingKeywords || isBulkGenerating}
+                    title={isConfigured ? 'Generate keywords with AI' : 'Generate basic placeholder keywords'}
+                    className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                >
+                    {isGeneratingKeywords ? (
+                        <><LoadingSpinner className="mr-2"/> Generating...</>
+                    ) : '✨ Generate Keywords'}
+                </button>
+            </div>
             <InputField 
                 data={data} 
-                onFieldChange={onFieldChange as (field: 'imagePrompt', value: string) => void}
+                onFieldChange={onFieldChange}
                 id="imagePrompt" 
                 label="Image Prompt (optional)"
                 description={imagePromptDescription}
@@ -391,7 +415,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
                         onChange={handleCsvFileSelect}
                         className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-600 hover:file:bg-pink-100 cursor-pointer transition-colors duration-200"
                     />
-                    <p className="text-xs text-slate-500 mt-1.5">Needs 'Title'. 'Description' is used if available, or auto-generated if empty.</p>
+                    <p className="text-xs text-slate-500 mt-1.5">Needs 'Title'. 'Description' and 'Keywords' are used if available, or auto-generated if empty.</p>
                 </div>
                 {csvData.length > 0 && currentRowIndex !== null && (
                     <div className="flex items-center justify-between bg-slate-100 p-2 rounded-lg border border-slate-200">
@@ -444,7 +468,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
 
             <ControlCard icon={<BulkIcon />} title="Bulk Actions">
                 <div className="grid grid-cols-2 gap-4">
-                    <InputField data={data} onFieldChange={onFieldChange as (field: 'pinsPerDay', value: string) => void} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
+                    <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
                     <div>
                         <label htmlFor="startDate" className="block text-sm font-medium text-slate-600 mb-1.5">Start Date</label>
                         <input
@@ -457,7 +481,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
                     </div>
                 </div>
                 <div>
-                    <InputField data={data} onFieldChange={onFieldChange as (field: 'mediaUrlPrefix', value: string) => void} id="mediaUrlPrefix" label="Media URL Prefix" placeholder="e.g., http://yourwebsite.com/images/" />
+                    <InputField data={data} onFieldChange={onFieldChange} id="mediaUrlPrefix" label="Media URL Prefix" placeholder="e.g., http://yourwebsite.com/images/" />
                     <p className="text-xs text-slate-500 mt-1.5">This URL will be prefixed to the generated image filenames in the CSV.</p>
                 </div>
                 <div className="space-y-2">

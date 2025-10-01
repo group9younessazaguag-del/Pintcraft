@@ -170,6 +170,38 @@ export const generateDescription = async (
     }
 };
 
+export const generateKeywords = async (
+    apiKey: string,
+    model: string,
+    title: string,
+    subtitle: string
+): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Generate 8-12 relevant, comma-separated SEO keywords for a Pinterest pin with the title "${title}" for the board "${subtitle}". Focus on a mix of broad and long-tail keywords. Do not use hashtags. Do not use quotation marks. Return only the keywords.`;
+        
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+        });
+
+        const text = response.text?.trim().replace(/"/g, '');
+
+        if (!text) {
+            throw new Error('The AI model returned empty keywords.');
+        }
+        return text;
+
+    } catch (error: any) {
+        console.error('Error generating keywords with AI:', error);
+        const errorDetails = getApiErrorDetails(error);
+        const specificError = new Error(errorDetails.message);
+        (specificError as any).type = errorDetails.type;
+        (specificError as any).helpLink = errorDetails.helpLink;
+        throw specificError;
+    }
+};
+
 export const generatePlaceholderDescription = (
     title: string,
     subtitle: string
@@ -186,6 +218,25 @@ export const generatePlaceholderDescription = (
     // Pick a template based on title length to add variety
     const index = title.length % templates.length;
     return templates[index];
+};
+
+export const generatePlaceholderKeywords = (
+    title: string,
+    subtitle: string
+): string => {
+    const titleWords = title.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9\s]/g, '').split(' ').filter(w => w.length > 2);
+    const subtitleWords = subtitle.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9\s]/g, '').split(' ').filter(w => w.length > 2);
+    
+    const combined = [...new Set([...titleWords, ...subtitleWords])];
+    
+    if (subtitle.toLowerCase().includes('recipe')) {
+        combined.push('recipe', 'easy recipe', 'dinner ideas');
+    }
+    if (subtitle.toLowerCase().includes('diy')) {
+        combined.push('diy project', 'crafts');
+    }
+
+    return combined.slice(0, 10).join(', ');
 };
 
 

@@ -12,6 +12,7 @@ export interface TemplateData {
   pinSize: PinSize;
   imagePrompt: string;
   description: string;
+  keywords: string;
   mediaUrlPrefix: string;
   pinsPerDay: number | string;
   startDate: string;
@@ -25,4 +26,5 @@ export interface CsvRow {
   website: string;
   imagePrompt: string;
   description: string;
+  keywords: string;
 }
