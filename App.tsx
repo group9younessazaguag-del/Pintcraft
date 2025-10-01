@@ -127,11 +127,11 @@ const App: React.FC = () => {
       const { title, subtitle, imagePrompt, description, keywords } = csvData[currentRowIndex];
       setPersistedData(prev => ({
         ...prev,
-        title: title || prev.title,
-        subtitle: subtitle || prev.subtitle,
-        imagePrompt: imagePrompt || '',
-        description: description || '',
-        keywords: keywords || '',
+        title: title,
+        subtitle: subtitle,
+        imagePrompt: imagePrompt,
+        description: description,
+        keywords: keywords,
       }));
       setImageData({
         backgroundImage: null,
@@ -167,10 +167,10 @@ const App: React.FC = () => {
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false): Promise<void> => {
-    const userPrompt = templateData.imagePrompt || templateData.title;
+  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
+    const userPrompt = overridePrompt || templateData.imagePrompt;
     if (!userPrompt) {
-        const msg = 'Please enter a Title or an Image Prompt to generate an image.';
+        const msg = 'Please enter an Image Prompt to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
@@ -497,13 +497,13 @@ const App: React.FC = () => {
             setBulkMessage(`Row ${i + 1}: Generating images...`);
             const prompt = currentData.imagePrompt;
             if (prompt) {
-                 await handleGenerateImage(1, true);
+                 await handleGenerateImage(1, true, prompt);
                 
                 const templateNeeds2Images = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look'].includes(templateData.templateId);
-                if (templateNeeds2Images) await handleGenerateImage(2, true);
+                if (templateNeeds2Images) await handleGenerateImage(2, true, prompt);
 
                 const templateNeeds3Images = ['clean-grid', 'shop-the-look'].includes(templateData.templateId);
-                if (templateNeeds3Images) await handleGenerateImage(3, true);
+                if (templateNeeds3Images) await handleGenerateImage(3, true, prompt);
             }
             await sleep(100);
 
