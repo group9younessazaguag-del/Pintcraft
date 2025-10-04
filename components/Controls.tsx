@@ -38,6 +38,8 @@ export interface ControlsProps {
   onSetUserApiKey: (key: string) => void;
   isApiKeyFromEnv: boolean;
   userApiKey: string;
+  onSetFalAiApiKey: (key: string) => void;
+  falAiApiKey: string;
 }
 
 const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
@@ -120,7 +122,7 @@ const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { 
                 type="button"
                 onClick={() => onGenerateImage(id)}
                 disabled={isGenerating || isBulkGenerating}
-                title={isConfigured ? 'Generate a high-quality image with AI' : 'Generate a basic placeholder image (add an API key to use AI)'}
+                title={isConfigured ? 'Generate a high-quality image with Fal.ai' : 'Generate a basic placeholder image (add a Fal.ai API key to use AI)'}
                 className="flex-1 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
             >
               {isGenerating ? (
@@ -135,7 +137,68 @@ const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { 
     );
   };
 
-export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetUserApiKey, isApiKeyFromEnv, userApiKey }) => {
+const ApiKeyInput: React.FC<{
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    onSave: () => void;
+    onClear: () => void;
+    placeholder: string;
+    getLink: string;
+    getLinkText: string;
+    statusMessage: React.ReactNode;
+}> = ({ label, value, onChange, onSave, onClear, placeholder, getLink, getLinkText, statusMessage }) => {
+    const [isKeyVisible, setIsKeyVisible] = useState(false);
+    return (
+        <div>
+            <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
+            <div className="relative">
+                <input
+                    type={isKeyVisible ? 'text' : 'password'}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                />
+                <button
+                    type="button"
+                    onClick={() => setIsKeyVisible(!isKeyVisible)}
+                    className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500"
+                    aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
+                >
+                    {isKeyVisible ? (
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                    ) : (
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074L3.707 2.293zM10 12a2 2 0 110-4 2 2 0 010 4z" clipRule="evenodd" />
+                        </svg>
+                    )}
+                </button>
+            </div>
+            <div className="flex gap-2 mt-2">
+                <button onClick={onSave} className="flex-1 px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
+                    Save
+                </button>
+                {value && (
+                    <button onClick={onClear} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
+                        Clear
+                    </button>
+                )}
+            </div>
+            <div className="mt-3 text-xs space-y-2">
+                {statusMessage}
+                <a href={getLink} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:text-pink-800 hover:underline !mt-3 w-full text-left block">
+                    {getLinkText} &rarr;
+                </a>
+            </div>
+        </div>
+    );
+};
+
+export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetUserApiKey, isApiKeyFromEnv, userApiKey, onSetFalAiApiKey, falAiApiKey }) => {
     const options: {templates: {id: TemplateId, name: string}[], sizes: {id: PinSize, name:string}[]} = {
         templates: [
           { id: 'classic', name: 'Classic' },
@@ -161,124 +224,78 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
         ],
       };
       
-    const [apiKeyInput, setApiKeyInput] = useState(userApiKey);
-    const [isKeyVisible, setIsKeyVisible] = useState(false);
-    const isConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
+    const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
+    const [falApiKeyInput, setFalApiKeyInput] = useState(falAiApiKey);
 
-    useEffect(() => {
-        setApiKeyInput(userApiKey);
-    }, [userApiKey]);
+    useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
+    useEffect(() => { setFalApiKeyInput(falAiApiKey); }, [falAiApiKey]);
 
-    const handleSaveKey = () => {
-        onSetUserApiKey(apiKeyInput.trim());
-    };
+    const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
+    const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
+    
+    const handleSaveFalKey = () => onSetFalAiApiKey(falApiKeyInput.trim());
+    const handleClearFalKey = () => { setFalApiKeyInput(''); onSetFalAiApiKey(''); };
 
-    const handleClearKey = () => {
-        setApiKeyInput('');
-        onSetUserApiKey('');
-    };
+    const googleKeyIsConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
+    const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
 
     return (
         <>
             <ControlCard icon={<SettingsIcon />} title="AI Configuration">
-                <div>
-                    <label htmlFor="apiKeyInput" className="block text-sm font-medium text-slate-600 mb-1.5">Google AI API Key</label>
-                    <div className="relative">
-                        <input
-                            id="apiKeyInput"
-                            type={isKeyVisible ? 'text' : 'password'}
-                            value={apiKeyInput}
-                            onChange={(e) => setApiKeyInput(e.target.value)}
-                            placeholder={isApiKeyFromEnv && !userApiKey ? 'Using secure environment key' : 'Enter your API key'}
-                            className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                        />
-                         <button
-                            type="button"
-                            onClick={() => setIsKeyVisible(!isKeyVisible)}
-                            className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500"
-                            aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
-                        >
-                            {isKeyVisible ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                                </svg>
+                <div className="space-y-6">
+                    <ApiKeyInput
+                        label="Google AI API Key (for Text)"
+                        value={googleApiKeyInput}
+                        onChange={setGoogleApiKeyInput}
+                        onSave={handleSaveGoogleKey}
+                        onClear={handleClearGoogleKey}
+                        placeholder={isApiKeyFromEnv && !userApiKey ? 'Using secure environment key' : 'Enter your Google AI key'}
+                        getLink="https://aistudio.google.com/app/apikey"
+                        getLinkText="Get a Google AI API Key"
+                        statusMessage={
+                            userApiKey ? (
+                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Google AI key is saved in this browser.</p>
+                            ) : isApiKeyFromEnv ? (
+                                <p className="text-slate-600 p-2 bg-slate-100 rounded-lg border border-slate-200">A secure environment key is active. Saving a key here will override it.</p>
                             ) : (
-                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074L3.707 2.293zM10 12a2 2 0 110-4 2 2 0 010 4z" clipRule="evenodd" />
-                                </svg>
-                            )}
-                        </button>
-                    </div>
-                     <div className="flex gap-2 mt-2">
-                        <button
-                            onClick={handleSaveKey}
-                            className="flex-1 px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
-                        >
-                            Save
-                        </button>
-                        {userApiKey && (
-                            <button
-                                onClick={handleClearKey}
-                                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
-                            >
-                                Clear
-                            </button>
-                        )}
-                    </div>
-                    <div className="mt-3 text-xs space-y-2">
-                        {userApiKey ? (
-                             <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">
-                                Your API key is saved in this browser.
-                            </p>
-                        ) : isApiKeyFromEnv ? (
-                            <p className="text-slate-600 p-2 bg-slate-100 rounded-lg border border-slate-200">
-                                A secure environment key is active. Saving a key here will override it.
-                            </p>
-                        ) : (
-                             <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium">
-                                <strong>API Key Recommended:</strong> Add a key to enable high-quality AI image and text generation.
-                            </p>
-                        )}
-                        
-                        <div className="!mt-4 text-sm space-y-3">
-                            {isConfigured ? (
-                                <>
-                                    <InputField
-                                        data={data}
-                                        onFieldChange={onFieldChange}
-                                        id="imageModel"
-                                        label="Image Generation Model"
-                                    />
-                                    <InputField
-                                        data={data}
-                                        onFieldChange={onFieldChange}
-                                        id="textModel"
-                                        label="Text Generation Model"
-                                    />
-                                </>
-                            ) : (
-                                <>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-600 mb-1.5">Image Generation Mode</label>
-                                        <p className="text-sm text-slate-800 font-medium bg-slate-100 p-3 rounded-lg border border-slate-200 text-center">
-                                            Built-in Placeholder Generator
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-600 mb-1.5">Text Generation Mode</label>
-                                        <p className="text-sm text-slate-800 font-medium bg-slate-100 p-3 rounded-lg border border-slate-200 text-center">
-                                            Free AI Placeholder Generator
-                                        </p>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable AI text generation.</p>
+                            )
+                        }
+                    />
 
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:text-pink-800 hover:underline !mt-3 w-full text-left block">
-                            Get a Google AI API Key &rarr;
-                        </a>
-                    </div>
+                    <ApiKeyInput
+                        label="Fal.ai API Key (for Images)"
+                        value={falApiKeyInput}
+                        onChange={setFalApiKeyInput}
+                        onSave={handleSaveFalKey}
+                        onClear={handleClearFalKey}
+                        placeholder="Enter your Fal.ai key"
+                        getLink="https://fal.ai/dashboard/keys"
+                        getLinkText="Get a Fal.ai API Key"
+                        statusMessage={
+                            falAiApiKey ? (
+                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Fal.ai key is saved in this browser.</p>
+                            ) : (
+                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable AI image generation.</p>
+                            )
+                        }
+                    />
+                </div>
+                 <div className="!mt-6 pt-4 border-t border-slate-200/80 space-y-3">
+                    <InputField
+                        data={data}
+                        onFieldChange={onFieldChange}
+                        id="imageModel"
+                        label="Image Generation Model (Fal.ai)"
+                        description={!falKeyIsConfigured ? 'Add Fal.ai key to use.' : 'e.g., fal-ai/stable-diffusion-v3-medium'}
+                    />
+                    <InputField
+                        data={data}
+                        onFieldChange={onFieldChange}
+                        id="textModel"
+                        label="Text Generation Model (Google AI)"
+                         description={!googleKeyIsConfigured ? 'Add Google key to use.' : 'e.g., gemini-2.5-flash'}
+                    />
                 </div>
             </ControlCard>
              <ControlCard icon={<PaletteIcon />} title="Customize Your Pin">
@@ -300,11 +317,12 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 };
 
 
-export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, isApiKeyFromEnv, userApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, isBulkGenerating }) => {
-    const isConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
-    const imagePromptDescription = isConfigured
-        ? "Describe the image you want our AI to create. Be descriptive for the best results."
-        : "This text will be used for the placeholder image. Add an API key to generate images with AI.";
+export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, isApiKeyFromEnv, userApiKey, falAiApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, isBulkGenerating }) => {
+    const googleKeyIsConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
+    const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
+    const imagePromptDescription = falKeyIsConfigured
+        ? "Describe the image you want our AI to create. This will be sent to Fal.ai."
+        : "This text will be used for the placeholder image. Add a Fal.ai API key to generate images with AI.";
 
     return (
         <ControlCard icon={<PinContentIcon />} title="Pin Content">
@@ -325,7 +343,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     type="button"
                     onClick={onGenerateDescription}
                     disabled={isGeneratingDescription || isBulkGenerating}
-                    title={isConfigured ? 'Generate a high-quality description with AI' : 'Generate a basic placeholder description'}
+                    title={googleKeyIsConfigured ? 'Generate a high-quality description with Google AI' : 'Generate a basic placeholder description'}
                     className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
                 >
                     {isGeneratingDescription ? (
@@ -347,7 +365,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     type="button"
                     onClick={onGenerateKeywords}
                     disabled={isGeneratingKeywords || isBulkGenerating}
-                    title={isConfigured ? 'Generate keywords with AI' : 'Generate basic placeholder keywords'}
+                    title={googleKeyIsConfigured ? 'Generate keywords with Google AI' : 'Generate basic placeholder keywords'}
                     className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
                 >
                     {isGeneratingKeywords ? (
@@ -389,6 +407,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
     onResetBulkGeneration,
     isApiKeyFromEnv,
     userApiKey,
+    falAiApiKey,
 }) => {
     const handleCsvFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -401,7 +420,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
     const needsImage3 = ['clean-grid', 'shop-the-look'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;
-    const isConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
+    const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
 
     return (
         <>
@@ -447,12 +466,12 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
             </ControlCard>
 
              <ControlCard icon={<ImagesIcon />} title="Images">
-                <ImageUpload id={1} label="Background Image 1" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={isConfigured} />
+                <ImageUpload id={1} label="Background Image 1" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} />
                 {needsImage2 && (
-                    <ImageUpload id={2} label="Background Image 2" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={isConfigured} />
+                    <ImageUpload id={2} label="Background Image 2" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} />
                 )}
                 {needsImage3 && (
-                    <ImageUpload id={3} label="Background Image 3" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={isConfigured} />
+                    <ImageUpload id={3} label="Background Image 3" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} />
                 )}
              </ControlCard>
 

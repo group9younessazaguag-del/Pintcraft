@@ -1,4 +1,3 @@
-
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow } from './types';
 import Header from './components/Header';
@@ -36,7 +35,7 @@ const initialPersistedData: PersistedData = {
     mediaUrlPrefix: 'http://yourwebsite.com/images/',
     pinsPerDay: 3,
     startDate: new Date().toISOString().split('T')[0],
-    imageModel: 'gemini-2.5-flash-image-preview',
+    imageModel: 'fal-ai/stable-diffusion-v3-medium',
     textModel: 'gemini-2.5-flash',
 };
 
@@ -52,7 +51,9 @@ const App: React.FC = () => {
   const [imageData, setImageData] = useState(initialImageData);
   const templateData: TemplateData = { ...persistedData, ...imageData };
 
-  const [userApiKey, setUserApiKey] = useLocalStorage('userApiKey', '');
+  const [userApiKey, setUserApiKey] = useLocalStorage('userApiKey', ''); // For Google AI (text)
+  const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
+
 
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState<{ [key: number]: boolean }>({});
@@ -83,7 +84,7 @@ const App: React.FC = () => {
   }, []);
 
   const getApiKey = useCallback((): string | undefined => {
-    // Prioritize user-provided key from local storage over the environment variable.
+    // This is for Google AI (text) only now.
     if (userApiKey && userApiKey.length > 5) {
       return userApiKey;
     }
@@ -179,13 +180,13 @@ const App: React.FC = () => {
     setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: true }));
     setApiError(null);
 
-    const apiKey = getApiKey();
+    const apiKey = falAiApiKey; // Use Fal.ai key for image generation
     const aspectRatio = templateData.pinSize === 'standard' ? '3:4' : '9:16';
 
     try {
         let imageUrl: string;
-        if (apiKey) {
-            // Use AI generation if key is available
+        if (apiKey && apiKey.length > 5) {
+            // Use Fal.ai generation if key is available
             imageUrl = await generateImage(
                 apiKey,
                 templateData.imageModel,
@@ -229,7 +230,7 @@ const App: React.FC = () => {
     setIsGeneratingDescription(true);
     setApiError(null);
 
-    const apiKey = getApiKey();
+    const apiKey = getApiKey(); // Use Google AI key for text
 
     try {
         let newDescription: string;
@@ -266,7 +267,7 @@ const App: React.FC = () => {
     setIsGeneratingKeywords(true);
     setApiError(null);
 
-    const apiKey = getApiKey();
+    const apiKey = getApiKey(); // Use Google AI key for text
 
     try {
         let newKeywords: string;
@@ -415,9 +416,14 @@ const App: React.FC = () => {
       return;
     }
 
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        if (!window.confirm("You don't have an API key set. Only basic placeholder assets will be created. Do you want to continue?")) {
+    const googleApiKey = getApiKey();
+    const falApiKey = falAiApiKey;
+
+    if (!googleApiKey || !falApiKey) {
+        let missingKeys = [];
+        if (!googleApiKey) missingKeys.push("Google AI (for text)");
+        if (!falApiKey) missingKeys.push("Fal.ai (for images)");
+        if (!window.confirm(`You are missing API keys for: ${missingKeys.join(' and ')}. Only basic placeholder assets will be created for the missing parts. Do you want to continue?`)) {
             return;
         }
     }
@@ -474,8 +480,8 @@ const App: React.FC = () => {
             if (!currentRunCsvData[i][descriptionHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating description...`);
                 let description: string;
-                if (apiKey) {
-                    description = await generateDescription(apiKey, templateData.textModel, currentData.title, currentData.subtitle);
+                if (googleApiKey) {
+                    description = await generateDescription(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
                 } else {
                     description = generatePlaceholderDescription(currentData.title, currentData.subtitle);
                 }
@@ -486,8 +492,8 @@ const App: React.FC = () => {
             if (!currentRunCsvData[i][keywordsHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating keywords...`);
                 let keywords: string;
-                if (apiKey) {
-                    keywords = await generateKeywords(apiKey, templateData.textModel, currentData.title, currentData.subtitle);
+                if (googleApiKey) {
+                    keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
                 } else {
                     keywords = generatePlaceholderKeywords(currentData.title, currentData.subtitle);
                 }
@@ -654,6 +660,8 @@ const App: React.FC = () => {
     onSetUserApiKey: setUserApiKey,
     isApiKeyFromEnv: isApiKeyFromEnv,
     userApiKey: userApiKey,
+    onSetFalAiApiKey: setFalAiApiKey,
+    falAiApiKey: falAiApiKey,
   };
   
   const renderPage = () => {

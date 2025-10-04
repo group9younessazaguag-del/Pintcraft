@@ -1,4 +1,4 @@
-import { GoogleGenAI, Modality } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 // Helper to parse complex API errors
 const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic', message: string, helpLink?: string } => {
@@ -69,74 +69,83 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
     return { type: 'generic', message, helpLink: helpLink || undefined };
 };
 
+const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+};
+
 export const generateImage = async (
-    apiKey: string,
+    apiKey: string, // Fal.ai API key
     model: string,
     prompt: string,
     aspectRatio: '3:4' | '9:16'
 ): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey });
-
-        // Create a small, neutral base image for the AI to edit from.
-        const width = 300;
-        const height = aspectRatio === '3:4' ? 400 : 533;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            throw new Error('Failed to create canvas context.');
+        if (!model.includes('/')) {
+            throw new Error('Invalid Fal.ai model name. It must be in the format "author/model-name", e.g., "fal-ai/stable-diffusion-v3-medium".');
         }
-        ctx.fillStyle = '#cccccc'; // A neutral gray
-        ctx.fillRect(0, 0, width, height);
-        const baseImage = canvas.toDataURL('image/jpeg');
-        const base64Data = baseImage.split(',')[1];
 
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: {
-                parts: [
-                    {
-                        inlineData: {
-                            data: base64Data,
-                            mimeType: 'image/jpeg',
-                        },
-                    },
-                    {
-                        // Instruct the model to generate a new image based on the prompt, ignoring the placeholder.
-                        text: `Generate a new, complete image based on the following description, ignoring the placeholder background image: "${prompt}". The final image should be in a ${aspectRatio === '3:4' ? 'portrait' : 'tall portrait'} orientation.`,
-                    },
-                ],
+        const url = `https://fal.run/${model}`;
+
+        const body = JSON.stringify({
+            prompt: prompt,
+            aspect_ratio: aspectRatio,
+            num_images: 1,
+            output_format: "jpeg",
+            sync_mode: true
+        });
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Key ${apiKey}`,
+                'Content-Type': 'application/json',
             },
-            config: {
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
-            },
+            body: body,
         });
         
-        const imagePart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
-
-        if (imagePart && imagePart.inlineData) {
-            return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-        }
-        
-        const textPart = response.candidates?.[0]?.content?.parts?.find(part => part.text);
-        if (textPart && textPart.text) {
-             throw new Error(`AI model returned text instead of an image: ${textPart.text}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Fal.ai API error:', errorData);
+            const message = errorData.detail || `Image generation failed with status: ${response.status}`;
+            const specificError = new Error(message);
+            (specificError as any).type = response.status === 429 ? 'quota' : 'generic';
+            throw specificError;
         }
 
-        throw new Error('The AI model did not return a valid image. Please try again.');
+        const result = await response.json();
+        const imageUrl = result?.images?.[0]?.url;
+
+        if (!imageUrl) {
+            throw new Error('The AI model did not return a valid image URL.');
+        }
+
+        if (imageUrl.startsWith('data:image')) {
+            return imageUrl;
+        }
+
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+            throw new Error(`Failed to download the generated image from ${imageUrl}`);
+        }
+        const imageBlob = await imageResponse.blob();
+        return await blobToBase64(imageBlob);
 
     } catch (error: any) {
-        console.error('Error generating image with AI:', error);
-        const errorDetails = getApiErrorDetails(error);
-        const specificError = new Error(errorDetails.message);
-        (specificError as any).type = errorDetails.type;
-        (specificError as any).helpLink = errorDetails.helpLink;
+        console.error('Error generating image with Fal.ai:', error);
+        if (error.type) {
+            throw error;
+        }
+        const specificError = new Error(error.message || 'An unknown error occurred during image generation.');
+        (specificError as any).type = 'generic';
         throw specificError;
     }
 };
+
 
 export const generateDescription = async (
     apiKey: string,
