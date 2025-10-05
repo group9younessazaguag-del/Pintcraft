@@ -201,22 +201,26 @@ const ApiKeyInput: React.FC<{
 export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetUserApiKey, isApiKeyFromEnv, userApiKey, onSetFalAiApiKey, falAiApiKey }) => {
     const options: {templates: {id: TemplateId, name: string}[], sizes: {id: PinSize, name:string}[]} = {
         templates: [
-          { id: 'classic', name: 'Classic' },
-          { id: 'split', name: 'Split View' },
-          { id: 'modern', name: 'Modern' },
-          { id: 'brush', name: 'Brush Stroke' },
-          { id: 'border', name: 'Border' },
-          { id: 'editorial', name: 'Editorial' },
-          { id: 'clean-grid', name: 'Clean Grid' },
-          { id: 'minimalist-quote', name: 'Minimalist Quote' },
-          { id: 'tasty-recipe', name: 'Tasty Recipe' },
-          { id: 'trendy-collage', name: 'Trendy Collage' },
-          { id: 'retro-vibes', name: 'Retro Vibes' },
-          { id: 'product-spotlight', name: 'Product Spotlight' },
-          { id: 'infographic', name: 'Infographic' },
-          { id: 'quote-overlay', name: 'Quote Overlay' },
-          { id: 'shop-the-look', name: 'Shop the Look' },
-          { id: 'before-after', name: 'Before & After' },
+            { id: 'before-after', name: 'Before & After' },
+            { id: 'border', name: 'Border' },
+            { id: 'brush', name: 'Brush Stroke' },
+            { id: 'checklist', name: 'Checklist' },
+            { id: 'classic', name: 'Classic' },
+            { id: 'clean-grid', name: 'Clean Grid' },
+            { id: 'detailed-recipe', name: 'Detailed Recipe' },
+            { id: 'editorial', name: 'Editorial' },
+            { id: 'infographic', name: 'Infographic' },
+            { id: 'minimalist-quote', name: 'Minimalist Quote' },
+            { id: 'modern', name: 'Modern' },
+            { id: 'mood-board', name: 'Mood Board' },
+            { id: 'new-article', name: 'New Article' },
+            { id: 'product-spotlight', name: 'Product Spotlight' },
+            { id: 'quote-overlay', name: 'Quote Overlay' },
+            { id: 'retro-vibes', name: 'Retro Vibes' },
+            { id: 'shop-the-look', name: 'Shop the Look' },
+            { id: 'split', name: 'Split View' },
+            { id: 'tasty-recipe', name: 'Tasty Recipe' },
+            { id: 'trendy-collage', name: 'Trendy Collage' },
         ],
         sizes: [
           { id: 'standard', name: 'Standard (3:4)' },
@@ -405,8 +409,8 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
         }
     };
 
-    const needsImage2 = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look'].includes(data.templateId);
-    const needsImage3 = ['clean-grid', 'shop-the-look'].includes(data.templateId);
+    const needsImage2 = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look', 'mood-board'].includes(data.templateId);
+    const needsImage3 = ['clean-grid', 'shop-the-look', 'mood-board'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;

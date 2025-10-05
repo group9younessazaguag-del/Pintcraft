@@ -499,10 +499,10 @@ const App: React.FC = () => {
             if (prompt) {
                  await handleGenerateImage(1, true, prompt);
                 
-                const templateNeeds2Images = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look'].includes(templateData.templateId);
+                const templateNeeds2Images = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look', 'mood-board'].includes(templateData.templateId);
                 if (templateNeeds2Images) await handleGenerateImage(2, true, prompt);
 
-                const templateNeeds3Images = ['clean-grid', 'shop-the-look'].includes(templateData.templateId);
+                const templateNeeds3Images = ['clean-grid', 'shop-the-look', 'mood-board'].includes(templateData.templateId);
                 if (templateNeeds3Images) await handleGenerateImage(3, true, prompt);
             }
             await sleep(100);

@@ -346,6 +346,63 @@ const TastyRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     );
 };
 
+const DetailedRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage } = data;
+    const details = subtitle.split(',').map(s => s.trim()).filter(Boolean);
+
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#F7F2EE] text-[#4E443A]">
+            {/* Image Section */}
+            <div className="w-full h-[60%] relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-slate-300"></div>}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#F7F2EE] to-transparent"></div>
+            </div>
+
+            {/* Content Section */}
+            <div className="w-full h-[40%] p-6 flex flex-col justify-center items-center text-center">
+                {title && (
+                    <h2 className="font-playfair text-4xl sm:text-5xl font-bold leading-tight tracking-tight break-words">
+                        {title}
+                    </h2>
+                )}
+                {details.length > 0 && details[0] && (
+                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-4 text-[#4E443A]/80">
+                        {details.map((detail, index) => {
+                            const parts = detail.split(':');
+                            const detailLower = detail.toLowerCase();
+                            return (
+                                <div key={index} className="flex items-center text-sm font-semibold tracking-wide">
+                                    { (detailLower.includes('time') || detailLower.includes('cook') || detailLower.includes('prep')) &&
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    }
+                                    { detailLower.includes('serves') &&
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.124-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.124-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    }
+                                    {parts.length > 1 ? (
+                                        <span>
+                                            <strong className="font-bold">{parts[0]}</strong>:
+                                            <span className="font-medium">{parts.slice(1).join(':')}</span>
+                                        </span>
+                                    ) : (
+                                        <span className="font-medium">{detail}</span>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+                <div className="flex-grow"></div>
+                {website && (
+                    <p className="mt-auto text-xs font-bold tracking-[0.2em] text-[#4E443A]/60 uppercase">
+                        {website}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const TrendyCollageTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     return (
@@ -576,6 +633,126 @@ const BeforeAfterTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     );
 };
 
+const ChecklistTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage } = data;
+    const listItems = subtitle.split(',').map(item => item.trim()).filter(Boolean);
+
+    return (
+        <div className="w-full h-full flex flex-col items-center relative font-poppins text-gray-800 bg-[#F8F5F2] p-8">
+            <BackgroundImage imageUrl={backgroundImage} />
+            {backgroundImage && <div className="absolute inset-0 bg-white/80 backdrop-blur-sm"></div>}
+            
+            <div className="relative z-10 flex flex-col h-full w-full text-center">
+                {title && (
+                    <h2 className="font-anton uppercase text-4xl md:text-5xl leading-tight tracking-tight mb-8">
+                        {title}
+                    </h2>
+                )}
+
+                {listItems.length > 0 && (
+                    <ul className="space-y-3 text-lg text-left max-w-md mx-auto w-full">
+                        {listItems.map((item, index) => (
+                            <li key={index} className="flex items-start">
+                                <span className="mr-3 mt-1 flex-shrink-0 bg-teal-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </span>
+                                <span>{item}</span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                
+                <div className="flex-grow"></div>
+
+                {website && (
+                    <p className="mt-auto text-sm font-bold tracking-[0.2em] text-gray-400">
+                        {website}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const NewArticleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage } = data;
+    return (
+        <div className="w-full h-full flex flex-col justify-between items-center relative font-poppins text-white p-8 text-center">
+            <BackgroundImage imageUrl={backgroundImage} />
+            {!backgroundImage && <div className="absolute inset-0 bg-slate-800"></div>}
+            <div className="absolute inset-0 bg-black/50"></div>
+            
+            <div className="relative z-10 w-full">
+                {website && (
+                    <p 
+                        className="text-sm font-semibold tracking-[0.2em] opacity-80"
+                        style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.7)' }}
+                    >
+                        {website}
+                    </p>
+                )}
+            </div>
+
+            <div className="relative z-10 w-full flex flex-col items-center">
+                {title && (
+                    <h2 
+                        className="font-bold text-5xl md:text-6xl lg:text-7xl leading-tight tracking-tight break-words"
+                        style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+            </div>
+
+            <div className="relative z-10 w-full flex flex-col items-center">
+                <div className="bg-rose-500 text-white font-bold tracking-widest uppercase px-6 py-3 rounded-sm shadow-lg">
+                    {subtitle || 'NEW POST'}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const MoodBoardTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, website, backgroundImage, backgroundImage2, backgroundImage3 } = data;
+    return (
+        <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins p-6 bg-[#EAE6E1] overflow-hidden">
+             {/* Image 3 - bottom layer */}
+            <div className="absolute w-2/3 h-1/3 bottom-12 right-[-10%] transform rotate-12 shadow-2xl rounded-lg border-8 border-white box-border">
+                <BackgroundImage imageUrl={backgroundImage3} />
+                <div className="absolute inset-0 bg-gray-300 -z-10"></div>
+            </div>
+             {/* Image 1 - middle layer */}
+            <div className="absolute w-3/4 h-1/2 top-4 left-[-10%] transform -rotate-8 shadow-2xl rounded-lg border-8 border-white box-border">
+                <BackgroundImage imageUrl={backgroundImage} />
+                <div className="absolute inset-0 bg-gray-300 -z-10"></div>
+            </div>
+            {/* Image 2 - top layer */}
+            <div className="absolute w-1/2 h-2/5 bottom-4 left-[10%] transform rotate-3 shadow-2xl rounded-lg border-8 border-white box-border">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                 <div className="absolute inset-0 bg-gray-300 -z-10"></div>
+            </div>
+
+            <div className="relative z-20 text-center flex flex-col items-center bg-white/70 backdrop-blur-sm p-6 rounded-md shadow-lg">
+                 {title && (
+                    <h2 
+                        className="font-playfair text-4xl sm:text-5xl font-bold leading-tight text-stone-800"
+                    >
+                        {title}
+                    </h2>
+                )}
+                {website && (
+                    <p className="text-sm tracking-[0.2em] mt-4 font-light text-stone-600 uppercase">
+                        {website}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+};
+
 
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {
   const { templateId, pinSize } = data;
@@ -584,38 +761,46 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
 
   const renderTemplate = () => {
     switch (templateId) {
-      case 'classic':
-        return <ClassicTemplate data={data} />;
-      case 'split':
-        return <SplitTemplate data={data} />;
-      case 'modern':
-        return <ModernTemplate data={data} />;
-      case 'brush':
-        return <BrushStrokeTemplate data={data} />;
+      case 'before-after':
+        return <BeforeAfterTemplate data={data} />;
       case 'border':
         return <BorderTemplate data={data} />;
-      case 'editorial':
-        return <EditorialTemplate data={data} />;
+      case 'brush':
+        return <BrushStrokeTemplate data={data} />;
+      case 'checklist':
+        return <ChecklistTemplate data={data} />;
+      case 'classic':
+        return <ClassicTemplate data={data} />;
       case 'clean-grid':
         return <CleanGridTemplate data={data} />;
+      case 'detailed-recipe':
+        return <DetailedRecipeTemplate data={data} />;
+      case 'editorial':
+        return <EditorialTemplate data={data} />;
+      case 'infographic':
+        return <InfographicTemplate data={data} />;
       case 'minimalist-quote':
         return <MinimalistQuoteTemplate data={data} />;
+      case 'modern':
+        return <ModernTemplate data={data} />;
+      case 'mood-board':
+        return <MoodBoardTemplate data={data} />;
+      case 'new-article':
+        return <NewArticleTemplate data={data} />;
+      case 'product-spotlight':
+        return <ProductSpotlightTemplate data={data} />;
+      case 'quote-overlay':
+        return <QuoteOverlayTemplate data={data} />;
+      case 'retro-vibes':
+        return <RetroVibesTemplate data={data} />;
+      case 'shop-the-look':
+        return <ShopTheLookTemplate data={data} />;
+      case 'split':
+        return <SplitTemplate data={data} />;
       case 'tasty-recipe':
         return <TastyRecipeTemplate data={data} />;
       case 'trendy-collage':
         return <TrendyCollageTemplate data={data} />;
-      case 'retro-vibes':
-        return <RetroVibesTemplate data={data} />;
-      case 'product-spotlight':
-        return <ProductSpotlightTemplate data={data} />;
-      case 'infographic':
-        return <InfographicTemplate data={data} />;
-      case 'quote-overlay':
-        return <QuoteOverlayTemplate data={data} />;
-      case 'shop-the-look':
-        return <ShopTheLookTemplate data={data} />;
-      case 'before-after':
-        return <BeforeAfterTemplate data={data} />;
       default:
         return <ClassicTemplate data={data} />;
     }
