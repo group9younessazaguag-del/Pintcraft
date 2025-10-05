@@ -122,7 +122,7 @@ const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { 
                 type="button"
                 onClick={() => onGenerateImage(id)}
                 disabled={isGenerating || isBulkGenerating}
-                title={isConfigured ? 'Generate a high-quality image with Fal.ai' : 'Generate a basic placeholder image (add a Fal.ai API key to use AI)'}
+                title={isConfigured ? 'Generate a high-quality image with Fal.ai based on the pin title' : 'Generate a basic placeholder image based on the pin title (add a Fal.ai API key to use AI)'}
                 className="flex-1 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
             >
               {isGenerating ? (
@@ -317,12 +317,8 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 };
 
 
-export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, isApiKeyFromEnv, userApiKey, falAiApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, isBulkGenerating }) => {
+export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, isApiKeyFromEnv, userApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, isBulkGenerating }) => {
     const googleKeyIsConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
-    const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
-    const imagePromptDescription = falKeyIsConfigured
-        ? "Describe the image you want our AI to create. This will be sent to Fal.ai."
-        : "This text will be used for the placeholder image. Add a Fal.ai API key to generate images with AI.";
 
     return (
         <ControlCard icon={<PinContentIcon />} title="Pin Content">
@@ -373,13 +369,6 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     ) : '✨ Generate Keywords'}
                 </button>
             </div>
-            <InputField 
-                data={data} 
-                onFieldChange={onFieldChange}
-                id="imagePrompt" 
-                label="Image Prompt (optional)"
-                description={imagePromptDescription}
-            />
         </ControlCard>
     );
 };

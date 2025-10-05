@@ -29,7 +29,6 @@ const initialPersistedData: PersistedData = {
     website: 'YOURWEBSITE.COM',
     templateId: 'product-spotlight',
     pinSize: 'long',
-    imagePrompt: '',
     description: 'These garlic herb mozzarella bites are the perfect easy appetizer! They\'re cheesy, flavorful, and so simple to make. Get the recipe now!',
     keywords: '',
     mediaUrlPrefix: 'http://yourwebsite.com/images/',
@@ -125,12 +124,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (currentRowIndex !== null && csvData[currentRowIndex]) {
-      const { title, subtitle, imagePrompt, description, keywords } = csvData[currentRowIndex];
+      const { title, subtitle, description, keywords } = csvData[currentRowIndex];
       setPersistedData(prev => ({
         ...prev,
         title: title,
         subtitle: subtitle,
-        imagePrompt: imagePrompt,
         description: description,
         keywords: keywords,
       }));
@@ -169,9 +167,9 @@ const App: React.FC = () => {
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
-    const userPrompt = overridePrompt || templateData.imagePrompt;
+    const userPrompt = overridePrompt || templateData.title;
     if (!userPrompt) {
-        const msg = 'Please enter an Image Prompt to generate an image.';
+        const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
@@ -355,7 +353,6 @@ const App: React.FC = () => {
 
       const titleHeader = headerMap['title'] || headerMap['title of recipes'];
       const boardHeader = headerMap['pinterest board'] || headerMap['board'];
-      const imagePromptHeader = headerMap['image prompt'];
       const descriptionHeader = headerMap['description'];
       const keywordsHeader = headerMap['keywords'];
 
@@ -377,13 +374,10 @@ const App: React.FC = () => {
       const simpleData: CsvRow[] = fullData.map(row => {
           const title = row[titleHeader] || '';
           
-          const prompt = imagePromptHeader && row[imagePromptHeader] ? row[imagePromptHeader] : '';
-
           return {
               title: title,
               subtitle: row[boardHeader] || '',
               website: '',
-              imagePrompt: prompt,
               description: row[descriptionHeader] || '',
               keywords: row[keywordsHeader] || '',
           };
@@ -501,7 +495,7 @@ const App: React.FC = () => {
             }
 
             setBulkMessage(`Row ${i + 1}: Generating images...`);
-            const prompt = currentData.imagePrompt;
+            const prompt = currentData.title;
             if (prompt) {
                  await handleGenerateImage(1, true, prompt);
                 

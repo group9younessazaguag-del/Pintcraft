@@ -10,7 +10,6 @@ export interface TemplateData {
   backgroundImage3: string | null;
   templateId: TemplateId;
   pinSize: PinSize;
-  imagePrompt: string;
   description: string;
   keywords: string;
   mediaUrlPrefix: string;
@@ -24,7 +23,6 @@ export interface CsvRow {
   title: string;
   subtitle: string;
   website: string;
-  imagePrompt: string;
   description: string;
   keywords: string;
 }
