@@ -5,7 +5,7 @@ import Footer from './components/Footer';
 import AboutPage from './components/pages/AboutPage';
 import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './components/pages/TermsOfServicePage';
-import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords } from './services/googleAi';
+import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle } from './services/googleAi';
 import useLocalStorage from './hooks/useLocalStorage';
 import GeneratorInterface from './components/GeneratorInterface';
 
@@ -27,7 +27,7 @@ const initialPersistedData: PersistedData = {
     title: 'GARLIC HERB MOZZARELLA BITES',
     subtitle: 'QUICK & EASY APPETIZER',
     website: 'YOURWEBSITE.COM',
-    templateId: 'product-spotlight',
+    templateId: '15',
     pinSize: 'long',
     description: 'These garlic herb mozzarella bites are the perfect easy appetizer! They\'re cheesy, flavorful, and so simple to make. Get the recipe now!',
     keywords: '',
@@ -58,6 +58,7 @@ const App: React.FC = () => {
   const [isGeneratingImage, setIsGeneratingImage] = useState<{ [key: number]: boolean }>({});
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isGeneratingKeywords, setIsGeneratingKeywords] = useState(false);
+  const [isGeneratingShortTitle, setIsGeneratingShortTitle] = useState(false);
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [currentRowIndex, setCurrentRowIndex] = useState<number | null>(null);
   const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
@@ -290,6 +291,39 @@ const App: React.FC = () => {
     }
 };
 
+const handleGenerateShortTitle = async (): Promise<void> => {
+    const title = templateData.title;
+    if (!title) {
+        setApiError({ type: 'generic', message: 'Please enter a Title first.' });
+        return;
+    }
+
+    setIsGeneratingShortTitle(true);
+    setApiError(null);
+
+    const apiKey = getApiKey();
+
+    try {
+        let newTitle: string;
+        if (apiKey) {
+            newTitle = await generateShortTitle(apiKey, templateData.textModel, title);
+        } else {
+            // Fallback for when no API key is present
+            newTitle = title.length > 35 ? title.substring(0, 32) + '...' : title;
+        }
+        handleFieldChange('title', newTitle);
+    } catch (error: any) {
+        console.error(`Error generating short title:`, error);
+        setApiError({
+            type: error.type || 'generic',
+            message: error.message || 'Failed to shorten title.',
+            helpLink: error.helpLink
+        });
+    } finally {
+        setIsGeneratingShortTitle(false);
+    }
+};
+
   const handleDownload = useCallback(() => {
     if (previewRef.current === null) return;
     setIsLoading(true);
@@ -499,10 +533,10 @@ const App: React.FC = () => {
             if (prompt) {
                  await handleGenerateImage(1, true, prompt);
                 
-                const templateNeeds2Images = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look', 'mood-board'].includes(templateData.templateId);
+                const templateNeeds2Images = ['1', '3', '6', '10', '13', '15', '19', '20', '21', '23', '27', '28'].includes(templateData.templateId);
                 if (templateNeeds2Images) await handleGenerateImage(2, true, prompt);
 
-                const templateNeeds3Images = ['clean-grid', 'shop-the-look', 'mood-board'].includes(templateData.templateId);
+                const templateNeeds3Images = ['6', '13', '19', '21'].includes(templateData.templateId);
                 if (templateNeeds3Images) await handleGenerateImage(3, true, prompt);
             }
             await sleep(100);
@@ -633,11 +667,13 @@ const App: React.FC = () => {
     onGenerateImage: handleGenerateImage,
     onGenerateDescription: handleGenerateDescription,
     onGenerateKeywords: handleGenerateKeywords,
+    onGenerateShortTitle: handleGenerateShortTitle,
     onDownload: handleDownload,
     isLoading: isLoading,
     isGeneratingImage: isGeneratingImage,
     isGeneratingDescription: isGeneratingDescription,
     isGeneratingKeywords: isGeneratingKeywords,
+    isGeneratingShortTitle: isGeneratingShortTitle,
     onCsvUpload: handleCsvUpload,
     onNextRow: handleNextRow,
     onPrevRow: handlePrevRow,

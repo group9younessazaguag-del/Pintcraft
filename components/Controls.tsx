@@ -17,11 +17,13 @@ export interface ControlsProps {
   onGenerateImage: (imageNumber: 1 | 2 | 3) => void;
   onGenerateDescription: () => void;
   onGenerateKeywords: () => void;
+  onGenerateShortTitle: () => void;
   onDownload: () => void;
   isLoading: boolean;
   isGeneratingImage: { [key: number]: boolean };
   isGeneratingDescription: boolean;
   isGeneratingKeywords: boolean;
+  isGeneratingShortTitle: boolean;
   onCsvUpload: (file: File) => void;
   onNextRow: () => void;
   onPrevRow: () => void;
@@ -86,10 +88,10 @@ const SelectField: React.FC<{ value: string; onChange: (value: string) => void; 
     </div>
 );
 
-const ToggleButtonGrid: React.FC<{ label: string; options: {id: string; name: string}[]; selected: string; onSelect: (id: string) => void; }> = ({ label, options, selected, onSelect }) => (
+const ToggleButtonGrid: React.FC<{ label: string; options: {id: string; name: string}[]; selected: string; onSelect: (id: string) => void; gridCols?: string }> = ({ label, options, selected, onSelect, gridCols = 'grid-cols-2' }) => (
     <div>
         <label className="block text-sm font-medium text-slate-600 mb-2">{label}</label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className={`grid ${gridCols} gap-2`}>
             {options.map(option => (
                 <button 
                     key={option.id}
@@ -199,29 +201,13 @@ const ApiKeyInput: React.FC<{
 };
 
 export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetUserApiKey, isApiKeyFromEnv, userApiKey, onSetFalAiApiKey, falAiApiKey }) => {
-    const options: {templates: {id: TemplateId, name: string}[], sizes: {id: PinSize, name:string}[]} = {
-        templates: [
-            { id: 'before-after', name: 'Before & After' },
-            { id: 'border', name: 'Border' },
-            { id: 'brush', name: 'Brush Stroke' },
-            { id: 'checklist', name: 'Checklist' },
-            { id: 'classic', name: 'Classic' },
-            { id: 'clean-grid', name: 'Clean Grid' },
-            { id: 'detailed-recipe', name: 'Detailed Recipe' },
-            { id: 'editorial', name: 'Editorial' },
-            { id: 'infographic', name: 'Infographic' },
-            { id: 'minimalist-quote', name: 'Minimalist Quote' },
-            { id: 'modern', name: 'Modern' },
-            { id: 'mood-board', name: 'Mood Board' },
-            { id: 'new-article', name: 'New Article' },
-            { id: 'product-spotlight', name: 'Product Spotlight' },
-            { id: 'quote-overlay', name: 'Quote Overlay' },
-            { id: 'retro-vibes', name: 'Retro Vibes' },
-            { id: 'shop-the-look', name: 'Shop the Look' },
-            { id: 'split', name: 'Split View' },
-            { id: 'tasty-recipe', name: 'Tasty Recipe' },
-            { id: 'trendy-collage', name: 'Trendy Collage' },
-        ],
+    const templateCount = 31;
+    const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
+        id: `${i + 1}`,
+        name: `${i + 1}`
+    }));
+
+    const options = {
         sizes: [
           { id: 'standard', name: 'Standard (3:4)' },
           { id: 'long', name: 'Long (9:16)' },
@@ -305,9 +291,10 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
              <ControlCard icon={<PaletteIcon />} title="Customize Your Pin">
                 <ToggleButtonGrid 
                     label="Template"
-                    options={options.templates}
+                    options={templateOptions}
                     selected={data.templateId}
                     onSelect={(id) => onFieldChange('templateId', id as TemplateId)}
+                    gridCols="grid-cols-4"
                 />
                 <ToggleButtonGrid 
                     label="Pin Size"
@@ -321,12 +308,45 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 };
 
 
-export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, isApiKeyFromEnv, userApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, isBulkGenerating }) => {
+export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, isApiKeyFromEnv, userApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, onGenerateShortTitle, isGeneratingShortTitle, isBulkGenerating }) => {
     const googleKeyIsConfigured = isApiKeyFromEnv || (userApiKey && userApiKey.length > 5);
+    const TITLE_RECOMMENDED_MAX_LENGTH = 35;
+    const TITLE_HARD_MAX_LENGTH = 100;
+    const titleLength = data.title.length;
+
+    const getTitleCounterColor = () => {
+        if (titleLength > TITLE_HARD_MAX_LENGTH) return 'text-red-600';
+        if (titleLength > TITLE_RECOMMENDED_MAX_LENGTH) return 'text-amber-600';
+        return 'text-slate-500';
+    };
 
     return (
         <ControlCard icon={<PinContentIcon />} title="Pin Content">
-            <InputField data={data} onFieldChange={onFieldChange} id="title" label="Title" />
+             <div>
+                <label htmlFor="title" className="block text-sm font-medium text-slate-600 mb-1.5">Title</label>
+                <div className="relative">
+                    <input
+                        type="text"
+                        id="title"
+                        value={data.title || ''}
+                        onChange={(e) => onFieldChange('title', e.target.value)}
+                        className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                     <button
+                        type="button"
+                        onClick={onGenerateShortTitle}
+                        disabled={isGeneratingShortTitle || isBulkGenerating || !googleKeyIsConfigured || titleLength <= TITLE_RECOMMENDED_MAX_LENGTH}
+                        title={!googleKeyIsConfigured ? "Add a Google AI key to enable" : titleLength <= TITLE_RECOMMENDED_MAX_LENGTH ? "Title is already a good length" : "Use AI to shorten the title"}
+                        className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 disabled:text-slate-300 disabled:cursor-not-allowed rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500 transition-colors"
+                    >
+                        {isGeneratingShortTitle ? <LoadingSpinner className="w-4 h-4" /> : '✨'}
+                    </button>
+                </div>
+                <div className="text-xs text-right mt-1.5">
+                    <span className={getTitleCounterColor()}>{titleLength} / {TITLE_RECOMMENDED_MAX_LENGTH}</span>
+                </div>
+            </div>
+
             <InputField data={data} onFieldChange={onFieldChange} id="subtitle" label="Pinterest Board" />
             <InputField data={data} onFieldChange={onFieldChange} id="website" label="Link" />
             <div>
@@ -409,8 +429,8 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
         }
     };
 
-    const needsImage2 = ['split', 'brush', 'clean-grid', 'trendy-collage', 'product-spotlight', 'before-after', 'shop-the-look', 'mood-board'].includes(data.templateId);
-    const needsImage3 = ['clean-grid', 'shop-the-look', 'mood-board'].includes(data.templateId);
+    const needsImage2 = ['1', '3', '6', '10', '13', '15', '19', '20', '21', '23', '27', '28'].includes(data.templateId);
+    const needsImage3 = ['6', '13', '19', '21'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;

@@ -9,7 +9,7 @@ const PrivacyPolicyPage: React.FC = () => {
         <p className="text-sm text-slate-500">Last updated: {new Date().toLocaleDateString()}</p>
         
         <p>
-          This Privacy Policy describes how your information is handled when you use the AI Pinterest Pin Generator (the "Application"). Your privacy is critically important to us.
+          This Privacy Policy describes how your information is handled when you use the AI Pinterest Pin Generator By youness azaguag (the "Application"). Your privacy is critically important to us.
         </p>
         
         <h2>Information We Handle</h2>

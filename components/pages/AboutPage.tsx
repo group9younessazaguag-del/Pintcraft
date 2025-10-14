@@ -4,7 +4,7 @@ const AboutPage: React.FC = () => {
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4">
       <div className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-slate-200/80 prose prose-slate">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-800">About the AI Pinterest Pin Generator</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-slate-800">About the AI Pinterest Pin Generator By youness azaguag</h1>
         <p className="lead">
           Welcome to the ultimate tool for social media managers, bloggers, and e-commerce brands looking to supercharge their Pinterest marketing. Our AI Pinterest Pin Generator is designed to streamline your content creation process, saving you time and effort while producing beautiful, high-converting pins.
         </p>

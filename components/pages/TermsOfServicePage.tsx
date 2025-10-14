@@ -8,7 +8,7 @@ const TermsOfServicePage: React.FC = () => {
         <p className="text-sm text-slate-500">Last updated: {new Date().toLocaleDateString()}</p>
         
         <p>
-          Please read these Terms of Service ("Terms") carefully before using the AI Pinterest Pin Generator (the "Application"). Your access to and use of the Application is conditioned on your acceptance of and compliance with these Terms.
+          Please read these Terms of Service ("Terms") carefully before using the AI Pinterest Pin Generator By youness azaguag (the "Application"). Your access to and use of the Application is conditioned on your acceptance of and compliance with these Terms.
         </p>
         
         <h2>1. Acceptance of Terms</h2>
@@ -23,7 +23,7 @@ const TermsOfServicePage: React.FC = () => {
         <ul>
           <li><strong>API Key:</strong> You are required to provide your own Google AI API Key to use certain features. You are solely responsible for all activities that occur under your API key.</li>
           <li><strong>Content Responsibility:</strong> You are solely responsible for the text prompts you provide and the images and text generated ("Content"). You agree not to create any Content that is illegal, offensive, or infringes on the rights of others.</li>
-          <li><strong>Third-Party Policies:</strong> Your use of the generated Content must comply with the terms of service of any platform where you publish it, including but not limited to Pinterest's and Google's policies.</li>
+          <li><strong>Third-Party Policies:</strong> Your use of the generated Content must comply with the terms of service of any platform where you publish it, including but not to Pinterest's and Google's policies.</li>
         </ul>
 
         <h2>3. Intellectual Property</h2>

@@ -1,5 +1,5 @@
 export type PinSize = 'standard' | 'long';
-export type TemplateId = 'classic' | 'split' | 'modern' | 'brush' | 'border' | 'editorial' | 'clean-grid' | 'minimalist-quote' | 'tasty-recipe' | 'trendy-collage' | 'retro-vibes' | 'product-spotlight' | 'infographic' | 'quote-overlay' | 'shop-the-look' | 'before-after' | 'detailed-recipe' | 'checklist' | 'new-article' | 'mood-board';
+export type TemplateId = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13' | '14' | '15' | '16' | '17' | '18' | '19' | '20' | '21' | '22' | '23' | '24' | '25' | '26' | '27' | '28' | '29' | '30' | '31';
 
 export interface TemplateData {
   title: string;

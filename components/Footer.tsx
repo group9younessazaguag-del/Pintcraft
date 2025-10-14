@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
       <div className="container mx-auto px-4 md:px-8 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-slate-500">
-            &copy; {new Date().getFullYear()} Pinterest Pin Generator. All Rights Reserved.
+            &copy; {new Date().getFullYear()} Pinterest Pin Generator By youness azaguag. All Rights Reserved.
           </p>
           <nav className="flex gap-4 md:gap-6">
             <a href="#" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Home</a>

@@ -211,6 +211,37 @@ export const generateKeywords = async (
     }
 };
 
+export const generateShortTitle = async (
+    apiKey: string,
+    model: string,
+    longTitle: string
+): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Rewrite this Pinterest title to be more catchy and concise. It must be under 35 characters. Return only the new title, without quotation marks.\n\nOriginal Title: "${longTitle}"`;
+        
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+        });
+
+        const text = response.text?.trim().replace(/"/g, '');
+
+        if (!text) {
+            throw new Error('The AI model returned an empty title.');
+        }
+        return text;
+
+    } catch (error: any) {
+        console.error('Error generating short title with AI:', error);
+        const errorDetails = getApiErrorDetails(error);
+        const specificError = new Error(errorDetails.message);
+        (specificError as any).type = errorDetails.type;
+        (specificError as any).helpLink = errorDetails.helpLink;
+        throw specificError;
+    }
+};
+
 export const generatePlaceholderDescription = (
     title: string,
     subtitle: string
