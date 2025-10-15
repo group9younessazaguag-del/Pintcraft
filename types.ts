@@ -30,4 +30,9 @@ export interface CsvRow {
 export interface AdminSettings {
   analyticsId: string;
   adScript: string;
+  aboutPageContent: string;
+  contactPageContent: string;
+  howToUsePageContent: string;
+  privacyPageContent: string;
+  termsPageContent: string;
 }

@@ -53,6 +53,11 @@ const initialImageData = {
 const initialAdminSettings: AdminSettings = {
     analyticsId: '',
     adScript: '',
+    aboutPageContent: '',
+    contactPageContent: '',
+    howToUsePageContent: '',
+    privacyPageContent: '',
+    termsPageContent: '',
 };
 
 
@@ -713,15 +718,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
   const renderPage = () => {
     switch(page) {
         case 'about':
-            return <AboutPage />;
+            return <AboutPage content={adminSettings.aboutPageContent} />;
         case 'privacy':
-            return <PrivacyPolicyPage />;
+            return <PrivacyPolicyPage content={adminSettings.privacyPageContent} />;
         case 'terms':
-            return <TermsOfServicePage />;
+            return <TermsOfServicePage content={adminSettings.termsPageContent} />;
         case 'how-to-use':
-            return <HowToUsePage />;
+            return <HowToUsePage content={adminSettings.howToUsePageContent} />;
         case 'contact':
-            return <ContactPage />;
+            return <ContactPage content={adminSettings.contactPageContent} />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}

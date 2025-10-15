@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { AdminSettings } from '../../types';
 import SettingsIcon from '../icons/SettingsIcon';
 import BulkIcon from '../icons/BulkIcon';
+import PageIcon from '../icons/PageIcon';
 
 interface AdminPageProps {
   isAdminLoggedIn: boolean;
@@ -81,6 +82,22 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
     );
   }
 
+  const PageContentEditor: React.FC<{
+    pageKey: keyof AdminSettings;
+    label: string;
+  }> = ({ pageKey, label }) => (
+    <div>
+        <label htmlFor={pageKey} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
+        <textarea
+            id={pageKey}
+            value={localSettings[pageKey]}
+            onChange={(e) => handleSettingsChange(pageKey, e.target.value)}
+            className="w-full h-48 px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono text-sm"
+            placeholder={`Enter content for the ${label} page. You can use basic HTML for formatting.`}
+        />
+    </div>
+  );
+
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4">
       <div className="flex justify-between items-center mb-8">
@@ -132,6 +149,20 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
               <p className="text-xs text-slate-500 mt-1.5">This script will be injected into the ad banner area on the main page. Leave empty to show no ads.</p>
             </div>
           </div>
+        </div>
+        
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+            <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 text-slate-500"><PageIcon /></div>
+                <h3 className="text-md font-semibold text-slate-800 tracking-tight">Page Content Management</h3>
+            </div>
+            <div className="space-y-6 pt-4 border-t border-slate-200/80">
+                <PageContentEditor pageKey="howToUsePageContent" label="How to Use" />
+                <PageContentEditor pageKey="aboutPageContent" label="About Us" />
+                <PageContentEditor pageKey="contactPageContent" label="Contact Us" />
+                <PageContentEditor pageKey="termsPageContent" label="Terms of Service" />
+                <PageContentEditor pageKey="privacyPageContent" label="Privacy Policy" />
+            </div>
         </div>
 
         <div className="flex items-center justify-end gap-4">
