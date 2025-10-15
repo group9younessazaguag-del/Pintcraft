@@ -1,33 +1,42 @@
-export type PinSize = 'standard' | 'long';
-export type TemplateId = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13' | '14' | '15' | '16' | '17' | '18' | '19' | '20' | '21' | '22' | '23' | '24' | '25' | '26' | '27' | '28' | '29' | '30' | '31';
+// types.ts
+
+export type PinSize = 'standard' | 'tall';
+export type TemplateId = string; // e.g., '1', '2', ... '31'
 
 export interface TemplateData {
+  // Unique ID for each pin row, not part of the template itself
+  id: string; 
+
+  // Core content
   title: string;
   subtitle: string;
   website: string;
+
+  // Image URLs
   backgroundImage: string | null;
   backgroundImage2: string | null;
   backgroundImage3: string | null;
+
+  // Design settings
   templateId: TemplateId;
   pinSize: PinSize;
-  description: string;
-  keywords: string;
-  mediaUrlPrefix: string;
-  pinsPerDay: number | string;
-  startDate: string;
-  imageModel: string;
-  textModel: string;
-}
 
-export interface CsvRow {
-  title: string;
-  subtitle: string;
-  website: string;
-  description: string;
-  keywords: string;
+  // Bulk generation fields
+  boardName?: string;
+  publishDate?: string;
+  keywords?: string;
 }
 
 export interface AdminSettings {
   analyticsId: string;
   adScript: string;
 }
+
+// User state, for potential premium features
+export interface UserState {
+  isPro: boolean;
+  generationsLeft: number;
+  lastGenerationDate: string | null; // ISO date string
+}
+
+export const MAX_FREE_GENERATIONS = 10;
