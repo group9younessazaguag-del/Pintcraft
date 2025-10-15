@@ -29,8 +29,5 @@ export interface CsvRow {
 
 export interface AdminSettings {
   analyticsId: string;
-  adsId: string;
-  showAds: boolean;
-  adClient: string;
-  adSlot: string;
+  adScript: string;
 }

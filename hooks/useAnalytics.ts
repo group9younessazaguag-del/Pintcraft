@@ -6,7 +6,7 @@ declare global {
   }
 }
 
-export const useAnalytics = (analyticsId?: string, adsId?: string) => {
+export const useAnalytics = (analyticsId?: string) => {
   useEffect(() => {
     if (typeof window.gtag !== 'function') {
       return;
@@ -15,8 +15,5 @@ export const useAnalytics = (analyticsId?: string, adsId?: string) => {
     if (analyticsId) {
       window.gtag('config', analyticsId);
     }
-    if (adsId) {
-        window.gtag('config', adsId);
-    }
-  }, [analyticsId, adsId]);
+  }, [analyticsId]);
 };

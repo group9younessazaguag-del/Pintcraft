@@ -49,10 +49,7 @@ const initialImageData = {
 
 const initialAdminSettings: AdminSettings = {
     analyticsId: '',
-    adsId: '',
-    showAds: false,
-    adClient: '',
-    adSlot: '',
+    adScript: '',
 };
 
 
@@ -67,7 +64,7 @@ const App: React.FC = () => {
   // Admin and Analytics State
   const [adminSettings, setAdminSettings] = useLocalStorage<AdminSettings>('adminSettings', initialAdminSettings);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useLocalStorage<boolean>('isAdminLoggedIn', false);
-  useAnalytics(adminSettings.analyticsId, adminSettings.adsId);
+  useAnalytics(adminSettings.analyticsId);
 
 
   const [isLoading, setIsLoading] = useState(false);
@@ -736,7 +733,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
-        {page !== 'admin' && <AdBanner settings={adminSettings} />}
+        {page !== 'admin' && <AdBanner adScript={adminSettings.adScript} />}
         {renderPage()}
       </main>
       <Footer />
