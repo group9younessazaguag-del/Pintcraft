@@ -36,11 +36,3 @@ export interface AdminSettings {
   privacyPageContent: string;
   termsPageContent: string;
 }
-
-export type UserTier = 'free' | 'pro';
-
-export interface UserState {
-    tier: UserTier;
-    generationCount: number;
-    lastGeneratedDate: string; // YYYY-MM
-}

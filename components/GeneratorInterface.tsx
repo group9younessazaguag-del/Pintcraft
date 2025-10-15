@@ -1,8 +1,7 @@
 
-
 import React from 'react';
 import type { TemplateData } from '../types';
-import { SettingsAndCustomizeControls, PinContentControls, CsvAndActionsControls, ControlsProps, AutoGeneratorControls } from './Controls';
+import { SettingsAndCustomizeControls, PinContentControls, CsvAndActionsControls, ControlsProps } from './Controls';
 import TemplatePreview from './TemplatePreview';
 import ErrorIcon from './icons/ErrorIcon';
 
@@ -25,8 +24,8 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
                         <div className="ml-3">
                             <h3 className="text-base font-semibold">API Quota Reached</h3>
                             <div className="text-sm mt-2 space-y-1">
-                                <p>The API key you're using has exceeded its free usage limits. This is an issue with your provider account, not the application.</p>
-                                <p>To continue, please check your billing status with Google/Fal.ai or use a different API key.</p>
+                                <p>The Google AI API key you're using has exceeded its free usage limits. This is an issue with your Google account, not the application.</p>
+                                <p>To continue, please check your billing status with Google or use a different API key.</p>
                                 {apiError.helpLink && (
                                     <a href={apiError.helpLink} target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-amber-900">
                                         Check your quota details here.
@@ -52,7 +51,6 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
         </div>
 
         <div className="lg:col-span-1 space-y-8">
-            <AutoGeneratorControls {...controlProps} />
             <PinContentControls {...controlProps} />
         </div>
 

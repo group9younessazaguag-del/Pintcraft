@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 // Helper to parse complex API errors
 const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic', message: string, helpLink?: string } => {
@@ -145,54 +145,6 @@ export const generateImage = async (
         throw specificError;
     }
 };
-
-export const generatePinIdea = async (
-    apiKey: string,
-    model: string,
-    topic: string
-): Promise<{ title: string; subtitle: string; }> => {
-    try {
-        const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Generate one creative and SEO-friendly Pinterest pin idea for the topic: "${topic}". Provide a catchy title (under 60 characters) and a relevant Pinterest board name (under 30 characters).`;
-        
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        title: {
-                            type: Type.STRING,
-                            description: 'A catchy, SEO-friendly pin title, under 60 characters.'
-                        },
-                        subtitle: {
-                            type: Type.STRING,
-                            description: 'A relevant Pinterest board name, under 30 characters.'
-                        }
-                    },
-                    required: ["title", "subtitle"]
-                }
-            }
-        });
-        
-        const jsonText = response.text?.trim();
-        if (!jsonText) {
-            throw new Error('The AI model returned an empty response.');
-        }
-        
-        return JSON.parse(jsonText);
-
-    } catch (error: any) {
-        console.error('Error generating pin idea with AI:', error);
-        const errorDetails = getApiErrorDetails(error);
-        const specificError = new Error(errorDetails.message);
-        (specificError as any).type = errorDetails.type;
-        (specificError as any).helpLink = errorDetails.helpLink;
-        throw specificError;
-    }
-}
 
 
 export const generateDescription = async (
