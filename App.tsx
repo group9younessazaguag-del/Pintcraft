@@ -59,6 +59,7 @@ const initialAdminSettings: AdminSettings = {
     howToUsePageContent: '',
     privacyPageContent: '',
     termsPageContent: '',
+    boardList: '',
 };
 
 
@@ -67,7 +68,7 @@ const App: React.FC = () => {
   const [imageData, setImageData] = useState(initialImageData);
   const templateData: TemplateData = { ...persistedData, ...imageData };
 
-  const [userApiKey, setUserApiKey] = useLocalStorage('userApiKey', ''); // For Google AI (text)
+  // FIX: Removed userApiKey state to comply with guideline of using process.env.API_KEY exclusively.
   const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
 
   // Admin and Analytics State
@@ -84,8 +85,7 @@ const App: React.FC = () => {
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [currentRowIndex, setCurrentRowIndex] = useState<number | null>(null);
   const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
-  const [isApiKeyFromEnv, setIsApiKeyFromEnv] = useState(false);
-
+  
   // State for bulk generation
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
   const [bulkMessage, setBulkMessage] = useState('');
@@ -99,22 +99,8 @@ const App: React.FC = () => {
   const zipRef = useRef<any>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (process.env.API_KEY && process.env.API_KEY.length > 5) {
-        setIsApiKeyFromEnv(true);
-    }
-  }, []);
-
-  const getApiKey = useCallback((): string | undefined => {
-    // This is for Google AI (text) only now.
-    if (userApiKey && userApiKey.length > 5) {
-      return userApiKey;
-    }
-    if (process.env.API_KEY && process.env.API_KEY.length > 5) {
-      return process.env.API_KEY;
-    }
-    return undefined;
-  }, [userApiKey]);
+  // FIX: The API key for Google AI must come exclusively from process.env.
+  const googleKeyIsConfigured = !!process.env.API_KEY;
 
   const handleResetBulkGeneration = useCallback(() => {
     setLastCompletedRowIndex(null);
@@ -251,12 +237,11 @@ const App: React.FC = () => {
     setIsGeneratingDescription(true);
     setApiError(null);
 
-    const apiKey = getApiKey(); // Use Google AI key for text
-
     try {
         let newDescription: string;
-        if (apiKey) {
-            newDescription = await generateDescription(apiKey, templateData.textModel, title, templateData.subtitle);
+        // FIX: Use `googleKeyIsConfigured` which checks `process.env.API_KEY`
+        if (googleKeyIsConfigured) {
+            newDescription = await generateDescription(templateData.textModel, title, templateData.subtitle);
         } else {
             newDescription = generatePlaceholderDescription(title, templateData.subtitle);
         }
@@ -288,12 +273,11 @@ const App: React.FC = () => {
     setIsGeneratingKeywords(true);
     setApiError(null);
 
-    const apiKey = getApiKey(); // Use Google AI key for text
-
     try {
         let newKeywords: string;
-        if (apiKey) {
-            newKeywords = await generateKeywords(apiKey, textModel, title, subtitle);
+        // FIX: Use `googleKeyIsConfigured` which checks `process.env.API_KEY`
+        if (googleKeyIsConfigured) {
+            newKeywords = await generateKeywords(textModel, title, subtitle);
         } else {
             newKeywords = generatePlaceholderKeywords(title, subtitle);
         }
@@ -323,12 +307,11 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     setIsGeneratingShortTitle(true);
     setApiError(null);
 
-    const apiKey = getApiKey();
-
     try {
         let newTitle: string;
-        if (apiKey) {
-            newTitle = await generateShortTitle(apiKey, templateData.textModel, title);
+        // FIX: Use `googleKeyIsConfigured` which checks `process.env.API_KEY`
+        if (googleKeyIsConfigured) {
+            newTitle = await generateShortTitle(templateData.textModel, title);
         } else {
             // Fallback for when no API key is present
             newTitle = title.length > 35 ? title.substring(0, 32) + '...' : title;
@@ -454,7 +437,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex + 1);
+      setCurrentRowIndex(currentRowIndex - 1);
     }
   };
 
@@ -466,12 +449,12 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       return;
     }
 
-    const googleApiKey = getApiKey();
     const falApiKey = falAiApiKey;
 
-    if (!googleApiKey || !falApiKey) {
+    // FIX: Updated API key check to use `googleKeyIsConfigured`
+    if (!googleKeyIsConfigured || !falApiKey) {
         let missingKeys = [];
-        if (!googleApiKey) missingKeys.push("Google AI (for text)");
+        if (!googleKeyIsConfigured) missingKeys.push("Google AI (for text)");
         if (!falApiKey) missingKeys.push("Fal.ai (for images)");
         if (!window.confirm(`You are missing API keys for: ${missingKeys.join(' and ')}. Only basic placeholder assets will be created for the missing parts. Do you want to continue?`)) {
             return;
@@ -530,8 +513,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             if (!currentRunCsvData[i][descriptionHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating description...`);
                 let description: string;
-                if (googleApiKey) {
-                    description = await generateDescription(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
+                // FIX: Updated API key check to use `googleKeyIsConfigured`
+                if (googleKeyIsConfigured) {
+                    description = await generateDescription(templateData.textModel, currentData.title, currentData.subtitle);
                 } else {
                     description = generatePlaceholderDescription(currentData.title, currentData.subtitle);
                 }
@@ -542,8 +526,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             if (!currentRunCsvData[i][keywordsHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating keywords...`);
                 let keywords: string;
-                if (googleApiKey) {
-                    keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
+                // FIX: Updated API key check to use `googleKeyIsConfigured`
+                if (googleKeyIsConfigured) {
+                    keywords = await generateKeywords(templateData.textModel, currentData.title, currentData.subtitle);
                 } else {
                     keywords = generatePlaceholderKeywords(currentData.title, currentData.subtitle);
                 }
@@ -709,9 +694,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
     lastCompletedRowIndex: lastCompletedRowIndex,
     onResetBulkGeneration: handleResetBulkGeneration,
-    onSetUserApiKey: setUserApiKey,
-    isApiKeyFromEnv: isApiKeyFromEnv,
-    userApiKey: userApiKey,
+    googleKeyIsConfigured: googleKeyIsConfigured,
     onSetFalAiApiKey: setFalAiApiKey,
     falAiApiKey: falAiApiKey,
   };
@@ -730,11 +713,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <ContactPage content={adminSettings.contactPageContent} />;
         case 'content-generator':
              return <ContentGeneratorPage
-                        getApiKey={getApiKey}
+                        googleKeyIsConfigured={googleKeyIsConfigured}
                         textModel={templateData.textModel}
-                        onSetUserApiKey={setUserApiKey}
-                        isApiKeyFromEnv={isApiKeyFromEnv}
-                        userApiKey={userApiKey}
+                        boardList={adminSettings.boardList}
                     />;
         case 'admin':
             return <AdminPage 

@@ -9,11 +9,9 @@ import DownloadIcon from '../icons/DownloadIcon';
 import ErrorIcon from '../icons/ErrorIcon';
 
 interface ContentGeneratorPageProps {
-    getApiKey: () => string | undefined;
+    googleKeyIsConfigured: boolean;
     textModel: string;
-    onSetUserApiKey: (key: string) => void;
-    isApiKeyFromEnv: boolean;
-    userApiKey: string;
+    boardList: string;
 }
 
 const parseCsvLine = (line: string): string[] => {
@@ -40,78 +38,12 @@ const parseCsvLine = (line: string): string[] => {
     return result;
 };
 
-const ApiKeyInput: React.FC<{
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    onSave: () => void;
-    onClear: () => void;
-    placeholder: string;
-    getLink: string;
-    getLinkText: string;
-    statusMessage: React.ReactNode;
-}> = ({ label, value, onChange, onSave, onClear, placeholder, getLink, getLinkText, statusMessage }) => {
-    const [isKeyVisible, setIsKeyVisible] = useState(false);
-    return (
-        <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
-            <div className="relative">
-                <input
-                    type={isKeyVisible ? 'text' : 'password'}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                />
-                <button
-                    type="button"
-                    onClick={() => setIsKeyVisible(!isKeyVisible)}
-                    className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500"
-                    aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
-                >
-                    {isKeyVisible ? (
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                        </svg>
-                    ) : (
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074L3.707 2.293zM10 12a2 2 0 110-4 2 2 0 010 4z" clipRule="evenodd" />
-                        </svg>
-                    )}
-                </button>
-            </div>
-            <div className="flex gap-2 mt-2">
-                <button onClick={onSave} className="flex-1 px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
-                    Save
-                </button>
-                {value && (
-                    <button onClick={onClear} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
-                        Clear
-                    </button>
-                )}
-            </div>
-            <div className="mt-3 text-xs space-y-2">
-                {statusMessage}
-                <a href={getLink} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:text-pink-800 hover:underline !mt-3 w-full text-left block">
-                    {getLinkText} &rarr;
-                </a>
-            </div>
-        </div>
-    );
-};
-
-const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ getApiKey, textModel, onSetUserApiKey, isApiKeyFromEnv, userApiKey }) => {
+const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ googleKeyIsConfigured, textModel, boardList }) => {
     const [keywords, setKeywords] = useState<string[]>([]);
     const [generatedData, setGeneratedData] = useState<GeneratedContentRow[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [progressMessage, setProgressMessage] = useState('');
     const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
-    const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
-
-    useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
-    const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
-    const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
 
     const resetState = () => {
         setKeywords([]);
@@ -162,9 +94,8 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ getApiKey, 
     };
 
     const handleGenerateContent = async () => {
-        const apiKey = getApiKey();
-        if (!apiKey) {
-            setApiError({type: 'generic', message: "Please provide a Google AI API key to generate content."});
+        if (!googleKeyIsConfigured) {
+            setApiError({type: 'generic', message: "Google AI API key not configured. Please set the API_KEY environment variable."});
             return;
         }
         if (keywords.length === 0) {
@@ -177,12 +108,13 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ getApiKey, 
         setGeneratedData([]);
         
         const results: GeneratedContentRow[] = [];
+        const boardOptions = boardList.split('\n').map(b => b.trim()).filter(Boolean);
 
         for (let i = 0; i < keywords.length; i++) {
             const keyword = keywords[i];
             setProgressMessage(`Processing keyword ${i + 1} of ${keywords.length}: "${keyword}"`);
             try {
-                const content = await generatePinContentFromKeyword(apiKey, textModel, keyword);
+                const content = await generatePinContentFromKeyword(textModel, keyword, boardOptions);
                 results.push({ keyword, ...content });
                 setGeneratedData([...results]); // Update table as we go
             } catch (error: any) {
@@ -201,16 +133,15 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ getApiKey, 
     const handleDownloadCsv = () => {
         if (generatedData.length === 0) return;
 
-        const headers = ['Keyword', 'Title of recipes', 'Board', 'Image Prompt', 'Description', 'Description Alt Text', 'Interest Used', 'Categorie'];
+        const headers = ['Title of recipes', 'Board', 'Image Prompt', 'Description', 'Description Alt Text', 'Interest Used', 'SITE'];
         const rows = generatedData.map(row => [
-            row.keyword,
             row.title,
             row.board,
             row.imagePrompt,
             row.description,
             row.altText,
             row.interests,
-            row.category
+            '' // Empty site column as requested
         ].map(value => {
             const escaped = (value || '').replace(/"/g, '""');
             return `"${escaped}"`;
@@ -246,25 +177,20 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ getApiKey, 
                             <h3 className="text-md font-semibold text-slate-800 tracking-tight">Configuration</h3>
                         </div>
                         <div className="space-y-4 pt-4 border-t border-slate-200/80">
-                           <ApiKeyInput
-                                label="Google AI API Key (for Text)"
-                                value={googleApiKeyInput}
-                                onChange={setGoogleApiKeyInput}
-                                onSave={handleSaveGoogleKey}
-                                onClear={handleClearGoogleKey}
-                                placeholder={isApiKeyFromEnv && !userApiKey ? 'Using secure environment key' : 'Enter your Google AI key'}
-                                getLink="https://aistudio.google.com/app/apikey"
-                                getLinkText="Get a Google AI API Key"
-                                statusMessage={
-                                    userApiKey ? (
-                                        <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Google AI key is saved in this browser.</p>
-                                    ) : isApiKeyFromEnv ? (
-                                        <p className="text-slate-600 p-2 bg-slate-100 rounded-lg border border-slate-200">A secure environment key is active. Saving a key here will override it.</p>
-                                    ) : (
-                                        <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
-                                    )
-                                }
-                            />
+                           {/* FIX: Removed Google AI API Key input to comply with guidelines. */}
+                           {!googleKeyIsConfigured && (
+                                <div className="text-amber-800 bg-amber-50 p-3 rounded-lg border border-amber-200 font-medium text-sm">
+                                    <strong>Google AI Key Not Found:</strong> To enable AI text generation, a <code>API_KEY</code> environment variable must be configured for this application.
+                                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:text-pink-800 hover:underline mt-2 w-full text-left block">
+                                        Get a Google AI API Key &rarr;
+                                    </a>
+                                </div>
+                            )}
+                             {googleKeyIsConfigured && (
+                                <div className="text-green-800 bg-green-50 p-3 rounded-lg border border-green-200 font-medium text-sm">
+                                    <strong>Google AI Key is configured.</strong> You're ready to generate content.
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">

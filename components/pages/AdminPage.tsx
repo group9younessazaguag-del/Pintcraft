@@ -153,6 +153,18 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono text-sm"
                 />
             </div>
+            <div>
+                <label htmlFor="boardList" className="block text-sm font-medium text-slate-600 mb-1.5">Pinterest Board List</label>
+                <textarea
+                    id="boardList"
+                    value={localSettings.boardList}
+                    onChange={(e) => handleSettingsChange('boardList', e.target.value)}
+                    rows={5}
+                    placeholder="Enter one board name per line"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono text-sm"
+                />
+                <p className="text-xs text-slate-500 mt-1.5">Enter one board name per line. The AI Content Generator will choose the most relevant board from this list.</p>
+            </div>
              <div className="text-right">
                 <button onClick={handleSaveAllSettings} className="px-6 py-2 bg-pink-500 text-white font-semibold rounded-lg shadow-md hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
                     Save Site Config

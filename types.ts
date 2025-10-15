@@ -36,6 +36,7 @@ export interface AdminSettings {
   howToUsePageContent: string;
   privacyPageContent: string;
   termsPageContent: string;
+  boardList: string;
 }
 
 export interface GeneratedContentRow {

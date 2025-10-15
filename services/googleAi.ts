@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow } from '../types';
 
@@ -150,13 +149,13 @@ export const generateImage = async (
 
 
 export const generateDescription = async (
-    apiKey: string,
     model: string,
     title: string,
     subtitle: string
 ): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey });
+        // FIX: Instantiate GoogleGenAI with API key from environment variables, per guidelines.
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `Write a short, engaging Pinterest description for a pin with the title "${title}" and board "${subtitle}". The description should be under 250 characters, use natural language, include 3-5 relevant hashtags, and end with a clear call to action.`;
         
         const response = await ai.models.generateContent({
@@ -164,7 +163,8 @@ export const generateDescription = async (
             contents: prompt,
         });
 
-        const text = response.text?.trim();
+        // FIX: response.text is a non-nullable string, so optional chaining is not needed.
+        const text = response.text.trim();
 
         if (!text) {
             throw new Error('The AI model returned an empty description.');
@@ -182,13 +182,13 @@ export const generateDescription = async (
 };
 
 export const generateKeywords = async (
-    apiKey: string,
     model: string,
     title: string,
     subtitle: string
 ): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey });
+        // FIX: Instantiate GoogleGenAI with API key from environment variables, per guidelines.
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `Generate 8-12 relevant, comma-separated SEO keywords for a Pinterest pin with the title "${title}" for the board "${subtitle}". Focus on a mix of broad and long-tail keywords. Do not use hashtags. Do not use quotation marks. Return only the keywords.`;
         
         const response = await ai.models.generateContent({
@@ -196,7 +196,8 @@ export const generateKeywords = async (
             contents: prompt,
         });
 
-        const text = response.text?.trim().replace(/"/g, '');
+        // FIX: response.text is a non-nullable string, so optional chaining is not needed.
+        const text = response.text.trim().replace(/"/g, '');
 
         if (!text) {
             throw new Error('The AI model returned empty keywords.');
@@ -214,12 +215,12 @@ export const generateKeywords = async (
 };
 
 export const generateShortTitle = async (
-    apiKey: string,
     model: string,
     longTitle: string
 ): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey });
+        // FIX: Instantiate GoogleGenAI with API key from environment variables, per guidelines.
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `Rewrite this Pinterest title to be more catchy and concise. It must be under 35 characters. Return only the new title, without quotation marks.\n\nOriginal Title: "${longTitle}"`;
         
         const response = await ai.models.generateContent({
@@ -227,7 +228,8 @@ export const generateShortTitle = async (
             contents: prompt,
         });
 
-        const text = response.text?.trim().replace(/"/g, '');
+        // FIX: response.text is a non-nullable string, so optional chaining is not needed.
+        const text = response.text.trim().replace(/"/g, '');
 
         if (!text) {
             throw new Error('The AI model returned an empty title.');
@@ -245,16 +247,21 @@ export const generateShortTitle = async (
 };
 
 export const generatePinContentFromKeyword = async (
-    apiKey: string,
     model: string,
-    keyword: string
+    keyword: string,
+    boardOptions?: string[]
 ): Promise<Omit<GeneratedContentRow, 'keyword'>> => {
     try {
-        const ai = new GoogleGenAI({ apiKey });
+        // FIX: Instantiate GoogleGenAI with API key from environment variables, per guidelines.
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+        const boardInstruction = (boardOptions && boardOptions.length > 0)
+            ? `Select the most suitable Pinterest board name for the keyword from this list ONLY: [${boardOptions.join(', ')}]. Do not create a new board name.`
+            : "Generate a suitable Pinterest board name.";
 
         const prompt = `You are a helpful assistant for creating Pinterest content for a food blog. Based on the provided keyword, generate the following content in JSON format:
 - "title": A catchy and SEO-friendly recipe title (under 100 characters).
-- "board": A suitable Pinterest board name.
+- "board": ${boardInstruction}
 - "imagePrompt": A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details.
 - "description": An engaging Pinterest pin description (under 500 characters) that includes a call-to-action and 2-3 relevant hashtags.
 - "altText": A concise and descriptive alt text for the image, for accessibility purposes.
@@ -400,7 +407,8 @@ export const generatePlaceholderImage = async (
     lines.push(currentLine);
 
     // Recalculate font size based on the longest line to ensure it fits
-    const longestLine = lines.reduce((a, b) => a.length > b.length ? a : b, '');
+    // FIX: Add explicit types to the reduce function callback parameters to prevent type inference issues.
+    const longestLine = lines.reduce((a: string, b: string) => (a.length > b.length ? a : b), '');
     const textWidth = ctx.measureText(longestLine).width;
     if (textWidth > width * 0.85) {
         fontSize *= (width * 0.85) / textWidth;
