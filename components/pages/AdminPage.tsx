@@ -97,7 +97,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0 text-slate-500"><SettingsIcon /></div>
-            <h3 className="text-md font-semibold text-slate-800 tracking-tight">Analytics & Ads Configuration</h3>
+            <h3 className="text-md font-semibold text-slate-800 tracking-tight">Analytics Configuration</h3>
           </div>
           <div className="space-y-4 pt-4 border-t border-slate-200/80">
             <div>
@@ -111,66 +111,25 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
                 placeholder="e.g., G-XXXXXXXXXX"
               />
             </div>
-            <div>
-              <label htmlFor="adsId" className="block text-sm font-medium text-slate-600 mb-1.5">Google Ads ID</label>
-              <input
-                type="text"
-                id="adsId"
-                value={localSettings.adsId}
-                onChange={(e) => handleSettingsChange('adsId', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="e.g., AW-XXXXXXXXX"
-              />
-            </div>
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0 text-slate-500"><BulkIcon /></div>
-            <h3 className="text-md font-semibold text-slate-800 tracking-tight">AdSense Monetization</h3>
+            <h3 className="text-md font-semibold text-slate-800 tracking-tight">Advertisement Script</h3>
           </div>
           <div className="space-y-4 pt-4 border-t border-slate-200/80">
-            <div className="flex items-center justify-between">
-                <label htmlFor="showAds" className="text-sm font-medium text-slate-600">Show Ad Banner</label>
-                <button
-                    type="button"
-                    onClick={() => handleSettingsChange('showAds', !localSettings.showAds)}
-                    className={`${
-                        localSettings.showAds ? 'bg-green-500' : 'bg-slate-300'
-                    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2`}
-                    role="switch"
-                    aria-checked={localSettings.showAds}
-                >
-                    <span
-                    aria-hidden="true"
-                    className={`${
-                        localSettings.showAds ? 'translate-x-5' : 'translate-x-0'
-                    } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                    />
-                </button>
-            </div>
             <div>
-              <label htmlFor="adClient" className="block text-sm font-medium text-slate-600 mb-1.5">AdSense Client ID</label>
-              <input
-                type="text"
-                id="adClient"
-                value={localSettings.adClient}
-                onChange={(e) => handleSettingsChange('adClient', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="e.g., ca-pub-XXXXXXXXXXXXXXXX"
+              <label htmlFor="adScript" className="block text-sm font-medium text-slate-600 mb-1.5">Ad Script Code</label>
+              <textarea
+                id="adScript"
+                value={localSettings.adScript}
+                onChange={(e) => handleSettingsChange('adScript', e.target.value)}
+                className="w-full h-48 px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono text-sm"
+                placeholder="Paste your ad script here (e.g., from Google AdSense or another ad network)"
               />
-            </div>
-            <div>
-              <label htmlFor="adSlot" className="block text-sm font-medium text-slate-600 mb-1.5">AdSense Slot ID</label>
-              <input
-                type="text"
-                id="adSlot"
-                value={localSettings.adSlot}
-                onChange={(e) => handleSettingsChange('adSlot', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="e.g., 1234567890"
-              />
+              <p className="text-xs text-slate-500 mt-1.5">This script will be injected into the ad banner area on the main page. Leave empty to show no ads.</p>
             </div>
           </div>
         </div>
