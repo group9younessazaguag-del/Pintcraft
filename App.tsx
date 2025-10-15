@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings } from './types';
 import Header from './components/Header';
@@ -739,7 +740,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
-        {page !== 'admin' && <AdBanner adScript={adminSettings.adScript} />}
+        {page === 'home' && <AdBanner adScript={adminSettings.adScript} />}
         {renderPage()}
       </main>
       <Footer />
