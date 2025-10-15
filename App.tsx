@@ -11,6 +11,8 @@ import { generateImage, generatePlaceholderImage, generateDescription, generateP
 import useLocalStorage from './hooks/useLocalStorage';
 import { useAnalytics } from './hooks/useAnalytics';
 import GeneratorInterface from './components/GeneratorInterface';
+import HowToUsePage from './components/pages/HowToUsePage';
+import ContactPage from './components/pages/ContactPage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -715,6 +717,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <PrivacyPolicyPage />;
         case 'terms':
             return <TermsOfServicePage />;
+        case 'how-to-use':
+            return <HowToUsePage />;
+        case 'contact':
+            return <ContactPage />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}

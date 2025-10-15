@@ -8,11 +8,13 @@ const Footer: React.FC = () => {
           <p className="text-sm text-slate-500">
             &copy; {new Date().getFullYear()} Pin4You. All Rights Reserved.
           </p>
-          <nav className="flex gap-4 md:gap-6">
-            <a href="#" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Home</a>
+          <nav className="flex flex-wrap justify-center gap-4 md:gap-6">
+            <a href="#home" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Home</a>
+            <a href="#how-to-use" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">How to Use</a>
             <a href="#about" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">About</a>
-            <a href="#privacy" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Privacy Policy</a>
-            <a href="#terms" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Terms of Service</a>
+            <a href="#contact" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Contact Us</a>
+            <a href="#privacy" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Privacy</a>
+            <a href="#terms" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Terms</a>
             <a href="#admin" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Admin</a>
           </nav>
         </div>
