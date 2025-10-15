@@ -8,7 +8,7 @@ const TermsOfServicePage: React.FC = () => {
         <p className="text-sm text-slate-500">Last updated: {new Date().toLocaleDateString()}</p>
         
         <p>
-          Please read these Terms of Service ("Terms") carefully before using the AI Pinterest Pin Generator By youness azaguag (the "Application"). Your access to and use of the Application is conditioned on your acceptance of and compliance with these Terms.
+          Please read these Terms of Service ("Terms") carefully before using Pin4You (the "Application"). Your access to and use of the Application is conditioned on your acceptance of and compliance with these Terms.
         </p>
         
         <h2>1. Acceptance of Terms</h2>

@@ -26,3 +26,11 @@ export interface CsvRow {
   description: string;
   keywords: string;
 }
+
+export interface AdminSettings {
+  analyticsId: string;
+  adsId: string;
+  showAds: boolean;
+  adClient: string;
+  adSlot: string;
+}

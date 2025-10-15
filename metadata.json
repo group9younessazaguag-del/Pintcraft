@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Pinterest Pin Template Generator",
-  "description": "An application to automatically generate Pinterest pin images from templates by allowing users to upload their own background images and add custom text overlays.",
+  "name": "Pin4You",
+  "description": "Pin4You: An AI-powered application to automatically generate Pinterest pin images from templates, allowing users to upload their own background images and add custom text overlays.",
   "requestFramePermissions": []
 }

@@ -1,12 +1,15 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import type { TemplateData, CsvRow } from './types';
+import type { TemplateData, CsvRow, AdminSettings } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutPage from './components/pages/AboutPage';
 import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './components/pages/TermsOfServicePage';
+import AdminPage from './components/pages/AdminPage';
+import AdBanner from './components/AdBanner';
 import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle } from './services/googleAi';
 import useLocalStorage from './hooks/useLocalStorage';
+import { useAnalytics } from './hooks/useAnalytics';
 import GeneratorInterface from './components/GeneratorInterface';
 
 // TypeScript declaration for the CDN-loaded libraries
@@ -44,6 +47,14 @@ const initialImageData = {
     backgroundImage3: null,
 };
 
+const initialAdminSettings: AdminSettings = {
+    analyticsId: '',
+    adsId: '',
+    showAds: false,
+    adClient: '',
+    adSlot: '',
+};
+
 
 const App: React.FC = () => {
   const [persistedData, setPersistedData] = useLocalStorage<PersistedData>('templateData', initialPersistedData);
@@ -52,6 +63,11 @@ const App: React.FC = () => {
 
   const [userApiKey, setUserApiKey] = useLocalStorage('userApiKey', ''); // For Google AI (text)
   const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
+
+  // Admin and Analytics State
+  const [adminSettings, setAdminSettings] = useLocalStorage<AdminSettings>('adminSettings', initialAdminSettings);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useLocalStorage<boolean>('isAdminLoggedIn', false);
+  useAnalytics(adminSettings.analyticsId, adminSettings.adsId);
 
 
   const [isLoading, setIsLoading] = useState(false);
@@ -702,6 +718,13 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <PrivacyPolicyPage />;
         case 'terms':
             return <TermsOfServicePage />;
+        case 'admin':
+            return <AdminPage 
+                        isAdminLoggedIn={isAdminLoggedIn}
+                        setIsAdminLoggedIn={setIsAdminLoggedIn}
+                        settings={adminSettings}
+                        setSettings={setAdminSettings}
+                    />;
         case 'home':
         default:
             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
@@ -713,6 +736,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
+        {page !== 'admin' && <AdBanner settings={adminSettings} />}
         {renderPage()}
       </main>
       <Footer />

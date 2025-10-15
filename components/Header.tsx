@@ -8,7 +8,7 @@ const Header: React.FC = () => {
         <div className="flex justify-center items-center gap-3">
             <PinIcon className="w-7 h-7 text-pink-500" />
             <h1 className="text-xl font-semibold tracking-tight text-slate-800">
-              Pinterest Pin Generator By youness azaguag
+              Pin4You
             </h1>
         </div>
       </div>
