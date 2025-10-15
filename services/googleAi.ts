@@ -1,4 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
+
+import { GoogleGenAI, Type } from '@google/genai';
+import { GeneratedContentRow } from '../types';
 
 // Helper to parse complex API errors
 const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic', message: string, helpLink?: string } => {
@@ -236,6 +238,73 @@ export const generateShortTitle = async (
         console.error('Error generating short title with AI:', error);
         const errorDetails = getApiErrorDetails(error);
         const specificError = new Error(errorDetails.message);
+        (specificError as any).type = errorDetails.type;
+        (specificError as any).helpLink = errorDetails.helpLink;
+        throw specificError;
+    }
+};
+
+export const generatePinContentFromKeyword = async (
+    apiKey: string,
+    model: string,
+    keyword: string
+): Promise<Omit<GeneratedContentRow, 'keyword'>> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+
+        const prompt = `You are a helpful assistant for creating Pinterest content for a food blog. Based on the provided keyword, generate the following content in JSON format:
+- "title": A catchy and SEO-friendly recipe title (under 100 characters).
+- "board": A suitable Pinterest board name.
+- "imagePrompt": A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details.
+- "description": An engaging Pinterest pin description (under 500 characters) that includes a call-to-action and 2-3 relevant hashtags.
+- "altText": A concise and descriptive alt text for the image, for accessibility purposes.
+- "interests": A comma-separated list of 5-7 relevant Pinterest interests for targeting.
+- "category": The most appropriate recipe category (e.g., 'Appetizer', 'Main Course', 'Dessert', 'Breakfast').
+
+Keyword: "${keyword}"`;
+
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING, description: "Catchy, SEO-friendly recipe title." },
+                        board: { type: Type.STRING, description: "Suitable Pinterest board name." },
+                        imagePrompt: { type: Type.STRING, description: "Detailed prompt for an AI image generator." },
+                        description: { type: Type.STRING, description: "Engaging Pinterest pin description with hashtags and a call-to-action." },
+                        altText: { type: Type.STRING, description: "Concise, descriptive alt text for the image." },
+                        interests: { type: Type.STRING, description: "Comma-separated list of relevant Pinterest interests." },
+                        category: { type: Type.STRING, description: "The most appropriate recipe category." },
+                    },
+                    required: ['title', 'board', 'imagePrompt', 'description', 'altText', 'interests', 'category']
+                }
+            }
+        });
+
+        const jsonStr = response.text.trim();
+        const parsedData = JSON.parse(jsonStr);
+
+        if (!parsedData || typeof parsedData !== 'object') {
+            throw new Error('The AI model returned an invalid JSON object.');
+        }
+
+        return {
+            title: parsedData.title || '',
+            board: parsedData.board || '',
+            imagePrompt: parsedData.imagePrompt || '',
+            description: parsedData.description || '',
+            altText: parsedData.altText || '',
+            interests: parsedData.interests || '',
+            category: parsedData.category || '',
+        };
+    } catch (error: any) {
+        console.error(`Error generating content for keyword "${keyword}":`, error);
+        // Re-use existing error handling logic
+        const errorDetails = getApiErrorDetails(error);
+        const specificError = new Error(`Failed on keyword "${keyword}": ${errorDetails.message}`);
         (specificError as any).type = errorDetails.type;
         (specificError as any).helpLink = errorDetails.helpLink;
         throw specificError;

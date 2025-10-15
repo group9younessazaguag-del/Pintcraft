@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PinIcon from './icons/PinIcon';
 import MenuIcon from './icons/MenuIcon';
@@ -49,6 +50,8 @@ const Header: React.FC = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-6">
+              <NavLink href="#home">Pin Generator</NavLink>
+              <NavLink href="#content-generator">Content Generator</NavLink>
               <NavLink href="#how-to-use">How to Use</NavLink>
               <NavLink href="#about">About</NavLink>
               <NavLink href="#terms">Terms of Service</NavLink>
@@ -96,7 +99,8 @@ const Header: React.FC = () => {
              </button>
         </div>
         <nav className="p-4 space-y-2">
-            <MobileNavLink href="#home" onClick={closeMobileMenu}>Home</MobileNavLink>
+            <MobileNavLink href="#home" onClick={closeMobileMenu}>Pin Generator</MobileNavLink>
+            <MobileNavLink href="#content-generator" onClick={closeMobileMenu}>Content Generator</MobileNavLink>
             <MobileNavLink href="#how-to-use" onClick={closeMobileMenu}>How to Use</MobileNavLink>
             <MobileNavLink href="#about" onClick={closeMobileMenu}>About</MobileNavLink>
             <MobileNavLink href="#terms" onClick={closeMobileMenu}>Terms of Service</MobileNavLink>

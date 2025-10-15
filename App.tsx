@@ -14,6 +14,7 @@ import { useAnalytics } from './hooks/useAnalytics';
 import GeneratorInterface from './components/GeneratorInterface';
 import HowToUsePage from './components/pages/HowToUsePage';
 import ContactPage from './components/pages/ContactPage';
+import ContentGeneratorPage from './components/pages/ContentGeneratorPage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -453,7 +454,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex - 1);
+      setCurrentRowIndex(currentRowIndex + 1);
     }
   };
 
@@ -727,6 +728,14 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <HowToUsePage content={adminSettings.howToUsePageContent} />;
         case 'contact':
             return <ContactPage content={adminSettings.contactPageContent} />;
+        case 'content-generator':
+             return <ContentGeneratorPage
+                        getApiKey={getApiKey}
+                        textModel={templateData.textModel}
+                        onSetUserApiKey={setUserApiKey}
+                        isApiKeyFromEnv={isApiKeyFromEnv}
+                        userApiKey={userApiKey}
+                    />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
