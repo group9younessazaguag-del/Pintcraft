@@ -8,12 +8,15 @@ import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './components/pages/TermsOfServicePage';
 import AdminPage from './components/pages/AdminPage';
 import AdBanner from './components/AdBanner';
-import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle } from './services/googleAi';
+import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, generatePinIdea } from './services/googleAi';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useAnalytics } from './hooks/useAnalytics';
 import GeneratorInterface from './components/GeneratorInterface';
 import HowToUsePage from './components/pages/HowToUsePage';
 import ContactPage from './components/pages/ContactPage';
+import { useUser } from './hooks/useUser';
+import UpgradePage from './components/pages/UpgradePage';
+import LimitReachedModal from './components/LimitReachedModal';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -69,6 +72,10 @@ const App: React.FC = () => {
   const [userApiKey, setUserApiKey] = useLocalStorage('userApiKey', ''); // For Google AI (text)
   const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
 
+  // User and Freemium State
+  const { user, setUser, generationCount, isPro, limitReached, decrementCount } = useUser();
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
   // Admin and Analytics State
   const [adminSettings, setAdminSettings] = useLocalStorage<AdminSettings>('adminSettings', initialAdminSettings);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useLocalStorage<boolean>('isAdminLoggedIn', false);
@@ -80,6 +87,8 @@ const App: React.FC = () => {
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isGeneratingKeywords, setIsGeneratingKeywords] = useState(false);
   const [isGeneratingShortTitle, setIsGeneratingShortTitle] = useState(false);
+  const [isAutoGenerating, setIsAutoGenerating] = useState(false);
+
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [currentRowIndex, setCurrentRowIndex] = useState<number | null>(null);
   const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
@@ -105,15 +114,23 @@ const App: React.FC = () => {
   }, []);
 
   const getApiKey = useCallback((): string | undefined => {
-    // This is for Google AI (text) only now.
-    if (userApiKey && userApiKey.length > 5) {
-      return userApiKey;
-    }
-    if (process.env.API_KEY && process.env.API_KEY.length > 5) {
-      return process.env.API_KEY;
-    }
+    if (userApiKey && userApiKey.length > 5) return userApiKey;
+    if (process.env.API_KEY && process.env.API_KEY.length > 5) return process.env.API_KEY;
     return undefined;
   }, [userApiKey]);
+
+  const handleGenerationAttempt = (action: 'single' | 'bulk', requiredCount: number = 1): boolean => {
+      if (isPro) return true;
+      if (limitReached || generationCount + requiredCount > 20) {
+          setShowLimitModal(true);
+          return false;
+      }
+      if (action === 'single') {
+          decrementCount(1);
+      }
+      // For bulk, decrement is handled inside the loop
+      return true;
+  }
 
   const handleResetBulkGeneration = useCallback(() => {
     setLastCompletedRowIndex(null);
@@ -200,39 +217,23 @@ const App: React.FC = () => {
     setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: true }));
     setApiError(null);
 
-    const apiKey = falAiApiKey; // Use Fal.ai key for image generation
+    const apiKey = falAiApiKey; 
     const aspectRatio = templateData.pinSize === 'standard' ? '3:4' : '9:16';
 
     try {
         let imageUrl: string;
-        if (apiKey && apiKey.length > 5) {
-            // Use Fal.ai generation if key is available
-            imageUrl = await generateImage(
-                apiKey,
-                templateData.imageModel,
-                userPrompt,
-                aspectRatio
-            );
+        if (apiKey && apiKey.length > 5 && isPro) {
+            imageUrl = await generateImage(apiKey, templateData.imageModel, userPrompt, aspectRatio);
         } else {
-            // Fallback to placeholder generation
-            imageUrl = await generatePlaceholderImage(
-                userPrompt,
-                aspectRatio
-            );
+            imageUrl = await generatePlaceholderImage(userPrompt, aspectRatio);
         }
         
         const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
         setImageData(prev => ({ ...prev, [field]: imageUrl }));
     } catch (error: any) {
         console.error(`Error generating image:`, error);
-        if (throwOnError) {
-            throw error; // Re-throw for bulk processor
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate image.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
     }
@@ -250,11 +251,11 @@ const App: React.FC = () => {
     setIsGeneratingDescription(true);
     setApiError(null);
 
-    const apiKey = getApiKey(); // Use Google AI key for text
+    const apiKey = getApiKey();
 
     try {
         let newDescription: string;
-        if (apiKey) {
+        if (apiKey && isPro) {
             newDescription = await generateDescription(apiKey, templateData.textModel, title, templateData.subtitle);
         } else {
             newDescription = generatePlaceholderDescription(title, templateData.subtitle);
@@ -262,14 +263,8 @@ const App: React.FC = () => {
         handleFieldChange('description', newDescription);
     } catch (error: any) {
         console.error(`Error generating description:`, error);
-        if (throwOnError) {
-            throw error;
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate description.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate description.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingDescription(false);
     }
@@ -287,11 +282,11 @@ const App: React.FC = () => {
     setIsGeneratingKeywords(true);
     setApiError(null);
 
-    const apiKey = getApiKey(); // Use Google AI key for text
+    const apiKey = getApiKey();
 
     try {
         let newKeywords: string;
-        if (apiKey) {
+        if (apiKey && isPro) {
             newKeywords = await generateKeywords(apiKey, textModel, title, subtitle);
         } else {
             newKeywords = generatePlaceholderKeywords(title, subtitle);
@@ -299,14 +294,8 @@ const App: React.FC = () => {
         handleFieldChange('keywords', newKeywords);
     } catch (error: any) {
         console.error(`Error generating keywords:`, error);
-        if (throwOnError) {
-            throw error;
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate keywords.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate keywords.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingKeywords(false);
     }
@@ -326,26 +315,69 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
     try {
         let newTitle: string;
-        if (apiKey) {
+        if (apiKey && isPro) {
             newTitle = await generateShortTitle(apiKey, templateData.textModel, title);
         } else {
-            // Fallback for when no API key is present
             newTitle = title.length > 35 ? title.substring(0, 32) + '...' : title;
         }
         handleFieldChange('title', newTitle);
     } catch (error: any) {
         console.error(`Error generating short title:`, error);
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to shorten title.',
-            helpLink: error.helpLink
-        });
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to shorten title.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingShortTitle(false);
     }
 };
 
+const handleAutoGenerate = async (topic: string) => {
+    if (!isPro) {
+        window.location.hash = 'upgrade';
+        return;
+    }
+    const googleApiKey = getApiKey();
+    if (!googleApiKey || !falAiApiKey) {
+        setApiError({ type: 'generic', message: 'Please configure both Google AI and Fal.ai API keys to use automatic generation.' });
+        return;
+    }
+    
+    setIsAutoGenerating(true);
+    setApiError(null);
+    try {
+        // 1. Generate Idea
+        const idea = await generatePinIdea(googleApiKey, templateData.textModel, topic);
+        handleFieldChange('title', idea.title);
+        handleFieldChange('subtitle', idea.subtitle);
+        
+        // This is a trick to wait for state to update before the next step
+        await new Promise(resolve => setTimeout(resolve, 50)); 
+
+        // 2. Generate Description & Keywords (can run in parallel)
+        await Promise.all([
+            handleGenerateDescription(true),
+            handleGenerateKeywords(true)
+        ]);
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // 3. Generate Images
+        await handleGenerateImage(1, true, idea.title);
+
+        const templateNeeds2Images = ['1', '3', '6', '10', '13', '15', '19', '20', '21', '23', '27', '28'].includes(templateData.templateId);
+        if (templateNeeds2Images) await handleGenerateImage(2, true, idea.title);
+
+        const templateNeeds3Images = ['6', '13', '19', '21'].includes(templateData.templateId);
+        if (templateNeeds3Images) await handleGenerateImage(3, true, idea.title);
+
+    } catch (error: any) {
+        console.error('Auto generation failed:', error);
+        setApiError({ type: error.type || 'generic', message: `Auto-generation failed: ${error.message}`, helpLink: error.helpLink });
+    } finally {
+        setIsAutoGenerating(false);
+    }
+}
+
   const handleDownload = useCallback(() => {
+    if(!handleGenerationAttempt('single')) return;
+
     if (previewRef.current === null) return;
     setIsLoading(true);
 
@@ -363,7 +395,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         setApiError({ type: 'generic', message: 'Could not generate image. Please try again.'});
       })
       .finally(() => setIsLoading(false));
-  }, [previewRef, templateData.title, currentRowIndex]);
+  }, [previewRef, templateData.title, currentRowIndex, handleGenerationAttempt]);
 
   const parseCsvLine = (line: string): string[] => {
     const result: string[] = [];
@@ -453,7 +485,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex - 1);
+      setCurrentRowIndex(currentRowIndex + 1);
     }
   };
 
@@ -464,15 +496,13 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       setApiError({ type: 'generic', message: 'Please upload a CSV file first.'});
       return;
     }
+    if (!handleGenerationAttempt('bulk', csvData.length)) return;
 
     const googleApiKey = getApiKey();
     const falApiKey = falAiApiKey;
 
-    if (!googleApiKey || !falApiKey) {
-        let missingKeys = [];
-        if (!googleApiKey) missingKeys.push("Google AI (for text)");
-        if (!falApiKey) missingKeys.push("Fal.ai (for images)");
-        if (!window.confirm(`You are missing API keys for: ${missingKeys.join(' and ')}. Only basic placeholder assets will be created for the missing parts. Do you want to continue?`)) {
+    if (!isPro && (!googleApiKey || !falApiKey)) {
+        if (!window.confirm(`You are in the Free plan and don't have API keys configured. Only basic placeholder assets will be created. Do you want to continue?`)) {
             return;
         }
     }
@@ -490,10 +520,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         zipRef.current = new window.JSZip();
         setInProgressCsvData(fullDataForGeneration);
         setLastCompletedRowIndex(null);
-        currentRunCsvData = fullDataForGeneration; // Use the snapshot directly for this run
+        currentRunCsvData = fullDataForGeneration; 
     } else {
         setBulkMessage(`Resuming from row ${startIndex + 1}...`);
-        currentRunCsvData = [...inProgressCsvData]; // For a resumed run, we MUST use the state
+        currentRunCsvData = [...inProgressCsvData]; 
     }
 
     const zip = zipRef.current;
@@ -516,6 +546,11 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     let i = startIndex;
     try {
         for (i = startIndex; i < dataForGeneration.length; i++) {
+            if (!isPro && generationCount + (i - startIndex) + 1 > 20) {
+                setShowLimitModal(true);
+                throw new Error("Monthly generation limit reached.");
+            }
+
             const currentData = dataForGeneration[i];
             setBulkMessage(`Processing row ${i + 1} of ${dataForGeneration.length}: ${currentData.title}`);
             setCurrentRowIndex(i);
@@ -525,11 +560,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 throw new Error(`Data mismatch error at row ${i + 1}. Please restart the bulk generation.`);
             }
             
-            // Generate description if missing
             if (!currentRunCsvData[i][descriptionHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating description...`);
                 let description: string;
-                if (googleApiKey) {
+                if (googleApiKey && isPro) {
                     description = await generateDescription(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
                 } else {
                     description = generatePlaceholderDescription(currentData.title, currentData.subtitle);
@@ -537,11 +571,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 currentRunCsvData[i][descriptionHeaderKey] = description;
             }
 
-            // Generate keywords if missing
             if (!currentRunCsvData[i][keywordsHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating keywords...`);
                 let keywords: string;
-                if (googleApiKey) {
+                if (googleApiKey && isPro) {
                     keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
                 } else {
                     keywords = generatePlaceholderKeywords(currentData.title, currentData.subtitle);
@@ -553,10 +586,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             const prompt = currentData.title;
             if (prompt) {
                  await handleGenerateImage(1, true, prompt);
-                
                 const templateNeeds2Images = ['1', '3', '6', '10', '13', '15', '19', '20', '21', '23', '27', '28'].includes(templateData.templateId);
                 if (templateNeeds2Images) await handleGenerateImage(2, true, prompt);
-
                 const templateNeeds3Images = ['6', '13', '19', '21'].includes(templateData.templateId);
                 if (templateNeeds3Images) await handleGenerateImage(3, true, prompt);
             }
@@ -566,37 +597,28 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 const dataUrl = await window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2, fetchRequestInit: { mode: 'cors' }});
                 const safeTitle = currentData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
                 const filename = `pin_${i + 1}_${safeTitle}.png`;
-
                 const base64Data = dataUrl.substring(dataUrl.indexOf(',') + 1);
                 zip.file(filename, base64Data, { base64: true });
-
                 const prefix = templateData.mediaUrlPrefix.endsWith('/') ? templateData.mediaUrlPrefix : `${templateData.mediaUrlPrefix}/`;
                 const imageUrl = `${prefix}${filename}`;
                 currentRunCsvData[i][mediaUrlHeaderKey] = imageUrl;
-
                 const daysToAdd = Math.floor(i / pinsPerDayNum);
                 const publishDate = new Date(start);
                 publishDate.setDate(start.getDate() + daysToAdd);
-
                 const pinIndexInDay = i % pinsPerDayNum;
-                const startHour = 9;
-                const endHour = 17;
-                const totalHoursInWindow = endHour - startHour;
+                const startHour = 9; const endHour = 17; const totalHoursInWindow = endHour - startHour;
                 const hourIncrement = pinsPerDayNum > 1 ? totalHoursInWindow / (pinsPerDayNum - 1) : 0;
                 const publishHourFloat = startHour + (pinIndexInDay * hourIncrement);
                 const publishHour = Math.floor(publishHourFloat);
                 const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
-                
                 publishDate.setHours(publishHour, publishMinute, 0, 0);
-
-                const year = publishDate.getFullYear();
-                const month = (publishDate.getMonth() + 1).toString().padStart(2, '0');
-                const day = publishDate.getDate().toString().padStart(2, '0');
-                const hour = publishDate.getHours().toString().padStart(2, '0');
+                const year = publishDate.getFullYear(); const month = (publishDate.getMonth() + 1).toString().padStart(2, '0');
+                const day = publishDate.getDate().toString().padStart(2, '0'); const hour = publishDate.getHours().toString().padStart(2, '0');
                 const minute = publishDate.getMinutes().toString().padStart(2, '0');
                 const formattedPublishDate = `${year}-${month}-${day}T${hour}:${minute}:00`;
                 currentRunCsvData[i][publishDateHeaderKey] = formattedPublishDate;
             }
+            if (!isPro) decrementCount(1);
             setInProgressCsvData([...currentRunCsvData]);
             setLastCompletedRowIndex(i);
             await sleep(100);
@@ -644,14 +666,12 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     } catch (e: any) {
         console.error('Bulk generation failed:', e);
         const rowIndex = i + 1;
-        
         let message: string;
         if (e.type === 'quota') {
             message = `API Quota Exceeded on row ${rowIndex}. Bulk generation has been paused.`;
         } else {
             message = `An error occurred on row ${rowIndex}: ${e.message}. Bulk generation stopped.`;
         }
-        
         setApiError({ type: e.type || 'generic', message: message, helpLink: e.helpLink });
         setBulkMessage(message);
     } finally {
@@ -661,7 +681,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handleDownloadGeneratedAssets = () => {
     if (!generatedAssets) return;
-
     const zipLink = document.createElement('a');
     zipLink.href = URL.createObjectURL(generatedAssets.zip);
     zipLink.download = 'pinterest_pins.zip';
@@ -669,7 +688,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     zipLink.click();
     document.body.removeChild(zipLink);
     URL.revokeObjectURL(zipLink.href);
-
     const csvLink = document.createElement('a');
     csvLink.href = URL.createObjectURL(generatedAssets.csv);
     csvLink.setAttribute('download', 'pinterest_bulk_with_media_urls.csv');
@@ -677,7 +695,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     csvLink.click();
     document.body.removeChild(csvLink);
     URL.revokeObjectURL(csvLink.href);
-
     handleResetBulkGeneration();
   };
 
@@ -713,6 +730,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     userApiKey: userApiKey,
     onSetFalAiApiKey: setFalAiApiKey,
     falAiApiKey: falAiApiKey,
+    // Freemium and Auto-Gen props
+    isPro,
+    isAutoGenerating,
+    onAutoGenerate: handleAutoGenerate,
   };
   
   const renderPage = () => {
@@ -727,6 +748,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <HowToUsePage content={adminSettings.howToUsePageContent} />;
         case 'contact':
             return <ContactPage content={adminSettings.contactPageContent} />;
+        case 'upgrade':
+            return <UpgradePage onUpgrade={() => setUser({ ...user, tier: 'pro' })} />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
@@ -740,15 +763,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     }
   };
 
-
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header isPro={isPro} generationCount={generationCount} />
       <main className="flex-grow p-4 md:p-8">
         {page === 'home' && <AdBanner adScript={adminSettings.adScript} />}
         {renderPage()}
       </main>
       <Footer />
+      {showLimitModal && <LimitReachedModal onClose={() => setShowLimitModal(false)} />}
     </div>
   );
 };
