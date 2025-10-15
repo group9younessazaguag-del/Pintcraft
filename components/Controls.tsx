@@ -10,6 +10,7 @@ import ImagesIcon from './icons/ImagesIcon';
 import ActionsIcon from './icons/ActionsIcon';
 import BulkIcon from './icons/BulkIcon';
 import LoadingSpinner from './icons/LoadingSpinner';
+import ApiKeyModal from './ApiKeyModal';
 
 export interface ControlsProps {
   data: TemplateData;
@@ -38,7 +39,9 @@ export interface ControlsProps {
   onDownloadGeneratedAssets: () => void;
   lastCompletedRowIndex: number | null;
   onResetBulkGeneration: () => void;
-  googleKeyIsConfigured: boolean;
+  // FIX: Added props for user-provided Google AI key.
+  userApiKey: string;
+  onSetUserApiKey: (key: string) => void;
   onSetFalAiApiKey: (key: string) => void;
   falAiApiKey: string;
 }
@@ -199,7 +202,7 @@ const ApiKeyInput: React.FC<{
     );
 };
 
-export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, googleKeyIsConfigured }) => {
+export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey }) => {
     const templateCount = 31;
     const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
         id: `${i + 1}`,
@@ -214,24 +217,48 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
       };
       
     const [falApiKeyInput, setFalApiKeyInput] = useState(falAiApiKey);
+    // FIX: Add state for the Google AI key input field.
+    const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
 
     useEffect(() => { setFalApiKeyInput(falAiApiKey); }, [falAiApiKey]);
+    // FIX: Sync local input state with the global API key state.
+    useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
     
     const handleSaveFalKey = () => onSetFalAiApiKey(falApiKeyInput.trim());
     const handleClearFalKey = () => { setFalApiKeyInput(''); onSetFalAiApiKey(''); };
+    // FIX: Add handlers for saving and clearing the Google AI key.
+    const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
+    const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
 
+    const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
+
+    // This modal is no longer needed as the key input is always visible.
+    // const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
     return (
         <>
+            {/* {isApiKeyModalOpen && <ApiKeyModal onClose={() => setIsApiKeyModalOpen(false)} />} */}
             <ControlCard icon={<SettingsIcon />} title="AI Configuration">
                 <div className="space-y-6">
-                    {/* FIX: Removed Google AI API Key input to comply with guidelines. */}
-                    {!googleKeyIsConfigured && (
-                        <div className="text-amber-800 bg-amber-50 p-3 rounded-lg border border-amber-200 font-medium text-sm">
-                            <strong>Google AI Key Not Found:</strong> To enable AI text generation, a <code>API_KEY</code> environment variable must be configured for this application.
-                        </div>
-                    )}
+                    {/* FIX: Re-added the ApiKeyInput for Google AI. */}
+                    <ApiKeyInput
+                        label="Google AI API Key (for Text)"
+                        value={googleApiKeyInput}
+                        onChange={setGoogleApiKeyInput}
+                        onSave={handleSaveGoogleKey}
+                        onClear={handleClearGoogleKey}
+                        placeholder="Enter your Google AI key"
+                        getLink="https://aistudio.google.com/app/apikey"
+                        getLinkText="Get a Google AI API Key"
+                        statusMessage={
+                            googleKeyIsConfigured ? (
+                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Google AI key is saved in this browser.</p>
+                            ) : (
+                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
+                            )
+                        }
+                    />
                     <ApiKeyInput
                         label="Fal.ai API Key (for Images)"
                         value={falApiKeyInput}
@@ -242,7 +269,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         getLink="https://fal.ai/dashboard/keys"
                         getLinkText="Get a Fal.ai API Key"
                         statusMessage={
-                            falAiApiKey ? (
+                            falKeyIsConfigured ? (
                                 <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Fal.ai key is saved in this browser.</p>
                             ) : (
                                 <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable AI image generation.</p>
@@ -263,7 +290,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         onFieldChange={onFieldChange}
                         id="textModel"
                         label="Text Generation Model (Google AI)"
-                         description={!googleKeyIsConfigured ? 'Set API_KEY env var to use.' : 'e.g., gemini-2.5-flash'}
+                         description={!googleKeyIsConfigured ? 'Add Google AI key to use.' : 'e.g., gemini-2.5-flash'}
                     />
                 </div>
             </ControlCard>
@@ -287,10 +314,11 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 };
 
 
-export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, googleKeyIsConfigured, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, onGenerateShortTitle, isGeneratingShortTitle, isBulkGenerating }) => {
+export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, userApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, onGenerateShortTitle, isGeneratingShortTitle, isBulkGenerating }) => {
     const TITLE_RECOMMENDED_MAX_LENGTH = 35;
     const TITLE_HARD_MAX_LENGTH = 100;
     const titleLength = data.title.length;
+    const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
 
     const getTitleCounterColor = () => {
         if (titleLength > TITLE_HARD_MAX_LENGTH) return 'text-red-600';
@@ -396,7 +424,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
     onDownloadGeneratedAssets,
     lastCompletedRowIndex,
     onResetBulkGeneration,
-    googleKeyIsConfigured,
+    userApiKey,
     falAiApiKey,
 }) => {
     const handleCsvFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
