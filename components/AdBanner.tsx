@@ -1,64 +1,44 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
+import type { AdminSettings } from '../types';
 
 interface AdBannerProps {
-  adScript: string;
+  settings: AdminSettings;
 }
 
-const AdBanner: React.FC<AdBannerProps> = ({ adScript }) => {
-  const adContainerRef = useRef<HTMLDivElement>(null);
+declare global {
+  interface Window {
+    adsbygoogle: any[];
+  }
+}
+
+const AdBanner: React.FC<AdBannerProps> = ({ settings }) => {
+  const { showAds, adClient, adSlot } = settings;
 
   useEffect(() => {
-    const adContainer = adContainerRef.current;
-    if (adScript && adContainer) {
-      // Clear any previous ad content
-      adContainer.innerHTML = '';
-
-      // Create a temporary div to parse the script string
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = adScript;
-
-      // Move all child nodes from tempDiv to the ad container
-      // This includes any non-script elements the ad provider might include
-      Array.from(tempDiv.childNodes).forEach(node => {
-        adContainer.appendChild(node.cloneNode(true));
-      });
-
-      // Find all script tags within the newly added content and re-create them
-      // to ensure they execute. Setting innerHTML doesn't execute scripts.
-      const scripts = Array.from(adContainer.getElementsByTagName('script'));
-      // FIX: Explicitly type `oldScript` to resolve errors where its properties were being accessed on an `unknown` type.
-      // This resolves all downstream type inference errors for `attr` as well.
-      scripts.forEach((oldScript: HTMLScriptElement) => {
-        const newScript = document.createElement('script');
-        
-        // Copy all attributes (src, async, etc.)
-        Array.from(oldScript.attributes).forEach(attr => {
-          newScript.setAttribute(attr.name, attr.value);
-        });
-        
-        // Copy inline script content
-        if (oldScript.innerHTML) {
-          newScript.innerHTML = oldScript.innerHTML;
-        }
-        
-        // Replace the non-executable script with the new, executable one
-        oldScript.parentNode?.replaceChild(newScript, oldScript);
-      });
+    if (showAds && adClient && adSlot) {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.error('AdSense error:', e);
+      }
     }
-  }, [adScript]);
+  }, [showAds, adClient, adSlot]);
 
-  if (!adScript) {
+  if (!showAds || !adClient || !adSlot) {
     return null;
   }
 
-  // The ad script injected in the useEffect will populate this container.
   return (
     <div className="container mx-auto mb-8 text-center">
-      <div
-        ref={adContainerRef}
-        className="min-h-[50px] flex items-center justify-center"
-      >
-        {/* Ad script content will be dynamically injected here */}
+      <div className="bg-slate-200/70 rounded-lg p-2 min-h-[100px] flex items-center justify-center">
+        <ins
+          className="adsbygoogle"
+          style={{ display: 'block' }}
+          data-ad-client={adClient}
+          data-ad-slot={adSlot}
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        ></ins>
       </div>
     </div>
   );
