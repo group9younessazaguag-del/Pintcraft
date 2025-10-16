@@ -28,6 +28,13 @@ export interface CsvRow {
   keywords: string;
 }
 
+export interface WebsiteProfile {
+  id: string;
+  name: string;
+  boardList: string;
+  categoryList: string;
+}
+
 export interface AdminSettings {
   analyticsId: string;
   adScript: string;
@@ -36,8 +43,7 @@ export interface AdminSettings {
   howToUsePageContent: string;
   privacyPageContent: string;
   termsPageContent: string;
-  boardList: string;
-  categoryList: string;
+  websiteProfiles: WebsiteProfile[];
   contentPrompt: string;
 }
 

@@ -59,8 +59,7 @@ const initialAdminSettings: AdminSettings = {
     howToUsePageContent: '',
     privacyPageContent: '',
     termsPageContent: '',
-    boardList: '',
-    categoryList: '',
+    websiteProfiles: [],
     contentPrompt: DEFAULT_CONTENT_PROMPT,
 };
 
@@ -721,8 +720,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         userApiKey={userApiKey}
                         onSetUserApiKey={setUserApiKey}
                         textModel={templateData.textModel}
-                        boardList={adminSettings.boardList}
-                        categoryList={adminSettings.categoryList}
+                        websiteProfiles={adminSettings.websiteProfiles}
                         contentPrompt={adminSettings.contentPrompt}
                     />;
     }

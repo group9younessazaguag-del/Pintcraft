@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { AdminSettings } from '../../types';
 import RichTextEditor from '../RichTextEditor';
@@ -31,6 +32,62 @@ const Accordion: React.FC<{ title: string; children: React.ReactNode; initialOpe
     );
 };
 
+const WebsiteProfileEditor: React.FC<{
+    profile: AdminSettings['websiteProfiles'][0];
+    onUpdate: (updatedProfile: AdminSettings['websiteProfiles'][0]) => void;
+    onDelete: () => void;
+}> = ({ profile, onUpdate, onDelete }) => {
+    const handleChange = (field: 'name' | 'boardList' | 'categoryList', value: string) => {
+        onUpdate({ ...profile, [field]: value });
+    };
+
+    return (
+        <div className="space-y-4">
+            <div>
+                <label htmlFor={`profile-name-${profile.id}`} className="block text-sm font-medium text-slate-600 mb-1.5">Profile Name</label>
+                <input
+                    type="text"
+                    id={`profile-name-${profile.id}`}
+                    value={profile.name}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    placeholder="e.g., My Food Blog"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                />
+            </div>
+            <div>
+                <label htmlFor={`board-list-${profile.id}`} className="block text-sm font-medium text-slate-600 mb-1.5">Pinterest Board List</label>
+                <textarea
+                    id={`board-list-${profile.id}`}
+                    value={profile.boardList}
+                    onChange={(e) => handleChange('boardList', e.target.value)}
+                    rows={5}
+                    placeholder="Enter one board name per line"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                />
+            </div>
+            <div>
+                <label htmlFor={`category-list-${profile.id}`} className="block text-sm font-medium text-slate-600 mb-1.5">Recipe Category List</label>
+                <textarea
+                    id={`category-list-${profile.id}`}
+                    value={profile.categoryList}
+                    onChange={(e) => handleChange('categoryList', e.target.value)}
+                    rows={5}
+                    placeholder="Enter one category per line (e.g., Appetizer, Main Course, Dessert)"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                />
+            </div>
+            <div className="text-right">
+                <button
+                    onClick={onDelete}
+                    className="text-sm text-red-600 hover:text-red-800 font-semibold"
+                >
+                    Delete Profile
+                </button>
+            </div>
+        </div>
+    );
+};
+
 
 const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLoggedIn, settings, setSettings }) => {
   const [password, setPassword] = useState('');
@@ -48,8 +105,31 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
     }
   };
 
-  const handleSettingsChange = (field: keyof AdminSettings, value: string) => {
+  const handleSettingsChange = (field: keyof AdminSettings, value: any) => {
     setLocalSettings(prev => ({ ...prev, [field]: value }));
+  };
+  
+  const handleAddNewProfile = () => {
+    const newProfile = {
+        id: new Date().getTime().toString(), // simple unique id
+        name: 'New Website Profile',
+        boardList: '',
+        categoryList: '',
+    };
+    handleSettingsChange('websiteProfiles', [...localSettings.websiteProfiles, newProfile]);
+  };
+
+  const handleUpdateProfile = (index: number, updatedProfile: AdminSettings['websiteProfiles'][0]) => {
+      const newProfiles = [...localSettings.websiteProfiles];
+      newProfiles[index] = updatedProfile;
+      handleSettingsChange('websiteProfiles', newProfiles);
+  };
+
+  const handleDeleteProfile = (index: number) => {
+      if (window.confirm('Are you sure you want to delete this profile?')) {
+          const newProfiles = localSettings.websiteProfiles.filter((_, i) => i !== index);
+          handleSettingsChange('websiteProfiles', newProfiles);
+      }
   };
 
   const handleSavePageContent = (field: keyof AdminSettings) => {
@@ -152,37 +232,37 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono text-sm"
                 />
             </div>
-            <div>
-                <label htmlFor="boardList" className="block text-sm font-medium text-slate-600 mb-1.5">Pinterest Board List</label>
-                <textarea
-                    id="boardList"
-                    value={localSettings.boardList}
-                    onChange={(e) => handleSettingsChange('boardList', e.target.value)}
-                    rows={5}
-                    placeholder="Enter one board name per line"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                />
-                <p className="text-xs text-slate-500 mt-1.5">Enter one board name per line. The AI Content Generator will choose the most relevant board from this list.</p>
-            </div>
-            <div>
-                <label htmlFor="categoryList" className="block text-sm font-medium text-slate-600 mb-1.5">Recipe Category List</label>
-                <textarea
-                    id="categoryList"
-                    value={localSettings.categoryList}
-                    onChange={(e) => handleSettingsChange('categoryList', e.target.value)}
-                    rows={5}
-                    placeholder="Enter one category per line (e.g., Appetizer, Main Course, Dessert)"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                />
-                <p className="text-xs text-slate-500 mt-1.5">Enter one category per line. The AI will choose the most relevant category from this list for each recipe.</p>
-            </div>
              <div className="text-right">
                 <button onClick={handleSaveAllSettings} className="px-6 py-2 bg-pink-500 text-white font-semibold rounded-lg shadow-md hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
-                    Save Site Config
+                    Save All Settings
                 </button>
             </div>
         </div>
         
+        <div className="space-y-6 pt-6 border-t border-slate-200">
+            <h2 className="text-xl font-semibold text-slate-700">Website Profiles</h2>
+            <p className="text-sm text-slate-500 -mt-4">Manage board and category lists for different websites or Pinterest accounts.</p>
+            <div className="space-y-4">
+                {localSettings.websiteProfiles.map((profile, index) => (
+                    <Accordion key={profile.id} title={profile.name || `Profile ${index + 1}`}>
+                        <WebsiteProfileEditor
+                            profile={profile}
+                            onUpdate={(updated) => handleUpdateProfile(index, updated)}
+                            onDelete={() => handleDeleteProfile(index)}
+                        />
+                    </Accordion>
+                ))}
+            </div>
+            <div className="mt-4">
+                <button
+                    onClick={handleAddNewProfile}
+                    className="px-5 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg shadow-sm hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+                >
+                    + Add New Profile
+                </button>
+            </div>
+        </div>
+
         <div className="space-y-6 pt-6 border-t border-slate-200">
             <div className="flex items-center gap-3">
                 <PageIcon className="w-6 h-6 text-slate-500" />
