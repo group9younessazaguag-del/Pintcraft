@@ -247,38 +247,47 @@ export const generateShortTitle = async (
     }
 };
 
+export const DEFAULT_CONTENT_PROMPT = `You are a helpful assistant for creating Pinterest content for a food blog. Based on the provided keyword, generate the following content in JSON format.
+
+{instructions}
+
+- "title": "A catchy and SEO-friendly recipe title between 50 and 90 characters (e.g., 'Easy Creamy Chicken Pasta Recipe for Busy Weeknights')."
+- "board": "The name of the Pinterest board. If a list of boards was provided in the instructions, you MUST select one from that list."
+- "imagePrompt": "A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details."
+- "description": "An engaging Pinterest pin description (under 500 characters) that includes a call-to-action and 2-3 relevant hashtags."
+- "altText": "A concise and descriptive alt text for the image, for accessibility purposes."
+- "interests": "A comma-separated list of 5-7 relevant Pinterest interests for targeting."
+- "category": "The recipe category. If a list of categories was provided in the instructions, you MUST select one from that list."
+
+Keyword: "{keyword}"`;
+
 export const generatePinContentFromKeyword = async (
     apiKey: string,
     model: string,
     keyword: string,
+    promptTemplate: string,
     boardOptions?: string[],
     categoryOptions?: string[]
 ): Promise<Omit<GeneratedContentRow, 'keyword'>> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
 
-        const boardInstruction = (boardOptions && boardOptions.length > 0)
-            ? `Select the most suitable Pinterest board name for the keyword from this list ONLY: [${boardOptions.join(', ')}]. Do not create a new board name.`
-            : "Generate a suitable Pinterest board name.";
+        let instructions: string[] = [];
+        if (boardOptions && boardOptions.length > 0) {
+            instructions.push(`For the 'board' field, you MUST choose exactly one value from the following list: [${boardOptions.join(', ')}].`);
+        }
+        if (categoryOptions && categoryOptions.length > 0) {
+            instructions.push(`For the 'category' field, you MUST choose exactly one value from the following list: [${categoryOptions.join(', ')}].`);
+        }
+        const instructionBlock = instructions.join('\n');
 
-        const categoryInstruction = (categoryOptions && categoryOptions.length > 0)
-            ? `Select the most suitable recipe category for the keyword from this list ONLY: [${categoryOptions.join(', ')}].`
-            : "Generate the most appropriate recipe category (e.g., 'Appetizer', 'Main Course', 'Dessert', 'Breakfast').";
-
-        const prompt = `You are a helpful assistant for creating Pinterest content for a food blog. Based on the provided keyword, generate the following content in JSON format:
-- "title": A catchy and SEO-friendly recipe title (under 100 characters).
-- "board": ${boardInstruction}
-- "imagePrompt": A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details.
-- "description": An engaging Pinterest pin description (under 500 characters) that includes a call-to-action and 2-3 relevant hashtags.
-- "altText": A concise and descriptive alt text for the image, for accessibility purposes.
-- "interests": A comma-separated list of 5-7 relevant Pinterest interests for targeting.
-- "category": ${categoryInstruction}
-
-Keyword: "${keyword}"`;
+        const finalPrompt = promptTemplate
+            .replace('{instructions}', instructionBlock)
+            .replace('{keyword}', keyword);
 
         const response = await ai.models.generateContent({
             model: model,
-            contents: prompt,
+            contents: finalPrompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {

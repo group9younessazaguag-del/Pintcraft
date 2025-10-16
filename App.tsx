@@ -8,7 +8,7 @@ import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './components/pages/TermsOfServicePage';
 import AdminPage from './components/pages/AdminPage';
 import AdBanner from './components/AdBanner';
-import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle } from './services/googleAi';
+import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, DEFAULT_CONTENT_PROMPT } from './services/googleAi';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useAnalytics } from './hooks/useAnalytics';
 import GeneratorInterface from './components/GeneratorInterface';
@@ -61,6 +61,7 @@ const initialAdminSettings: AdminSettings = {
     termsPageContent: '',
     boardList: '',
     categoryList: '',
+    contentPrompt: DEFAULT_CONTENT_PROMPT,
 };
 
 
@@ -722,6 +723,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         textModel={templateData.textModel}
                         boardList={adminSettings.boardList}
                         categoryList={adminSettings.categoryList}
+                        contentPrompt={adminSettings.contentPrompt}
                     />;
     }
   };

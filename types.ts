@@ -38,6 +38,7 @@ export interface AdminSettings {
   termsPageContent: string;
   boardList: string;
   categoryList: string;
+  contentPrompt: string;
 }
 
 export interface GeneratedContentRow {

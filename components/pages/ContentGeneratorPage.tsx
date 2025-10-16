@@ -15,6 +15,7 @@ interface ContentGeneratorPageProps {
     textModel: string;
     boardList: string;
     categoryList: string;
+    contentPrompt: string;
 }
 
 // Copied from Controls.tsx to avoid circular dependency
@@ -91,7 +92,7 @@ const parseCsvLine = (line: string): string[] => {
     return result;
 };
 
-const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, textModel, boardList, categoryList }) => {
+const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, textModel, boardList, categoryList, contentPrompt }) => {
     const [keywords, setKeywords] = useState<string[]>([]);
     const [generatedData, setGeneratedData] = useState<GeneratedContentRow[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -175,7 +176,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
             const keyword = keywords[i];
             setProgressMessage(`Processing keyword ${i + 1} of ${keywords.length}: "${keyword}"`);
             try {
-                const content = await generatePinContentFromKeyword(userApiKey, textModel, keyword, boardOptions, categoryOptions);
+                const content = await generatePinContentFromKeyword(userApiKey, textModel, keyword, contentPrompt, boardOptions, categoryOptions);
                 results.push({ keyword, ...content });
                 setGeneratedData([...results]); // Update table as we go
             } catch (error: any) {
@@ -339,6 +340,9 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                        <th scope="col" className="px-4 py-3">Generated Title</th>
                                        <th scope="col" className="px-4 py-3">Board</th>
                                        <th scope="col" className="px-4 py-3">Description</th>
+                                       <th scope="col" className="px-4 py-3">Description Alt Text</th>
+                                       <th scope="col" className="px-4 py-3">Interest Used</th>
+                                       <th scope="col" className="px-4 py-3">Categorie</th>
                                    </tr>
                                </thead>
                                <tbody>
@@ -346,14 +350,17 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                        generatedData.map((row, index) => (
                                            <tr key={index} className="bg-white border-b hover:bg-slate-50">
                                                <td className="px-4 py-3 font-semibold text-slate-800 align-top">{row.keyword}</td>
-                                               <td className="px-4 py-3 align-top">{row.title}</td>
+                                               <td className="px-4 py-3 align-top min-w-[200px]">{row.title}</td>
                                                <td className="px-4 py-3 align-top">{row.board}</td>
                                                <td className="px-4 py-3 align-top min-w-[250px]">{row.description}</td>
+                                               <td className="px-4 py-3 align-top min-w-[200px]">{row.altText}</td>
+                                               <td className="px-4 py-3 align-top min-w-[200px]">{row.interests}</td>
+                                               <td className="px-4 py-3 align-top">{row.category}</td>
                                            </tr>
                                        ))
                                    ) : (
                                        <tr>
-                                           <td colSpan={4} className="text-center py-10 px-4 text-slate-500">
+                                           <td colSpan={7} className="text-center py-10 px-4 text-slate-500">
                                                {keywords.length > 0 ? 'Generated content will appear here...' : 'Upload a keyword CSV to get started.'}
                                            </td>
                                        </tr>
