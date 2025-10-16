@@ -4,7 +4,10 @@ import PinIcon from './icons/PinIcon';
 import MenuIcon from './icons/MenuIcon';
 import CloseIcon from './icons/CloseIcon';
 
-const getCurrentPage = () => window.location.hash.replace('#', '') || 'home';
+const getCurrentPage = () => {
+    const path = window.location.pathname.substring(1).replace(/\/$/, '');
+    return path || 'home';
+};
 
 const NavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () => void; isActive: boolean }> = ({ href, children, onClick, isActive }) => (
     <a 
@@ -31,11 +34,13 @@ const Header: React.FC = () => {
   const [activePage, setActivePage] = useState(getCurrentPage());
 
   useEffect(() => {
-    const handleHashChange = () => {
+    const handlePopState = () => {
       setActivePage(getCurrentPage());
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
+    // Also handle initial load correctly
+    handlePopState();
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const toggleMobileMenu = () => {
@@ -47,17 +52,17 @@ const Header: React.FC = () => {
   };
 
   const navItems = [
-    { href: "#home", label: "Pin Generator" },
-    { href: "#content-generator", label: "Content Generator" },
-    { href: "#how-to-use", label: "How to Use" },
-    { href: "#about", label: "About" },
-    { href: "#terms", label: "Terms of Service" },
-    { href: "#contact", label: "Contact Us" },
+    { href: "/home", label: "Pin Generator" },
+    { href: "/content-generator", label: "Content Generator" },
+    { href: "/how-to-use", label: "How to Use" },
+    { href: "/about", label: "About" },
+    { href: "/terms", label: "Terms of Service" },
+    { href: "/contact", label: "Contact Us" },
   ];
 
   const mobileNavItems = [
       ...navItems.slice(0, 5),
-      { href: "#privacy", label: "Privacy Policy" },
+      { href: "/privacy", label: "Privacy Policy" },
       ...navItems.slice(5),
   ];
 
@@ -68,7 +73,7 @@ const Header: React.FC = () => {
         <div className="container mx-auto px-4 md:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo and Brand Name */}
-            <a href="#home" onClick={closeMobileMenu} className="flex items-center gap-3 group">
+            <a href="/home" onClick={closeMobileMenu} className="flex items-center gap-3 group">
               <PinIcon className="w-7 h-7 text-pink-500 transition-colors group-hover:text-pink-600" />
               <h1 className="text-xl font-semibold tracking-tight text-slate-800 transition-colors group-hover:text-slate-900">
                 Pin4You

@@ -26,7 +26,12 @@ declare global {
   }
 }
 
-const getCurrentPage = () => window.location.hash.replace('#', '') || 'home';
+const getCurrentPage = () => {
+  // Get pathname, remove leading slash, and remove trailing slash if it exists
+  const path = window.location.pathname.substring(1).replace(/\/$/, '');
+  return path || 'home';
+};
+
 
 type PersistedData = Omit<TemplateData, 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3'>;
 
@@ -121,12 +126,45 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
-    const handleHashChange = () => {
+    // This handles navigation via browser back/forward buttons
+    const handlePopState = () => {
         setPage(getCurrentPage());
         window.scrollTo(0, 0);
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
+    
+    // This handles in-app navigation by intercepting link clicks
+    const handleLinkClick = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        const anchor = target.closest('a');
+
+        // If it's not a local link that we should handle, let the browser do its thing
+        if (!anchor || anchor.target === '_blank' || anchor.origin !== window.location.origin) {
+            return;
+        }
+
+        // If it's a link to the same page with a hash, let the browser handle scrolling
+        if (anchor.pathname === window.location.pathname && anchor.hash.length > 0) {
+            return;
+        }
+        
+        // Prevent full page reload for local links
+        e.preventDefault();
+
+        // Navigate to the new URL if it's different
+        if (window.location.href !== anchor.href) {
+            window.history.pushState({}, '', anchor.href);
+            // Manually trigger popstate to update component state and re-render
+            window.dispatchEvent(new PopStateEvent('popstate'));
+        }
+    };
+
+    document.addEventListener('click', handleLinkClick);
+
+    return () => {
+        window.removeEventListener('popstate', handlePopState);
+        document.removeEventListener('click', handleLinkClick);
+    };
   }, []);
 
   useEffect(() => {
