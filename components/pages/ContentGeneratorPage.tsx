@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { generatePinContentFromKeyword } from '../../services/googleAi';
 import type { GeneratedContentRow } from '../../types';
@@ -15,6 +14,7 @@ interface ContentGeneratorPageProps {
     textModel: string;
     boardList: string;
     categoryList: string;
+    contentPrompt: string;
 }
 
 // Copied from Controls.tsx to avoid circular dependency
@@ -91,7 +91,7 @@ const parseCsvLine = (line: string): string[] => {
     return result;
 };
 
-const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, textModel, boardList, categoryList }) => {
+const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, textModel, boardList, categoryList, contentPrompt }) => {
     const [keywords, setKeywords] = useState<string[]>([]);
     const [generatedData, setGeneratedData] = useState<GeneratedContentRow[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -175,7 +175,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
             const keyword = keywords[i];
             setProgressMessage(`Processing keyword ${i + 1} of ${keywords.length}: "${keyword}"`);
             try {
-                const content = await generatePinContentFromKeyword(userApiKey, textModel, keyword, boardOptions, categoryOptions);
+                const content = await generatePinContentFromKeyword(userApiKey, textModel, keyword, contentPrompt, boardOptions, categoryOptions);
                 results.push({ keyword, ...content });
                 setGeneratedData([...results]); // Update table as we go
             } catch (error: any) {

@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow } from '../types';
 
@@ -247,10 +246,22 @@ export const generateShortTitle = async (
     }
 };
 
+export const DEFAULT_CONTENT_PROMPT = `You are a helpful assistant for creating Pinterest content for a food blog. Based on the provided keyword, generate the following content in JSON format:
+- "title": A catchy and SEO-friendly recipe title between 50 and 90 characters. Example: 'Easy Creamy Chicken Pasta Recipe for Busy Weeknights'.
+- "board": \${boardInstruction}
+- "imagePrompt": A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details.
+- "description": An engaging Pinterest pin description (under 500 characters) that includes a call-to-action and 2-3 relevant hashtags.
+- "altText": A concise and descriptive alt text for the image, for accessibility purposes.
+- "interests": A comma-separated list of 5-7 relevant Pinterest interests for targeting.
+- "category": \${categoryInstruction}
+
+Keyword: "\${keyword}"`;
+
 export const generatePinContentFromKeyword = async (
     apiKey: string,
     model: string,
     keyword: string,
+    promptTemplate: string,
     boardOptions?: string[],
     categoryOptions?: string[]
 ): Promise<Omit<GeneratedContentRow, 'keyword'>> => {
@@ -265,16 +276,10 @@ export const generatePinContentFromKeyword = async (
             ? `Select the most suitable recipe category for the keyword from this list ONLY: [${categoryOptions.join(', ')}].`
             : "Generate the most appropriate recipe category (e.g., 'Appetizer', 'Main Course', 'Dessert', 'Breakfast').";
 
-        const prompt = `You are a helpful assistant for creating Pinterest content for a food blog. Based on the provided keyword, generate the following content in JSON format:
-- "title": A catchy and SEO-friendly recipe title (under 100 characters).
-- "board": ${boardInstruction}
-- "imagePrompt": A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details.
-- "description": An engaging Pinterest pin description (under 500 characters) that includes a call-to-action and 2-3 relevant hashtags.
-- "altText": A concise and descriptive alt text for the image, for accessibility purposes.
-- "interests": A comma-separated list of 5-7 relevant Pinterest interests for targeting.
-- "category": ${categoryInstruction}
-
-Keyword: "${keyword}"`;
+        const prompt = promptTemplate
+            .replace(/\${boardInstruction}/g, boardInstruction)
+            .replace(/\${categoryInstruction}/g, categoryInstruction)
+            .replace(/\${keyword}/g, keyword);
 
         const response = await ai.models.generateContent({
             model: model,
@@ -284,7 +289,7 @@ Keyword: "${keyword}"`;
                 responseSchema: {
                     type: Type.OBJECT,
                     properties: {
-                        title: { type: Type.STRING, description: "Catchy, SEO-friendly recipe title." },
+                        title: { type: Type.STRING, description: "Catchy, SEO-friendly recipe title between 50-90 characters." },
                         board: { type: Type.STRING, description: "Suitable Pinterest board name." },
                         imagePrompt: { type: Type.STRING, description: "Detailed prompt for an AI image generator." },
                         description: { type: Type.STRING, description: "Engaging Pinterest pin description with hashtags and a call-to-action." },
