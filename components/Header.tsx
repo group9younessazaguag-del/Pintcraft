@@ -1,24 +1,25 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PinIcon from './icons/PinIcon';
 import MenuIcon from './icons/MenuIcon';
 import CloseIcon from './icons/CloseIcon';
 
-const NavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () => void }> = ({ href, children, onClick }) => (
+const getCurrentPage = () => window.location.hash.replace('#', '') || 'content-generator';
+
+const NavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () => void; isActive: boolean }> = ({ href, children, onClick, isActive }) => (
     <a 
       href={href} 
       onClick={onClick}
-      className="text-slate-600 hover:text-pink-500 transition-colors duration-200 text-sm font-medium"
+      className={`flex items-center h-16 transition-all duration-200 text-sm font-medium border-b-2 ${isActive ? 'text-pink-500 font-semibold border-pink-500' : 'text-slate-600 hover:text-pink-500 border-transparent'}`}
     >
         {children}
     </a>
 );
 
-const MobileNavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () => void }> = ({ href, children, onClick }) => (
+const MobileNavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () => void; isActive: boolean }> = ({ href, children, onClick, isActive }) => (
     <a 
       href={href}
       onClick={onClick}
-      className="block px-4 py-3 text-lg text-slate-700 hover:bg-slate-100 hover:text-pink-500 rounded-lg transition-colors duration-200"
+      className={`block px-4 py-3 text-lg rounded-lg transition-colors duration-200 ${isActive ? 'bg-pink-50 text-pink-600 font-semibold' : 'text-slate-700 hover:bg-slate-100 hover:text-pink-500'}`}
     >
         {children}
     </a>
@@ -26,6 +27,15 @@ const MobileNavLink: React.FC<{ href: string; children: React.ReactNode; onClick
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activePage, setActivePage] = useState(getCurrentPage());
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setActivePage(getCurrentPage());
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -35,34 +45,53 @@ const Header: React.FC = () => {
     setIsMobileMenuOpen(false);
   };
 
+  const navItems = [
+    { href: "#content-generator", label: "Content Generator" },
+    { href: "#home", label: "Pin Generator" },
+    { href: "#how-to-use", label: "How to Use" },
+    { href: "#about", label: "About" },
+    { href: "#terms", label: "Terms of Service" },
+    { href: "#contact", label: "Contact Us" },
+  ];
+
+  const mobileNavItems = [
+      ...navItems.slice(0, 5),
+      { href: "#privacy", label: "Privacy Policy" },
+      ...navItems.slice(5),
+  ];
+
+
   return (
     <>
       <header className="bg-white/70 backdrop-blur-lg sticky top-0 z-50 border-b border-slate-200">
         <div className="container mx-auto px-4 md:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo and Brand Name */}
-            <a href="#content-generator" onClick={closeMobileMenu} className="flex items-center gap-3">
-              <PinIcon className="w-7 h-7 text-pink-500" />
-              <h1 className="text-xl font-semibold tracking-tight text-slate-800">
+            <a href="#content-generator" onClick={closeMobileMenu} className="flex items-center gap-3 group">
+              <PinIcon className="w-7 h-7 text-pink-500 transition-colors group-hover:text-pink-600" />
+              <h1 className="text-xl font-semibold tracking-tight text-slate-800 transition-colors group-hover:text-slate-900">
                 Pin4You
               </h1>
             </a>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-6">
-              <NavLink href="#content-generator">Content Generator</NavLink>
-              <NavLink href="#home">Pin Generator</NavLink>
-              <NavLink href="#how-to-use">How to Use</NavLink>
-              <NavLink href="#about">About</NavLink>
-              <NavLink href="#terms">Terms of Service</NavLink>
-              <NavLink href="#contact">Contact Us</NavLink>
+              {navItems.map(item => (
+                <NavLink 
+                  key={item.href}
+                  href={item.href}
+                  isActive={activePage === item.href.substring(1)}
+                >
+                    {item.label}
+                </NavLink>
+              ))}
             </nav>
 
             {/* Mobile Menu Button */}
             <div className="md:hidden">
               <button 
                 onClick={toggleMobileMenu} 
-                className="p-2 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className="p-2 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
                 aria-label="Toggle menu"
                 aria-expanded={isMobileMenuOpen}
               >
@@ -92,20 +121,23 @@ const Header: React.FC = () => {
              <h2 className="font-semibold text-slate-800">Menu</h2>
              <button 
                 onClick={closeMobileMenu} 
-                className="p-2 rounded-full text-slate-500 hover:bg-slate-100"
+                className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
                 aria-label="Close menu"
              >
                 <CloseIcon className="w-6 h-6" />
              </button>
         </div>
         <nav className="p-4 space-y-2">
-            <MobileNavLink href="#content-generator" onClick={closeMobileMenu}>Content Generator</MobileNavLink>
-            <MobileNavLink href="#home" onClick={closeMobileMenu}>Pin Generator</MobileNavLink>
-            <MobileNavLink href="#how-to-use" onClick={closeMobileMenu}>How to Use</MobileNavLink>
-            <MobileNavLink href="#about" onClick={closeMobileMenu}>About</MobileNavLink>
-            <MobileNavLink href="#terms" onClick={closeMobileMenu}>Terms of Service</MobileNavLink>
-            <MobileNavLink href="#privacy" onClick={closeMobileMenu}>Privacy Policy</MobileNavLink>
-            <MobileNavLink href="#contact" onClick={closeMobileMenu}>Contact Us</MobileNavLink>
+            {mobileNavItems.map(item => (
+                <MobileNavLink
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMobileMenu}
+                    isActive={activePage === item.href.substring(1)}
+                >
+                    {item.label}
+                </MobileNavLink>
+            ))}
         </nav>
       </div>
     </>
