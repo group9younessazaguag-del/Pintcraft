@@ -239,10 +239,8 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
             return rowData.map(escapeCsvCell).join(',');
         });
 
-        // Add BOM for Excel compatibility with UTF-8
-        const bom = '\uFEFF';
         const csvContent = [headerString, ...rows].join('\n');
-        const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
