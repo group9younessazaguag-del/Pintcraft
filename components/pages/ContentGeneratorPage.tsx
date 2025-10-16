@@ -14,6 +14,7 @@ interface ContentGeneratorPageProps {
     onSetUserApiKey: (key: string) => void;
     textModel: string;
     boardList: string;
+    categoryList: string;
 }
 
 // Copied from Controls.tsx to avoid circular dependency
@@ -90,7 +91,7 @@ const parseCsvLine = (line: string): string[] => {
     return result;
 };
 
-const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, textModel, boardList }) => {
+const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, textModel, boardList, categoryList }) => {
     const [keywords, setKeywords] = useState<string[]>([]);
     const [generatedData, setGeneratedData] = useState<GeneratedContentRow[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -168,12 +169,13 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
         
         const results: GeneratedContentRow[] = [];
         const boardOptions = boardList.split('\n').map(b => b.trim()).filter(Boolean);
+        const categoryOptions = categoryList.split('\n').map(c => c.trim()).filter(Boolean);
 
         for (let i = 0; i < keywords.length; i++) {
             const keyword = keywords[i];
             setProgressMessage(`Processing keyword ${i + 1} of ${keywords.length}: "${keyword}"`);
             try {
-                const content = await generatePinContentFromKeyword(userApiKey, textModel, keyword, boardOptions);
+                const content = await generatePinContentFromKeyword(userApiKey, textModel, keyword, boardOptions, categoryOptions);
                 results.push({ keyword, ...content });
                 setGeneratedData([...results]); // Update table as we go
             } catch (error: any) {
@@ -192,7 +194,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
     const handleDownloadCsv = () => {
         if (generatedData.length === 0) return;
 
-        const headers = ['Title of recipes', 'Board', 'Image Prompt', 'Description', 'Description Alt Text', 'Interest Used', 'SITE'];
+        const headers = ['Title of recipes', 'Board', 'Image Prompt', 'Description', 'Description Alt Text', 'Interest Used', 'SITE', 'Categorie'];
         const rows = generatedData.map(row => [
             row.title,
             row.board,
@@ -200,7 +202,8 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
             row.description,
             row.altText,
             row.interests,
-            '' // Empty site column as requested
+            '', // Empty SITE column
+            row.category
         ].map(value => {
             const escaped = (value || '').replace(/"/g, '""');
             return `"${escaped}"`;

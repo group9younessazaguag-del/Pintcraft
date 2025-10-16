@@ -41,7 +41,7 @@ const Header: React.FC = () => {
         <div className="container mx-auto px-4 md:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo and Brand Name */}
-            <a href="#home" onClick={closeMobileMenu} className="flex items-center gap-3">
+            <a href="#content-generator" onClick={closeMobileMenu} className="flex items-center gap-3">
               <PinIcon className="w-7 h-7 text-pink-500" />
               <h1 className="text-xl font-semibold tracking-tight text-slate-800">
                 Pin4You
@@ -50,8 +50,8 @@ const Header: React.FC = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-6">
-              <NavLink href="#home">Pin Generator</NavLink>
               <NavLink href="#content-generator">Content Generator</NavLink>
+              <NavLink href="#home">Pin Generator</NavLink>
               <NavLink href="#how-to-use">How to Use</NavLink>
               <NavLink href="#about">About</NavLink>
               <NavLink href="#terms">Terms of Service</NavLink>
@@ -99,8 +99,8 @@ const Header: React.FC = () => {
              </button>
         </div>
         <nav className="p-4 space-y-2">
-            <MobileNavLink href="#home" onClick={closeMobileMenu}>Pin Generator</MobileNavLink>
             <MobileNavLink href="#content-generator" onClick={closeMobileMenu}>Content Generator</MobileNavLink>
+            <MobileNavLink href="#home" onClick={closeMobileMenu}>Pin Generator</MobileNavLink>
             <MobileNavLink href="#how-to-use" onClick={closeMobileMenu}>How to Use</MobileNavLink>
             <MobileNavLink href="#about" onClick={closeMobileMenu}>About</MobileNavLink>
             <MobileNavLink href="#terms" onClick={closeMobileMenu}>Terms of Service</MobileNavLink>

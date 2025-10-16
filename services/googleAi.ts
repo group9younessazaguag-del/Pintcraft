@@ -248,18 +248,22 @@ export const generateShortTitle = async (
 };
 
 export const generatePinContentFromKeyword = async (
-    apiKey: string, // FIX: Added apiKey parameter
+    apiKey: string,
     model: string,
     keyword: string,
-    boardOptions?: string[]
+    boardOptions?: string[],
+    categoryOptions?: string[]
 ): Promise<Omit<GeneratedContentRow, 'keyword'>> => {
     try {
-        // FIX: Instantiate GoogleGenAI with user-provided API key.
         const ai = new GoogleGenAI({ apiKey });
 
         const boardInstruction = (boardOptions && boardOptions.length > 0)
             ? `Select the most suitable Pinterest board name for the keyword from this list ONLY: [${boardOptions.join(', ')}]. Do not create a new board name.`
             : "Generate a suitable Pinterest board name.";
+
+        const categoryInstruction = (categoryOptions && categoryOptions.length > 0)
+            ? `Select the most suitable recipe category for the keyword from this list ONLY: [${categoryOptions.join(', ')}].`
+            : "Generate the most appropriate recipe category (e.g., 'Appetizer', 'Main Course', 'Dessert', 'Breakfast').";
 
         const prompt = `You are a helpful assistant for creating Pinterest content for a food blog. Based on the provided keyword, generate the following content in JSON format:
 - "title": A catchy and SEO-friendly recipe title (under 100 characters).
@@ -268,7 +272,7 @@ export const generatePinContentFromKeyword = async (
 - "description": An engaging Pinterest pin description (under 500 characters) that includes a call-to-action and 2-3 relevant hashtags.
 - "altText": A concise and descriptive alt text for the image, for accessibility purposes.
 - "interests": A comma-separated list of 5-7 relevant Pinterest interests for targeting.
-- "category": The most appropriate recipe category (e.g., 'Appetizer', 'Main Course', 'Dessert', 'Breakfast').
+- "category": ${categoryInstruction}
 
 Keyword: "${keyword}"`;
 

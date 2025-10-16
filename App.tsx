@@ -26,7 +26,7 @@ declare global {
   }
 }
 
-const getCurrentPage = () => window.location.hash.replace('#', '') || 'home';
+const getCurrentPage = () => window.location.hash.replace('#', '') || 'content-generator';
 
 type PersistedData = Omit<TemplateData, 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3'>;
 
@@ -60,6 +60,7 @@ const initialAdminSettings: AdminSettings = {
     privacyPageContent: '',
     termsPageContent: '',
     boardList: '',
+    categoryList: '',
 };
 
 
@@ -68,7 +69,6 @@ const App: React.FC = () => {
   const [imageData, setImageData] = useState(initialImageData);
   const templateData: TemplateData = { ...persistedData, ...imageData };
 
-  // FIX: Re-introduced userApiKey state to allow users to enter their key in the UI.
   const [userApiKey, setUserApiKey] = useLocalStorage('googleAiApiKey', ''); // For Google AI (text)
   const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
 
@@ -237,7 +237,6 @@ const App: React.FC = () => {
 
     try {
         let newDescription: string;
-        // FIX: Use the user-provided API key.
         if (userApiKey) {
             newDescription = await generateDescription(userApiKey, templateData.textModel, title, templateData.subtitle);
         } else {
@@ -273,7 +272,6 @@ const App: React.FC = () => {
 
     try {
         let newKeywords: string;
-        // FIX: Use the user-provided API key.
         if (userApiKey) {
             newKeywords = await generateKeywords(userApiKey, textModel, title, subtitle);
         } else {
@@ -307,7 +305,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
     try {
         let newTitle: string;
-        // FIX: Use the user-provided API key.
         if (userApiKey) {
             newTitle = await generateShortTitle(userApiKey, templateData.textModel, title);
         } else {
@@ -435,7 +432,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex - 1);
+      setCurrentRowIndex(currentRowIndex + 1);
     }
   };
 
@@ -450,7 +447,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     const googleApiKey = userApiKey;
     const falApiKey = falAiApiKey;
 
-    // FIX: Updated API key check to use user-provided keys
     if (!googleApiKey || !falApiKey) {
         let missingKeys = [];
         if (!googleApiKey) missingKeys.push("Google AI (for text)");
@@ -512,7 +508,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             if (!currentRunCsvData[i][descriptionHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating description...`);
                 let description: string;
-                // FIX: Updated API key check to use user-provided key
                 if (googleApiKey) {
                     description = await generateDescription(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
                 } else {
@@ -525,7 +520,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             if (!currentRunCsvData[i][keywordsHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating keywords...`);
                 let keywords: string;
-                // FIX: Updated API key check to use user-provided key
                 if (googleApiKey) {
                     keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
                 } else {
@@ -693,7 +687,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
     lastCompletedRowIndex: lastCompletedRowIndex,
     onResetBulkGeneration: handleResetBulkGeneration,
-    // FIX: Pass userApiKey and its setter function to the controls.
     onSetUserApiKey: setUserApiKey,
     userApiKey: userApiKey,
     onSetFalAiApiKey: setFalAiApiKey,
@@ -712,14 +705,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <HowToUsePage content={adminSettings.howToUsePageContent} />;
         case 'contact':
             return <ContactPage content={adminSettings.contactPageContent} />;
-        case 'content-generator':
-             return <ContentGeneratorPage
-                        // FIX: Pass userApiKey and its setter function to the content generator page.
-                        userApiKey={userApiKey}
-                        onSetUserApiKey={setUserApiKey}
-                        textModel={templateData.textModel}
-                        boardList={adminSettings.boardList}
-                    />;
+        case 'home':
+             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
@@ -727,9 +714,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         settings={adminSettings}
                         setSettings={setAdminSettings}
                     />;
-        case 'home':
+        case 'content-generator':
         default:
-            return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
+            return <ContentGeneratorPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
+                        textModel={templateData.textModel}
+                        boardList={adminSettings.boardList}
+                        categoryList={adminSettings.categoryList}
+                    />;
     }
   };
 
@@ -738,7 +731,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
-        {page === 'home' && <AdBanner adScript={adminSettings.adScript} />}
+        {(page === 'content-generator' || page === 'home') && <AdBanner adScript={adminSettings.adScript} />}
         {renderPage()}
       </main>
       <Footer />

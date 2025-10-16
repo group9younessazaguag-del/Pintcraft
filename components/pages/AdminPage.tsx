@@ -161,9 +161,21 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
                     onChange={(e) => handleSettingsChange('boardList', e.target.value)}
                     rows={5}
                     placeholder="Enter one board name per line"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono text-sm"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                 />
                 <p className="text-xs text-slate-500 mt-1.5">Enter one board name per line. The AI Content Generator will choose the most relevant board from this list.</p>
+            </div>
+            <div>
+                <label htmlFor="categoryList" className="block text-sm font-medium text-slate-600 mb-1.5">Recipe Category List</label>
+                <textarea
+                    id="categoryList"
+                    value={localSettings.categoryList}
+                    onChange={(e) => handleSettingsChange('categoryList', e.target.value)}
+                    rows={5}
+                    placeholder="Enter one category per line (e.g., Appetizer, Main Course, Dessert)"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                />
+                <p className="text-xs text-slate-500 mt-1.5">Enter one category per line. The AI will choose the most relevant category from this list for each recipe.</p>
             </div>
              <div className="text-right">
                 <button onClick={handleSaveAllSettings} className="px-6 py-2 bg-pink-500 text-white font-semibold rounded-lg shadow-md hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
