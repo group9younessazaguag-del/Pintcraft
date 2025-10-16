@@ -28,7 +28,7 @@ declare global {
 const getCurrentPage = () => {
   // Get pathname, remove leading slash, and remove trailing slash if it exists
   const path = window.location.pathname.substring(1).replace(/\/$/, '');
-  return path || 'content-generator';
+  return path || 'home';
 };
 
 
@@ -768,8 +768,14 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <HowToUsePage content={adminSettings.howToUsePageContent} />;
         case 'contact':
             return <ContactPage content={adminSettings.contactPageContent} />;
-        case 'home':
-             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
+        case 'content-generator':
+            return <ContentGeneratorPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
+                        textModel={templateData.textModel}
+                        websiteProfiles={adminSettings.websiteProfiles}
+                        contentPrompt={adminSettings.contentPrompt}
+                    />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
@@ -779,15 +785,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         allData={{ adminSettings, googleAiApiKey: userApiKey, falAiApiKey }}
                         onImportSettings={handleImportSettings}
                     />;
-        case 'content-generator':
+        case 'home':
         default:
-            return <ContentGeneratorPage
-                        userApiKey={userApiKey}
-                        onSetUserApiKey={setUserApiKey}
-                        textModel={templateData.textModel}
-                        websiteProfiles={adminSettings.websiteProfiles}
-                        contentPrompt={adminSettings.contentPrompt}
-                    />;
+             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
     }
   };
 
