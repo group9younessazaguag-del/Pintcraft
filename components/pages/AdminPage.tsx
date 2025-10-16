@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { AdminSettings } from '../../types';
 import RichTextEditor from '../RichTextEditor';
@@ -176,22 +175,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                 />
                 <p className="text-xs text-slate-500 mt-1.5">Enter one category per line. The AI will choose the most relevant category from this list for each recipe.</p>
-            </div>
-            <div>
-                <label htmlFor="contentPrompt" className="block text-sm font-medium text-slate-600 mb-1.5">Content Generator AI Prompt</label>
-                <textarea
-                    id="contentPrompt"
-                    value={localSettings.contentPrompt}
-                    onChange={(e) => handleSettingsChange('contentPrompt', e.target.value)}
-                    rows={12}
-                    placeholder="Enter the master prompt for the AI content generator."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono text-sm"
-                />
-                <p className="text-xs text-slate-500 mt-1.5">
-                    Advanced: Edit the prompt used for AI content generation. Available variables: 
-                    <code className="bg-slate-200 text-slate-800 px-1 py-0.5 rounded text-[10px] mx-1">{'{keyword}'}</code>
-                    <code className="bg-slate-200 text-slate-800 px-1 py-0.5 rounded text-[10px] mx-1">{'{instructions}'}</code>
-                </p>
             </div>
              <div className="text-right">
                 <button onClick={handleSaveAllSettings} className="px-6 py-2 bg-pink-500 text-white font-semibold rounded-lg shadow-md hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">

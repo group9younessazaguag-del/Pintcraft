@@ -158,7 +158,7 @@ export const generateDescription = async (
     try {
         // FIX: Instantiate GoogleGenAI with user-provided API key.
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Write a short, engaging Pinterest description for a pin with the title "${title}" and board "${subtitle}". The description should be under 250 characters, use natural language, include 3-5 relevant hashtags, and end with a clear call to action.`;
+        const prompt = `Write a short, engaging Pinterest description for a pin with the title "${title}" and board "${subtitle}". The description should be under 250 characters, use natural language, and end with a clear call to action. Do not include hashtags.`;
         
         const response = await ai.models.generateContent({
             model: model,
@@ -254,7 +254,7 @@ export const DEFAULT_CONTENT_PROMPT = `You are a helpful assistant for creating 
 - "title": "A catchy and SEO-friendly recipe title between 50 and 90 characters (e.g., 'Easy Creamy Chicken Pasta Recipe for Busy Weeknights')."
 - "board": "The name of the Pinterest board. If a list of boards was provided in the instructions, you MUST select one from that list."
 - "imagePrompt": "A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details."
-- "description": "An engaging Pinterest pin description (under 500 characters) that includes a call-to-action and 2-3 relevant hashtags."
+- "description": "An engaging Pinterest pin description (under 500 characters) that includes a call-to-action. Do not include hashtags."
 - "altText": "A concise and descriptive alt text for the image, for accessibility purposes."
 - "interests": "A comma-separated list of 5-7 relevant Pinterest interests for targeting."
 - "category": "The recipe category. If a list of categories was provided in the instructions, you MUST select one from that list."
@@ -296,7 +296,7 @@ export const generatePinContentFromKeyword = async (
                         title: { type: Type.STRING, description: "Catchy, SEO-friendly recipe title." },
                         board: { type: Type.STRING, description: "Suitable Pinterest board name." },
                         imagePrompt: { type: Type.STRING, description: "Detailed prompt for an AI image generator." },
-                        description: { type: Type.STRING, description: "Engaging Pinterest pin description with hashtags and a call-to-action." },
+                        description: { type: Type.STRING, description: "Engaging Pinterest pin description with a call-to-action. Do not include hashtags." },
                         altText: { type: Type.STRING, description: "Concise, descriptive alt text for the image." },
                         interests: { type: Type.STRING, description: "Comma-separated list of relevant Pinterest interests." },
                         category: { type: Type.STRING, description: "The most appropriate recipe category." },
@@ -337,13 +337,10 @@ export const generatePlaceholderDescription = (
     title: string,
     subtitle: string
 ): string => {
-    const cleanedTitle = title.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9\s]/g, '').split(' ').filter(Boolean);
-    const hashtags = cleanedTitle.slice(0, 3).map(word => `#${word}`).join(' ');
-
     const templates = [
-        `Discover everything you need to know about ${title}! This pin is perfect for your '${subtitle}' board. Find more tips and ideas on our website! ${hashtags}`,
-        `Looking for ${title}? You've come to the right place! Get inspired for your '${subtitle}' collection. Click through to learn more. ${hashtags}`,
-        `Save this pin! An essential guide to ${title}. A great addition to your '${subtitle}' board. Visit our site for the full story! ${hashtags}`
+        `Discover everything you need to know about ${title}! This pin is perfect for your '${subtitle}' board. Find more tips and ideas on our website!`,
+        `Looking for ${title}? You've come to the right place! Get inspired for your '${subtitle}' collection. Click through to learn more.`,
+        `Save this pin! An essential guide to ${title}. A great addition to your '${subtitle}' board. Visit our site for the full story!`
     ];
     
     // Pick a template based on title length to add variety
