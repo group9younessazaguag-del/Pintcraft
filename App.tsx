@@ -1,6 +1,6 @@
 
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import type { TemplateData, CsvRow, AdminSettings } from './types';
+import type { TemplateData, CsvRow, AdminSettings, BackupData } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutPage from './components/pages/AboutPage';
@@ -697,6 +697,19 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
     handleResetBulkGeneration();
   };
+  
+  const handleImportSettings = (data: BackupData) => {
+    if (data.adminSettings) {
+        setAdminSettings(data.adminSettings);
+    }
+    if (typeof data.googleAiApiKey === 'string') {
+        setUserApiKey(data.googleAiApiKey);
+    }
+    if (typeof data.falAiApiKey === 'string') {
+        setFalAiApiKey(data.falAiApiKey);
+    }
+    alert('Settings imported successfully!');
+  };
 
   const controlProps = {
     data: templateData,
@@ -757,6 +770,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         setIsAdminLoggedIn={setIsAdminLoggedIn}
                         settings={adminSettings}
                         setSettings={setAdminSettings}
+                        allData={{ adminSettings, googleAiApiKey: userApiKey, falAiApiKey }}
+                        onImportSettings={handleImportSettings}
                     />;
         case 'home':
         default:

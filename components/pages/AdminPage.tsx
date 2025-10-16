@@ -1,15 +1,18 @@
 
-import React, { useState } from 'react';
-import type { AdminSettings } from '../../types';
+import React, { useState, useRef } from 'react';
+import type { AdminSettings, BackupData } from '../../types';
 import RichTextEditor from '../RichTextEditor';
 import PageIcon from '../icons/PageIcon';
 import ChevronDownIcon from '../icons/ChevronDownIcon';
+import DatabaseIcon from '../icons/DatabaseIcon';
 
 interface AdminPageProps {
   isAdminLoggedIn: boolean;
   setIsAdminLoggedIn: (isLoggedIn: boolean) => void;
   settings: AdminSettings;
   setSettings: (settings: AdminSettings) => void;
+  allData: Omit<BackupData, 'adminSettings'> & { adminSettings: AdminSettings };
+  onImportSettings: (data: BackupData) => void;
 }
 
 const Accordion: React.FC<{ title: string; children: React.ReactNode; initialOpen?: boolean }> = ({ title, children, initialOpen = false }) => {
@@ -89,11 +92,12 @@ const WebsiteProfileEditor: React.FC<{
 };
 
 
-const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLoggedIn, settings, setSettings }) => {
+const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLoggedIn, settings, setSettings, allData, onImportSettings }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [localSettings, setLocalSettings] = useState<AdminSettings>(settings);
   const [saveStatus, setSaveStatus] = useState<{[key: string]: 'saved' | 'saving' | null}>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,6 +149,56 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
   const handleSaveAllSettings = () => {
     setSettings(localSettings);
     alert('Site configuration saved!');
+  };
+
+  const handleExport = () => {
+    try {
+        const jsonString = JSON.stringify(allData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `pin4you_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error("Failed to export settings:", err);
+        alert("Could not export settings. See console for details.");
+    }
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const text = e.target?.result as string;
+            const data = JSON.parse(text) as BackupData;
+            // Basic validation
+            if (data.adminSettings && typeof data.googleAiApiKey !== 'undefined' && typeof data.falAiApiKey !== 'undefined') {
+                if (window.confirm("Are you sure you want to import settings? This will overwrite your current API keys and all admin settings.")) {
+                    onImportSettings(data);
+                    // Also update local state to reflect changes immediately
+                    setLocalSettings(data.adminSettings);
+                }
+            } else {
+                throw new Error("Invalid or corrupted backup file.");
+            }
+        } catch (err: any) {
+            console.error("Failed to import settings:", err);
+            alert(`Error importing file: ${err.message}`);
+        } finally {
+            // Reset file input so the same file can be selected again
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+    reader.readAsText(file);
   };
 
   if (!isAdminLoggedIn) {
@@ -260,6 +314,40 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
                 >
                     + Add New Profile
                 </button>
+            </div>
+        </div>
+
+         <div className="space-y-6 pt-6 border-t border-slate-200">
+            <div className="flex items-center gap-3">
+                <DatabaseIcon className="w-6 h-6 text-slate-500" />
+                <h2 className="text-xl font-semibold text-slate-700">Data Management</h2>
+            </div>
+            <p className="text-sm text-slate-500 -mt-4">
+                Save your settings to a file to back them up or transfer them to another computer.
+            </p>
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                    <h4 className="font-semibold text-slate-800">Export Settings</h4>
+                    <p className="text-xs text-slate-500 mt-1 mb-2">
+                        This will save all API keys and admin settings into a single JSON file.
+                    </p>
+                    <button
+                        onClick={handleExport}
+                        className="w-full sm:w-auto px-5 py-2 bg-slate-700 text-white font-semibold text-sm rounded-lg shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+                    >
+                        Export to File
+                    </button>
+                </div>
+                 <div className="flex-1">
+                     <h4 className="font-semibold text-slate-800">Import Settings</h4>
+                     <p className="text-xs text-slate-500 mt-1 mb-2">
+                         Upload a previously exported JSON file to restore your settings. This will overwrite current settings.
+                     </p>
+                     <label htmlFor="import-file" className="w-full sm:w-auto cursor-pointer inline-block px-5 py-2 bg-white text-slate-700 border border-slate-300 font-semibold text-sm rounded-lg shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+                         Import from File
+                     </label>
+                     <input type="file" id="import-file" accept=".json" className="sr-only" ref={fileInputRef} onChange={handleImport}/>
+                </div>
             </div>
         </div>
 
