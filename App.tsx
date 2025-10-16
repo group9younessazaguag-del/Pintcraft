@@ -26,9 +26,9 @@ declare global {
 }
 
 const getCurrentPage = () => {
-  // Get pathname, remove leading slash, and remove trailing slash if it exists
-  const path = window.location.pathname.substring(1).replace(/\/$/, '');
-  return path || 'home';
+  // Get hash, remove leading '#', remove leading/trailing slashes
+  const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
+  return hash || 'home';
 };
 
 
@@ -125,50 +125,18 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
-    // This handles navigation via browser back/forward buttons
-    const handlePopState = () => {
+    // This handles navigation via browser back/forward buttons and direct hash links
+    const handleHashChange = () => {
         setPage(getCurrentPage());
         window.scrollTo(0, 0);
     };
-    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handleHashChange);
     
-    // This handles in-app navigation by intercepting link clicks
-    const handleLinkClick = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        const anchor = target.closest('a');
-
-        // Let the browser handle clicks that aren't part of our app's routing.
-        // This includes:
-        // - Clicks not on an <a> tag
-        // - Links opening in a new tab
-        // - External links to a different origin
-        // - Download links with a `download` attribute
-        // - File links (e.g., blob: URLs)
-        if (!anchor || anchor.target === '_blank' || anchor.origin !== window.location.origin || anchor.hasAttribute('download') || anchor.protocol === 'blob:') {
-            return;
-        }
-
-        // If it's a link to the same page with a hash, let the browser handle scrolling
-        if (anchor.pathname === window.location.pathname && anchor.hash.length > 0) {
-            return;
-        }
-        
-        // Prevent full page reload for local links
-        e.preventDefault();
-
-        // Navigate to the new URL if it's different
-        if (window.location.href !== anchor.href) {
-            window.history.pushState({}, '', anchor.href);
-            // Manually trigger popstate to update component state and re-render
-            window.dispatchEvent(new PopStateEvent('popstate'));
-        }
-    };
-
-    document.addEventListener('click', handleLinkClick);
+    // Set the initial page based on the hash
+    handleHashChange();
 
     return () => {
-        window.removeEventListener('popstate', handlePopState);
-        document.removeEventListener('click', handleLinkClick);
+        window.removeEventListener('hashchange', handleHashChange);
     };
   }, []);
 
