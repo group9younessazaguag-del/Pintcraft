@@ -211,23 +211,39 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
     const handleDownloadCsv = () => {
         if (generatedData.length === 0) return;
 
-        const headers = ['Title of recipes', 'Board', 'Image Prompt', 'Description', 'Description Alt Text', 'Interest Used', 'SITE', 'Categorie'];
-        const rows = generatedData.map(row => [
-            row.title,
-            row.board,
-            row.imagePrompt,
-            row.description,
-            row.altText,
-            row.interests,
-            '', // Empty SITE column
-            row.category
-        ].map(value => {
-            const escaped = (value || '').replace(/"/g, '""');
-            return `"${escaped}"`;
-        }).join(','));
+        // A more robust CSV quoting function
+        const escapeCsvCell = (cell: string) => {
+            const value = cell || '';
+            // If the cell contains a comma, a quote, or a newline, wrap it in double quotes.
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                // Escape existing double quotes by doubling them up.
+                return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+        };
 
-        const csvContent = [headers.join(','), ...rows].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const headers = ['Title of recipes', 'Board', 'Image Prompt', 'Description', 'Description Alt Text', 'Interest Used', 'SITE', 'Categorie'];
+        const headerString = headers.map(escapeCsvCell).join(',');
+
+        const rows = generatedData.map(row => {
+            const rowData = [
+                row.title,
+                row.board,
+                row.imagePrompt,
+                row.description,
+                row.altText,
+                row.interests,
+                '', // Empty SITE column
+                row.category
+            ];
+            return rowData.map(escapeCsvCell).join(',');
+        });
+
+        // Add BOM for Excel compatibility with UTF-8
+        const bom = '\uFEFF';
+        const csvContent = [headerString, ...rows].join('\n');
+        const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+        
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.setAttribute('download', 'pinterest_content_ideas.csv');
