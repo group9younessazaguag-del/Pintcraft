@@ -26,7 +26,7 @@ declare global {
   }
 }
 
-const getCurrentPage = () => window.location.hash.replace('#', '') || 'content-generator';
+const getCurrentPage = () => window.location.hash.replace('#', '') || 'home';
 
 type PersistedData = Omit<TemplateData, 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3'>;
 
@@ -705,8 +705,14 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <HowToUsePage content={adminSettings.howToUsePageContent} />;
         case 'contact':
             return <ContactPage content={adminSettings.contactPageContent} />;
-        case 'home':
-             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
+        case 'content-generator':
+             return <ContentGeneratorPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
+                        textModel={templateData.textModel}
+                        websiteProfiles={adminSettings.websiteProfiles}
+                        contentPrompt={adminSettings.contentPrompt}
+                    />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
@@ -714,15 +720,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         settings={adminSettings}
                         setSettings={setAdminSettings}
                     />;
-        case 'content-generator':
+        case 'home':
         default:
-            return <ContentGeneratorPage
-                        userApiKey={userApiKey}
-                        onSetUserApiKey={setUserApiKey}
-                        textModel={templateData.textModel}
-                        websiteProfiles={adminSettings.websiteProfiles}
-                        contentPrompt={adminSettings.contentPrompt}
-                    />;
+            return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
     }
   };
 
