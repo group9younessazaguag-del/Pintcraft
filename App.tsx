@@ -137,8 +137,14 @@ const App: React.FC = () => {
         const target = e.target as HTMLElement;
         const anchor = target.closest('a');
 
-        // If it's not a local link that we should handle, let the browser do its thing
-        if (!anchor || anchor.target === '_blank' || anchor.origin !== window.location.origin) {
+        // Let the browser handle clicks that aren't part of our app's routing.
+        // This includes:
+        // - Clicks not on an <a> tag
+        // - Links opening in a new tab
+        // - External links to a different origin
+        // - Download links with a `download` attribute
+        // - File links (e.g., blob: URLs)
+        if (!anchor || anchor.target === '_blank' || anchor.origin !== window.location.origin || anchor.hasAttribute('download') || anchor.protocol === 'blob:') {
             return;
         }
 

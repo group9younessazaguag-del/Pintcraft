@@ -39,7 +39,8 @@ const WebsiteProfileEditor: React.FC<{
     profile: AdminSettings['websiteProfiles'][0];
     onUpdate: (updatedProfile: AdminSettings['websiteProfiles'][0]) => void;
     onDelete: () => void;
-}> = ({ profile, onUpdate, onDelete }) => {
+    onSetDefault: () => void;
+}> = ({ profile, onUpdate, onDelete, onSetDefault }) => {
     const handleChange = (field: 'name' | 'boardList' | 'categoryList', value: string) => {
         onUpdate({ ...profile, [field]: value });
     };
@@ -79,7 +80,14 @@ const WebsiteProfileEditor: React.FC<{
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                 />
             </div>
-            <div className="text-right">
+            <div className="flex justify-between items-center pt-2">
+                 <button
+                    onClick={onSetDefault}
+                    disabled={profile.isDefault}
+                    className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 disabled:text-slate-400 disabled:cursor-not-allowed"
+                >
+                    {profile.isDefault ? '✓ Default Profile' : 'Set as Default'}
+                </button>
                 <button
                     onClick={onDelete}
                     className="text-sm text-red-600 hover:text-red-800 font-semibold"
@@ -114,11 +122,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
   };
   
   const handleAddNewProfile = () => {
+    const isFirstProfile = localSettings.websiteProfiles.length === 0;
     const newProfile = {
         id: new Date().getTime().toString(), // simple unique id
         name: 'New Website Profile',
         boardList: '',
         categoryList: '',
+        isDefault: isFirstProfile,
     };
     handleSettingsChange('websiteProfiles', [...localSettings.websiteProfiles, newProfile]);
   };
@@ -128,10 +138,25 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
       newProfiles[index] = updatedProfile;
       handleSettingsChange('websiteProfiles', newProfiles);
   };
+  
+  const handleSetDefaultProfile = (profileIdToSet: string) => {
+      const newProfiles = localSettings.websiteProfiles.map(p => ({
+          ...p,
+          isDefault: p.id === profileIdToSet,
+      }));
+      handleSettingsChange('websiteProfiles', newProfiles);
+  };
 
   const handleDeleteProfile = (index: number) => {
       if (window.confirm('Are you sure you want to delete this profile?')) {
-          const newProfiles = localSettings.websiteProfiles.filter((_, i) => i !== index);
+          const deletedProfile = localSettings.websiteProfiles[index];
+          let newProfiles = localSettings.websiteProfiles.filter((_, i) => i !== index);
+
+          // If the deleted one was the default and there are profiles left, set a new default.
+          if (deletedProfile.isDefault && newProfiles.length > 0) {
+              newProfiles[0].isDefault = true;
+          }
+          
           handleSettingsChange('websiteProfiles', newProfiles);
       }
   };
@@ -298,11 +323,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
             <p className="text-sm text-slate-500 -mt-4">Manage board and category lists for different websites or Pinterest accounts.</p>
             <div className="space-y-4">
                 {localSettings.websiteProfiles.map((profile, index) => (
-                    <Accordion key={profile.id} title={profile.name || `Profile ${index + 1}`}>
+                    <Accordion key={profile.id} title={profile.name + (profile.isDefault ? ' (Default)' : '')}>
                         <WebsiteProfileEditor
                             profile={profile}
                             onUpdate={(updated) => handleUpdateProfile(index, updated)}
                             onDelete={() => handleDeleteProfile(index)}
+                            onSetDefault={() => handleSetDefaultProfile(profile.id)}
                         />
                     </Accordion>
                 ))}

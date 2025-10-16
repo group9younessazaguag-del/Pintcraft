@@ -102,10 +102,19 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
     useEffect(() => { setApiKeyInput(userApiKey); }, [userApiKey]);
     
     useEffect(() => {
-        if (websiteProfiles.length > 0 && !selectedProfileId) {
-            setSelectedProfileId(websiteProfiles[0].id);
+        if (websiteProfiles.length > 0) {
+            const defaultProfile = websiteProfiles.find(p => p.isDefault);
+            if (defaultProfile) {
+                setSelectedProfileId(defaultProfile.id);
+            } else {
+                // If no default is explicitly set, default to the first one in the list.
+                setSelectedProfileId(websiteProfiles[0].id);
+            }
+        } else {
+            setSelectedProfileId(null);
         }
-    }, [websiteProfiles, selectedProfileId]);
+    }, [websiteProfiles]);
+
 
     const handleSaveKey = () => onSetUserApiKey(apiKeyInput.trim());
     const handleClearKey = () => { setApiKeyInput(''); onSetUserApiKey(''); };
@@ -168,24 +177,31 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
             setApiError({type: 'generic', message: "Please upload a CSV with keywords first."});
             return;
         }
-        if (!selectedProfileId) {
-            setApiError({type: 'generic', message: "Please select a website profile to use for generation."});
-            return;
-        }
-
-        const selectedProfile = websiteProfiles.find(p => p.id === selectedProfileId);
-        if (!selectedProfile) {
-            setApiError({type: 'generic', message: "The selected website profile could not be found. Please check the admin panel."});
-            return;
-        }
 
         setIsLoading(true);
         setApiError(null);
         setGeneratedData([]);
         
+        let boardOptions: string[] = [];
+        let categoryOptions: string[] = [];
+
+        if (websiteProfiles.length > 0) {
+             if (!selectedProfileId) {
+                setApiError({type: 'generic', message: "Please select a website profile to use for generation."});
+                setIsLoading(false);
+                return;
+            }
+            const selectedProfile = websiteProfiles.find(p => p.id === selectedProfileId);
+            if (!selectedProfile) {
+                setApiError({type: 'generic', message: "The selected website profile could not be found. Please check the admin panel."});
+                setIsLoading(false);
+                return;
+            }
+            boardOptions = selectedProfile.boardList.split('\n').map(b => b.trim()).filter(Boolean);
+            categoryOptions = selectedProfile.categoryList.split('\n').map(c => c.trim()).filter(Boolean);
+        }
+
         const results: GeneratedContentRow[] = [];
-        const boardOptions = selectedProfile.boardList.split('\n').map(b => b.trim()).filter(Boolean);
-        const categoryOptions = selectedProfile.categoryList.split('\n').map(c => c.trim()).filter(Boolean);
 
         for (let i = 0; i < keywords.length; i++) {
             const keyword = keywords[i];
@@ -285,29 +301,23 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                 }
                            />
                         </div>
-                        <div className="space-y-4 pt-4 border-t border-slate-200/80">
-                            <label htmlFor="website-profile-select" className="block text-sm font-medium text-slate-600 mb-1.5">Website Profile</label>
-                            <select
-                                id="website-profile-select"
-                                value={selectedProfileId || ''}
-                                onChange={(e) => setSelectedProfileId(e.target.value)}
-                                disabled={websiteProfiles.length === 0}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 appearance-none bg-no-repeat bg-right pr-8 transition-colors duration-200"
-                                style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.5em 1.5em'}}
-                            >
-                            {websiteProfiles.length > 0 ? (
-                                    <>
-                                        <option value="" disabled>Select a profile...</option>
-                                        {websiteProfiles.map(profile => (
-                                            <option key={profile.id} value={profile.id}>{profile.name}</option>
-                                        ))}
-                                    </>
-                                ) : (
-                                    <option value="" disabled>No profiles configured</option>
-                                )}
-                            </select>
-                            {websiteProfiles.length === 0 && <p className="text-xs text-slate-500 mt-1.5">Please add a website profile in the Admin panel.</p>}
-                        </div>
+                        {websiteProfiles.length > 0 && (
+                            <div className="space-y-4 pt-4 border-t border-slate-200/80">
+                                <label htmlFor="website-profile-select" className="block text-sm font-medium text-slate-600 mb-1.5">Website Profile</label>
+                                <select
+                                    id="website-profile-select"
+                                    value={selectedProfileId || ''}
+                                    onChange={(e) => setSelectedProfileId(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 appearance-none bg-no-repeat bg-right pr-8 transition-colors duration-200"
+                                    style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.5em 1.5em'}}
+                                >
+                                    <option value="" disabled>Select a profile...</option>
+                                    {websiteProfiles.map(profile => (
+                                        <option key={profile.id} value={profile.id}>{profile.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
                         <div className="flex items-center gap-3">
@@ -335,7 +345,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                         <div className="space-y-3 pt-4 border-t border-slate-200/80">
                              <button
                                 onClick={handleGenerateContent}
-                                disabled={isLoading || keywords.length === 0 || !selectedProfileId}
+                                disabled={isLoading || keywords.length === 0 || (websiteProfiles.length > 0 && !selectedProfileId)}
                                 className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                             >
                                 {isLoading ? (

@@ -32,6 +32,7 @@ export interface WebsiteProfile {
   name: string;
   boardList: string;
   categoryList: string;
+  isDefault?: boolean;
 }
 
 export interface AdminSettings {
