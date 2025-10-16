@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow } from '../types';
 
@@ -67,6 +66,12 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
             return { type: 'service', message: 'Image generation service is temporarily unavailable.', helpLink: helpLink || undefined };
         }
     }
+    
+    // Add this to provide a more helpful message for the specific error reported by the user
+    if (message.includes('An internal error has occurred')) {
+        message = 'The AI model experienced an internal error. This is often temporary. Please try again in a few moments.';
+    }
+
 
     return { type: 'generic', message, helpLink: helpLink || undefined };
 };
@@ -247,19 +252,19 @@ export const generateShortTitle = async (
     }
 };
 
-export const DEFAULT_CONTENT_PROMPT = `You are a helpful assistant for creating Pinterest content for a food blog. Based on the provided keyword, generate the following content in JSON format.
+export const DEFAULT_CONTENT_PROMPT = `You are a helpful assistant for creating Pinterest content for a food blog. Your task is to generate content based on a provided keyword. The output must be in JSON format and adhere to the specified schema.
 
 {instructions}
 
-- "title": "A catchy and SEO-friendly recipe title between 50 and 90 characters (e.g., 'Easy Creamy Chicken Pasta Recipe for Busy Weeknights')."
-- "board": "The name of the Pinterest board. If a list of boards was provided in the instructions, you MUST select one from that list."
-- "imagePrompt": "A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details."
-- "description": "An engaging Pinterest pin description (under 500 characters) that includes a call-to-action. Do not include hashtags."
-- "altText": "A concise and descriptive alt text for the image, for accessibility purposes."
-- "interests": "A comma-separated list of 5-7 relevant Pinterest interests for targeting."
-- "category": "The recipe category. If a list of categories was provided in the instructions, you MUST select one from that list."
+Here are the details for each field:
+- "title": A catchy and SEO-friendly recipe title between 50 and 90 characters (e.g., 'Easy Creamy Chicken Pasta Recipe for Busy Weeknights').
+- "board": The name of the Pinterest board. If a list of boards was provided, you MUST select one from that list.
+- "imagePrompt": A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details.
+- "description": An engaging Pinterest pin description (under 500 characters) that includes a call-to-action. Do not include hashtags.
+- "altText": A concise and descriptive alt text for the image for accessibility purposes.
+- "interests": A comma-separated list of 5-7 relevant Pinterest interests for targeting.
+- "category": The recipe category. If a list of categories was provided, you MUST select one from that list.`;
 
-Keyword: "{keyword}"`;
 
 export const generatePinContentFromKeyword = async (
     apiKey: string,
@@ -281,14 +286,14 @@ export const generatePinContentFromKeyword = async (
         }
         const instructionBlock = instructions.join('\n');
 
-        const finalPrompt = promptTemplate
-            .replace('{instructions}', instructionBlock)
-            .replace('{keyword}', keyword);
+        const systemInstruction = promptTemplate.replace('{instructions}', instructionBlock);
+        const userContent = `Keyword: "${keyword}"`;
 
         const response = await ai.models.generateContent({
             model: model,
-            contents: finalPrompt,
+            contents: userContent,
             config: {
+                systemInstruction: systemInstruction,
                 responseMimeType: "application/json",
                 responseSchema: {
                     type: Type.OBJECT,
