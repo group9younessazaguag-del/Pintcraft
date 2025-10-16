@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow } from '../types';
 
@@ -258,12 +259,12 @@ export const DEFAULT_CONTENT_PROMPT = `You are a helpful assistant for creating 
 
 Here are the details for each field:
 - "title": A catchy and SEO-friendly recipe title between 50 and 90 characters (e.g., 'Easy Creamy Chicken Pasta Recipe for Busy Weeknights').
-- "board": The name of the Pinterest board. If a list of boards was provided, you MUST select one from that list.
+- "board": The name of the Pinterest board. If a list of boards is provided, you are strictly required to select one from that list and only that list. Do not invent a new board name.
 - "imagePrompt": A detailed, descriptive prompt for an AI image generator to create a delicious-looking photo of the final dish. Describe the lighting, composition, and details.
 - "description": An engaging Pinterest pin description (under 500 characters) that includes a call-to-action. Do not include hashtags.
 - "altText": A concise and descriptive alt text for the image for accessibility purposes.
 - "interests": A comma-separated list of 5-7 relevant Pinterest interests for targeting.
-- "category": The recipe category. If a list of categories was provided, you MUST select one from that list.`;
+- "category": The recipe category. If a list of categories is provided, you are strictly required to select one from that list and only that list. Do not invent a new category name.`;
 
 
 export const generatePinContentFromKeyword = async (
@@ -279,15 +280,35 @@ export const generatePinContentFromKeyword = async (
 
         let instructions: string[] = [];
         if (boardOptions && boardOptions.length > 0) {
-            instructions.push(`For the 'board' field, you MUST choose exactly one value from the following list: [${boardOptions.join(', ')}].`);
+            instructions.push(`For the 'board' field, you are strictly required to choose exactly one value from this list: [${boardOptions.join(', ')}]. Do not return any other value.`);
         }
         if (categoryOptions && categoryOptions.length > 0) {
-            instructions.push(`For the 'category' field, you MUST choose exactly one value from the following list: [${categoryOptions.join(', ')}].`);
+            instructions.push(`For the 'category' field, you are strictly required to choose exactly one value from this list: [${categoryOptions.join(', ')}]. Do not return any other value.`);
         }
         const instructionBlock = instructions.join('\n');
 
         const systemInstruction = promptTemplate.replace('{instructions}', instructionBlock);
         const userContent = `Keyword: "${keyword}"`;
+        
+        const schemaProperties: any = {
+            title: { type: Type.STRING, description: "Catchy, SEO-friendly recipe title." },
+            board: { type: Type.STRING, description: "Suitable Pinterest board name." },
+            imagePrompt: { type: Type.STRING, description: "Detailed prompt for an AI image generator." },
+            description: { type: Type.STRING, description: "Engaging Pinterest pin description with a call-to-action. Do not include hashtags." },
+            altText: { type: Type.STRING, description: "Concise, descriptive alt text for the image." },
+            interests: { type: Type.STRING, description: "Comma-separated list of relevant Pinterest interests." },
+            category: { type: Type.STRING, description: "The most appropriate recipe category." },
+        };
+
+        if (boardOptions && boardOptions.length > 0) {
+            schemaProperties.board.enum = boardOptions;
+            schemaProperties.board.description = `The Pinterest board name. MUST be one of the following: ${boardOptions.join(', ')}.`;
+        }
+
+        if (categoryOptions && categoryOptions.length > 0) {
+            schemaProperties.category.enum = categoryOptions;
+            schemaProperties.category.description = `The recipe category. MUST be one of the following: ${categoryOptions.join(', ')}.`;
+        }
 
         const response = await ai.models.generateContent({
             model: model,
@@ -297,15 +318,7 @@ export const generatePinContentFromKeyword = async (
                 responseMimeType: "application/json",
                 responseSchema: {
                     type: Type.OBJECT,
-                    properties: {
-                        title: { type: Type.STRING, description: "Catchy, SEO-friendly recipe title." },
-                        board: { type: Type.STRING, description: "Suitable Pinterest board name." },
-                        imagePrompt: { type: Type.STRING, description: "Detailed prompt for an AI image generator." },
-                        description: { type: Type.STRING, description: "Engaging Pinterest pin description with a call-to-action. Do not include hashtags." },
-                        altText: { type: Type.STRING, description: "Concise, descriptive alt text for the image." },
-                        interests: { type: Type.STRING, description: "Comma-separated list of relevant Pinterest interests." },
-                        category: { type: Type.STRING, description: "The most appropriate recipe category." },
-                    },
+                    properties: schemaProperties,
                     required: ['title', 'board', 'imagePrompt', 'description', 'altText', 'interests', 'category']
                 }
             }
