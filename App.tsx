@@ -1,4 +1,3 @@
-
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData } from './types';
 import Header from './components/Header';
@@ -29,7 +28,7 @@ declare global {
 const getCurrentPage = () => {
   // Get pathname, remove leading slash, and remove trailing slash if it exists
   const path = window.location.pathname.substring(1).replace(/\/$/, '');
-  return path || 'home';
+  return path || 'content-generator';
 };
 
 
@@ -632,9 +631,17 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 return lowerH === lowerCanonical;
             });
         };
-
-        const csvRows = [outputHeaders.join(',')];
-        currentRunCsvData.forEach(row => {
+        
+        const escapeCsvCell = (cell: any): string => {
+            const value = cell ? String(cell) : '';
+            if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
+                return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+        };
+        
+        const csvHeaderString = outputHeaders.join(',');
+        const csvRowStrings = currentRunCsvData.map(row => {
             const values = outputHeaders.map(header => {
                 let value = '';
                 if (header === 'Media URL') value = row[mediaUrlHeaderKey] || '';
@@ -645,14 +652,13 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     const originalHeader = getOriginalHeader(header);
                     if (originalHeader) value = row[originalHeader] || '';
                 }
-                const escaped = value.includes(',') || value.includes('"') ? `"${value.replace(/"/g, '""')}"` : value;
-                return escaped;
+                return escapeCsvCell(value);
             });
-            csvRows.push(values.join(','));
+            return values.join(',');
         });
 
-        const csvString = csvRows.join('\n');
-        const csvBlob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const csvString = [csvHeaderString, ...csvRowStrings].join('\r\n');
+        const csvBlob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' });
         const zipContent = await zip.generateAsync({ type: 'blob' });
 
         setGeneratedAssets({ zip: zipContent, csv: csvBlob });
@@ -756,14 +762,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <HowToUsePage content={adminSettings.howToUsePageContent} />;
         case 'contact':
             return <ContactPage content={adminSettings.contactPageContent} />;
-        case 'content-generator':
-             return <ContentGeneratorPage
-                        userApiKey={userApiKey}
-                        onSetUserApiKey={setUserApiKey}
-                        textModel={templateData.textModel}
-                        websiteProfiles={adminSettings.websiteProfiles}
-                        contentPrompt={adminSettings.contentPrompt}
-                    />;
+        case 'home':
+             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
@@ -773,9 +773,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         allData={{ adminSettings, googleAiApiKey: userApiKey, falAiApiKey }}
                         onImportSettings={handleImportSettings}
                     />;
-        case 'home':
+        case 'content-generator':
         default:
-            return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
+            return <ContentGeneratorPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
+                        textModel={templateData.textModel}
+                        websiteProfiles={adminSettings.websiteProfiles}
+                        contentPrompt={adminSettings.contentPrompt}
+                    />;
     }
   };
 

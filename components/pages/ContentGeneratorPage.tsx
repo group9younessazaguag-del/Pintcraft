@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { generatePinContentFromKeyword } from '../../services/googleAi';
 import type { GeneratedContentRow, WebsiteProfile } from '../../types';
@@ -211,12 +210,9 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
     const handleDownloadCsv = () => {
         if (generatedData.length === 0) return;
 
-        // A more robust CSV quoting function
-        const escapeCsvCell = (cell: string) => {
+        const escapeCsvCell = (cell: string): string => {
             const value = cell || '';
-            // If the cell contains a comma, a quote, or a newline, wrap it in double quotes.
-            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-                // Escape existing double quotes by doubling them up.
+            if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
                 return `"${value.replace(/"/g, '""')}"`;
             }
             return value;
@@ -239,8 +235,9 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
             return rowData.map(escapeCsvCell).join(',');
         });
 
-        const csvContent = [headerString, ...rows].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        // Use Windows-style line endings (\r\n) and add a BOM for better Excel compatibility.
+        const csvContent = [headerString, ...rows].join('\r\n');
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
