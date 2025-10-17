@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -10,7 +9,6 @@ import ImagesIcon from './icons/ImagesIcon';
 import ActionsIcon from './icons/ActionsIcon';
 import BulkIcon from './icons/BulkIcon';
 import LoadingSpinner from './icons/LoadingSpinner';
-import ApiKeyModal from './ApiKeyModal';
 
 export interface ControlsProps {
   data: TemplateData;
@@ -203,7 +201,7 @@ const ApiKeyInput: React.FC<{
 };
 
 export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey }) => {
-    const templateCount = 31;
+    const templateCount = 43;
     const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
         id: `${i + 1}`,
         name: `${i + 1}`
@@ -233,12 +231,8 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
 
-    // This modal is no longer needed as the key input is always visible.
-    // const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-
     return (
         <>
-            {/* {isApiKeyModalOpen && <ApiKeyModal onClose={() => setIsApiKeyModalOpen(false)} />} */}
             <ControlCard icon={<SettingsIcon />} title="AI Configuration">
                 <div className="space-y-6">
                     {/* FIX: Re-added the ApiKeyInput for Google AI. */}
@@ -434,7 +428,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
         }
     };
 
-    const needsImage2 = ['1', '3', '6', '10', '13', '15', '19', '20', '21', '23', '27', '28'].includes(data.templateId);
+    const needsImage2 = ['1', '3', '6', '10', '13', '15', '19', '20', '21', '23', '27', '28', '35', '37', '38', '40', '41', '42'].includes(data.templateId);
     const needsImage3 = ['6', '13', '19', '21'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;

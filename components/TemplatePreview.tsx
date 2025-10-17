@@ -865,179 +865,419 @@ const BoldTitleOverlayTemplate: React.FC<{ data: TemplateData }> = ({ data }) =>
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-black/20"></div>
             <div className="relative z-10 w-full flex flex-col items-center bg-black/20 backdrop-blur-sm p-6 rounded-lg">
                 {title && <h2 className="font-anton font-bold text-5xl md:text-6xl uppercase leading-none tracking-wider" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)', wordBreak: 'break-word' }}>{title}</h2>}
-                {subtitle && <p className="text-sm font-semibold tracking-widest mt-4 opacity-90 uppercase">{subtitle}</p>}
+                {subtitle && <p className="text-sm font-semibold tracking-wide mt-4 opacity-90" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.7)' }}>{subtitle}</p>}
+                {website && <p className="text-xs font-bold tracking-[0.15em] mt-6 pt-3 border-t border-white/20 uppercase opacity-80" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.7)' }}>{website}</p>}
             </div>
-            {website && <p className="absolute bottom-6 text-xs font-bold tracking-[0.15em] opacity-80 uppercase">{website}</p>}
         </div>
     );
 };
 
-const MagazineFeaturetteTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+const GardeningTipsTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
     return (
-        <div className="w-full h-full flex relative font-poppins">
-            <div className="flex-grow h-full relative">
-                <BackgroundImage imageUrl={backgroundImage} />
-                {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-            <div className="w-2/5 h-full bg-slate-800/80 backdrop-blur-sm text-white p-6 flex flex-col justify-center">
-                {title && <h2 className="font-playfair font-bold text-4xl leading-tight tracking-tight" style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                {subtitle && <p className="text-sm tracking-wide mt-4 opacity-80">{subtitle}</p>}
-                <div className="flex-grow"></div>
-                {website && <p className="mt-auto text-xs font-bold tracking-[0.15em] opacity-60 uppercase">{website}</p>}
+        <div className="w-full h-full relative font-poppins text-white">
+            <BackgroundImage imageUrl={backgroundImage} />
+            {!backgroundImage && <div className="absolute inset-0 bg-green-800"></div>}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 p-8 w-full">
+                {subtitle && <p className="text-sm font-semibold tracking-wider uppercase text-green-300">{subtitle}</p>}
+                {title && <h2 className="font-playfair text-4xl font-bold leading-tight tracking-tight mt-1" style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                {website && <p className="mt-4 text-xs font-bold tracking-[0.15em] opacity-80 uppercase border-t border-white/20 pt-2">{website}</p>}
             </div>
         </div>
     );
 };
 
-const HorizontalSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+const HomeDecorInspoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage } = data;
+    return (
+        <div className="w-full h-full relative font-playfair bg-[#F1ECE7] text-[#5C554E] p-6">
+            <div className="w-full h-full relative border-2 border-[#DCD3C9]">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-gray-200"></div>}
+                <div className="absolute inset-0 flex flex-col justify-between p-6">
+                    <div>
+                        {subtitle && <p className="font-poppins text-sm font-semibold tracking-widest uppercase">{subtitle}</p>}
+                    </div>
+                    <div className="text-right">
+                        {title && <h2 className="text-5xl font-bold leading-tight" style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                        {website && <p className="font-poppins mt-2 text-xs font-bold tracking-[0.15em] opacity-80 uppercase">{website}</p>}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const AuthorQuoteTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage } = data;
+    return (
+        <div className="w-full h-full flex flex-col justify-center items-center relative font-serif p-8 bg-white text-gray-800">
+            <BackgroundImage imageUrl={backgroundImage} />
+            {backgroundImage && <div className="absolute inset-0 bg-white/80 backdrop-blur-sm"></div>}
+            <div className="relative z-10 text-center max-w-md">
+                {title && <p className="text-3xl leading-relaxed italic">"{title}"</p>}
+                {subtitle && <p className="mt-6 font-poppins text-sm font-bold tracking-widest uppercase text-gray-500">— {subtitle}</p>}
+            </div>
+            {website && <p className="absolute bottom-6 font-poppins text-xs font-bold tracking-[0.15em] text-gray-400 uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const SplitImageFourBlockTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-gray-100">
-            <div className="h-1/2 w-full relative">
-                <BackgroundImage imageUrl={backgroundImage} />
-                {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
+        <div className="w-full h-full grid grid-cols-2 grid-rows-2 font-poppins bg-white">
+            <div className="relative"><BackgroundImage imageUrl={backgroundImage} /></div>
+            <div className="bg-[#F8F5F2] p-4 flex flex-col justify-center text-[#4E443A]">
+                {title && <h2 className="font-playfair text-3xl font-bold leading-tight" style={{ wordBreak: 'break-word' }}>{title}</h2>}
             </div>
-            <div className="h-1/2 w-full relative">
+            <div className="bg-[#F8F5F2] p-4 flex flex-col justify-center text-[#4E443A]">
+                 {subtitle && <p className="text-sm font-semibold tracking-wide">{subtitle}</p>}
+                 {website && <p className="mt-auto pt-2 border-t border-gray-300 text-xs font-bold tracking-[0.15em] opacity-80 uppercase">{website}</p>}
+            </div>
+            <div className="relative"><BackgroundImage imageUrl={backgroundImage2} /></div>
+        </div>
+    );
+};
+
+const SimpleProductTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage } = data;
+    return (
+        <div className="w-full h-full relative font-poppins bg-white">
+            <div className="h-4/5 w-full relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+            </div>
+            <div className="h-1/5 w-full flex flex-col justify-center items-center text-center p-4 bg-white text-gray-800 border-t border-gray-200">
+                {title && <h2 className="font-semibold text-lg leading-tight" style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+                {website && <p className="mt-1 text-xs font-bold tracking-widest text-pink-500 uppercase">{website}</p>}
+            </div>
+        </div>
+    );
+};
+
+const FoodieSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins text-white">
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                <div className="absolute inset-0 bg-gray-200 -z-10"></div>
+            </div>
+            <div className="flex-1 relative">
                 <BackgroundImage imageUrl={backgroundImage2} />
-                {!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}
+                <div className="absolute inset-0 bg-gray-200 -z-10"></div>
             </div>
-            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-10">
-                <div className="bg-white/95 backdrop-blur-sm shadow-lg py-6 px-4 text-center text-[#4E443A]">
-                    {subtitle && <p className="text-sm font-semibold tracking-wide text-[#4E443A]/70">{subtitle}</p>}
-                    {title && <h2 className="font-playfair text-4xl font-bold leading-tight tracking-tight mt-1" style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                    {website && <p className="mt-4 text-xs font-bold tracking-[0.15em] text-[#4E443A]/50 uppercase">{website}</p>}
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-4">
+                <div className="bg-[#4a4238] w-full max-w-lg text-center p-5 border-y-4 border-[#eacda3]">
+                    {subtitle && <p className="font-lobster text-2xl text-[#eacda3]">{subtitle}</p>}
+                    {title && <h2 className="text-4xl font-black uppercase tracking-wider mt-1" style={{ wordBreak: 'break-word' }}>{title}</h2>}
                 </div>
             </div>
+            {website && <p className="absolute bottom-2 w-full text-center text-sm font-semibold tracking-wider text-black bg-white/70 py-1">{website}</p>}
         </div>
     );
 };
 
-const IngredientSpotlightTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, website, backgroundImage, backgroundImage2 } = data;
+const MinimalistLivingTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const parts = title.split(' ');
+    const number = parts.find(p => !isNaN(parseInt(p)));
+    const textTitle = parts.filter(p => isNaN(parseInt(p))).join(' ');
+
     return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="h-2/3 w-full relative">
+        <div className="w-full h-full flex flex-col relative font-poppins text-white">
+            <div className="flex-1 relative">
                 <BackgroundImage imageUrl={backgroundImage} />
-                {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
+                <div className="absolute inset-0 bg-gray-200 -z-10"></div>
             </div>
-            <div className="h-1/3 w-full flex justify-center items-center text-center p-4 bg-[#F8F5F2] text-[#4E443A] relative">
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full overflow-hidden border-4 border-[#F8F5F2] shadow-lg bg-slate-200">
-                     <BackgroundImage imageUrl={backgroundImage2} />
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                <div className="absolute inset-0 bg-gray-200 -z-10"></div>
+            </div>
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-4">
+                <div className="bg-[#fdfcfb]/90 backdrop-blur-sm text-[#735e4e] w-full max-w-lg text-center p-6 space-y-2">
+                    {number && <p className="font-luckiest-guy text-7xl" style={{ textShadow: '2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff' }}>{number}</p>}
+                    {textTitle && <h2 className="font-luckiest-guy text-5xl uppercase leading-none" style={{ textShadow: '2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff', wordBreak: 'break-word' }}>{textTitle}</h2>}
+                    {subtitle && <p className="text-xl font-playfair italic pt-2">{subtitle}</p>}
                 </div>
-                <div className="pt-10">
-                    {title && <h2 className="font-playfair text-3xl font-bold leading-tight tracking-tight" style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                    {website && <p className="mt-3 text-xs font-bold tracking-[0.15em] text-[#4E443A]/50 uppercase">{website}</p>}
+            </div>
+            {website && (
+                <div className="absolute bottom-6 w-full flex justify-center">
+                    <p className="text-center text-sm font-semibold tracking-wider text-white bg-[#735e4e]/80 py-1.5 px-4 rounded-full">{website}</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const BoldFoodieTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, backgroundImage } = data;
+    const titleWords = title.split(' ');
+
+    return (
+        <div className="w-full h-full relative font-sans text-white">
+            {/* Background Image */}
+            <BackgroundImage imageUrl={backgroundImage} />
+            {!backgroundImage && <div className="absolute inset-0 bg-gray-800"></div>}
+            <div className="absolute inset-0 bg-black/20"></div> {/* Add a slight overlay to ensure text is readable */}
+
+            {/* Centered Content */}
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-4">
+                {/* Dashed subtitle box */}
+                {subtitle && (
+                    <div className="bg-[#3a312a] border-2 border-dashed border-white/80 px-4 py-1 mb-2 shadow-lg">
+                        <p className="font-sans font-bold text-lg tracking-wider text-white uppercase">{subtitle}</p>
+                    </div>
+                )}
+
+                {/* Top Divider */}
+                <div className="w-full max-w-sm h-px bg-white/50 my-2 shadow-lg"></div>
+                
+                {/* Main Title */}
+                {title && (
+                    <h2 className="font-anton text-5xl md:text-6xl uppercase leading-none text-center" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)', wordBreak: 'break-word' }}>
+                        {titleWords.map((word, index) => (
+                            <span key={index} className={index % 2 !== 0 ? 'text-[#d9a46e]' : 'text-white'}>
+                                {word}{' '}
+                            </span>
+                        ))}
+                    </h2>
+                )}
+
+                {/* Bottom Divider */}
+                <div className="w-full max-w-sm h-px bg-white/50 my-2 shadow-lg"></div>
+            </div>
+        </div>
+    );
+};
+
+const BoldFoodieSplitTemplate2: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, backgroundImage, backgroundImage2 } = data;
+    const titleWords = title.split(' ');
+
+    return (
+        <div className="w-full h-full flex flex-col relative font-sans text-white">
+            {/* Top Image */}
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-gray-400"></div>}
+            </div>
+            {/* Bottom Image */}
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-gray-500"></div>}
+            </div>
+
+            {/* Centered Content */}
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-4">
+                {/* Dashed subtitle box */}
+                {subtitle && (
+                    <div className="bg-[#3a312a] border-2 border-dashed border-white/80 px-4 py-1 mb-2 shadow-lg">
+                        <p className="font-sans font-bold text-lg tracking-wider text-white uppercase">{subtitle}</p>
+                    </div>
+                )}
+
+                {/* Top Divider */}
+                <div className="w-full max-w-sm h-px bg-white/50 my-2 shadow-lg"></div>
+                
+                {/* Main Title */}
+                {title && (
+                    <h2 className="font-anton text-5xl md:text-6xl uppercase leading-none text-center" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)', wordBreak: 'break-word' }}>
+                        {titleWords.map((word, index) => (
+                            <span key={index} className={index % 2 !== 0 ? 'text-[#d9a46e]' : 'text-[#4a4238]'}>
+                                {word}{' '}
+                            </span>
+                        ))}
+                    </h2>
+                )}
+
+                {/* Bottom Divider */}
+                <div className="w-full max-w-sm h-px bg-white/50 my-2 shadow-lg"></div>
+            </div>
+        </div>
+    );
+};
+
+const VibrantFoodieSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, backgroundImage, backgroundImage2 } = data;
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins text-white">
+            {/* Top Image */}
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-gray-400"></div>}
+            </div>
+            {/* Bottom Image */}
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-gray-500"></div>}
+            </div>
+
+            {/* Centered Content */}
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-4">
+                <div className="bg-orange-500 w-full max-w-lg text-center p-2 shadow-lg">
+                    <div className="border-2 border-dashed border-white/90 p-4">
+                        {/* The UI label for subtitle is "Pinterest Board" but we'll use it for the top line of text */}
+                        {subtitle && (
+                             <h2 className="font-anton text-4xl sm:text-5xl text-yellow-300 uppercase leading-none text-center" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.4)', wordBreak: 'break-word' }}>
+                                {subtitle}
+                            </h2>
+                        )}
+                         {/* The UI label for title is "Title" which we'll use for the bottom line */}
+                        {title && (
+                            <h2 className="font-anton text-4xl sm:text-5xl text-white uppercase leading-none text-center mt-1" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.4)', wordBreak: 'break-word' }}>
+                                {title}
+                            </h2>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-const PinForLaterTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+const ElegantFoodieSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins text-white">
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-gray-400"></div>}
+            </div>
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-gray-500"></div>}
+            </div>
+
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-4">
+                <div className="relative text-center flex flex-col items-center">
+                    {subtitle && (
+                        <div className="relative inline-block z-10 mb-1">
+                             <div className="absolute -left-2 top-0 h-full w-4 bg-[#e0d6c7] -z-10" style={{clipPath: 'polygon(100% 0, 0 50%, 100% 100%)'}}></div>
+                             <div className="absolute -right-2 top-0 h-full w-4 bg-[#e0d6c7] -z-10" style={{clipPath: 'polygon(0 0, 100% 50%, 0 100%)'}}></div>
+                            <div className="relative bg-[#F8F5F2] text-[#4E443A] px-6 py-1 shadow-md">
+                                <p className="font-lobster text-xl leading-none">{subtitle}</p>
+                            </div>
+                        </div>
+                    )}
+                    {title && (
+                        <div className="bg-[#c7913e] px-4 py-3 shadow-md">
+                            <h2 className="font-anton text-4xl uppercase leading-none tracking-wide text-white" style={{ wordBreak: 'break-word' }}>
+                                {title}
+                            </h2>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {website && (
+                <div className="absolute bottom-6 w-full flex justify-center px-4">
+                    <div className="bg-[#c7913e] text-white font-semibold text-sm px-6 py-2 rounded-md shadow-lg">
+                         <span>{website} ✨</span>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const ElegantFoodieSingleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
     return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="h-3/5 w-full relative">
-                <BackgroundImage imageUrl={backgroundImage} />
-                {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-            <div className="h-2/5 w-full flex flex-col justify-center items-center text-center p-6 bg-[#FFEFEF] text-[#4E443A]">
-                {subtitle && <p className="text-sm font-semibold tracking-wide text-[#4E443A]/70">{subtitle}</p>}
-                {title && <h2 className="font-playfair text-4xl font-bold leading-tight tracking-tight mt-1" style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                <div className="flex-grow"></div>
-                <div className="flex items-center gap-2 bg-rose-600 text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zM9 8a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" /><path d="M9 12a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" /></svg>
-                    <span>PIN FOR LATER</span>
+        <div className="w-full h-full relative font-poppins text-white">
+            <BackgroundImage imageUrl={backgroundImage} />
+            {!backgroundImage && <div className="absolute inset-0 bg-gray-600"></div>}
+            <div className="absolute inset-0 bg-black/10"></div>
+
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-4">
+                <div className="relative text-center flex flex-col items-center">
+                    {subtitle && (
+                        <div className="relative inline-block z-10 mb-1">
+                             <div className="absolute -left-2 top-0 h-full w-4 bg-[#e0d6c7] -z-10" style={{clipPath: 'polygon(100% 0, 0 50%, 100% 100%)'}}></div>
+                             <div className="absolute -right-2 top-0 h-full w-4 bg-[#e0d6c7] -z-10" style={{clipPath: 'polygon(0 0, 100% 50%, 0 100%)'}}></div>
+                            <div className="relative bg-[#F8F5F2] text-[#4E443A] px-6 py-1 shadow-md">
+                                <p className="font-lobster text-xl leading-none">{subtitle}</p>
+                            </div>
+                        </div>
+                    )}
+                    {title && (
+                        <div className="bg-[#c7913e] px-4 py-3 shadow-md">
+                            <h2 className="font-anton text-4xl uppercase leading-none tracking-wide text-white" style={{ wordBreak: 'break-word' }}>
+                                {title}
+                            </h2>
+                        </div>
+                    )}
                 </div>
-                {website && <p className="mt-4 text-xs font-bold tracking-[0.15em] text-[#4E443A]/50 uppercase">{website}</p>}
             </div>
-        </div>
-    );
-};
 
-const LuxuryDarkModeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage } = data;
-    return (
-        <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins text-[#E0D8C0] p-8 text-center bg-[#1A1A1A]">
-            <BackgroundImage imageUrl={backgroundImage} className="opacity-50" />
-            <div className="relative z-10 w-full flex flex-col items-center">
-                {subtitle && <p className="text-sm font-semibold tracking-[0.2em] mb-4 opacity-70 uppercase">{subtitle}</p>}
-                {title && <h2 className="font-playfair font-bold text-5xl leading-tight tracking-tight" style={{ textShadow: '1px 1px 15px rgba(0,0,0,0.5)', wordBreak: 'break-word' }}>{title}</h2>}
-                <div className="w-24 mt-8 border-t border-[#E0D8C0]/40"></div>
-            </div>
-            {website && <p className="absolute bottom-8 text-xs font-bold tracking-[0.15em] opacity-50 uppercase">{website}</p>}
-        </div>
-    );
-};
-
-const HolidayCheerTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage } = data;
-    return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-[#F7F2EE]">
-            <div className="h-3/4 w-full relative">
-                <BackgroundImage imageUrl={backgroundImage} />
-                {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-            <div className="h-1/4 w-full flex flex-col justify-center items-center text-center p-4 bg-[#A42C2C] text-white">
-                {subtitle && <p className="text-sm font-semibold tracking-wide opacity-80">{subtitle}</p>}
-                {title && <h2 className="font-playfair text-3xl font-bold leading-tight mt-1" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.3)', wordBreak: 'break-word' }}>{title}</h2>}
-            </div>
-            {website && <p className="absolute bottom-3 text-center w-full text-xs font-bold tracking-[0.1em] text-white/50 uppercase">{website}</p>}
+            {website && (
+                <div className="absolute bottom-6 w-full flex justify-center px-4">
+                    <div className="bg-[#c7913e] text-white font-semibold text-sm px-6 py-2 rounded-md shadow-lg">
+                         <span>{website} ✨</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {
-  const { templateId, pinSize } = data;
-
-  const aspectRatio = pinSize === 'standard' ? '3 / 4' : '9 / 16';
+  const pinSizeClass = data.pinSize === 'standard' ? 'aspect-[3/4]' : 'aspect-[9/16]';
 
   const renderTemplate = () => {
-    switch (templateId) {
-      case '1': return <BeforeAfterTemplate data={data} />;
-      case '2': return <BorderTemplate data={data} />;
+    switch (data.templateId) {
+      case '1': return <SplitTemplate data={data} />;
+      case '2': return <ClassicTemplate data={data} />;
       case '3': return <BrushStrokeTemplate data={data} />;
-      case '4': return <ChecklistTemplate data={data} />;
-      case '5': return <ClassicTemplate data={data} />;
+      case '4': return <ModernTemplate data={data} />;
+      case '5': return <BorderTemplate data={data} />;
       case '6': return <CleanGridTemplate data={data} />;
-      case '7': return <DetailedRecipeTemplate data={data} />;
+      case '7': return <RecipeCardTemplate data={data} />;
       case '8': return <EditorialTemplate data={data} />;
-      case '9': return <GourmetCloseUpTemplate data={data} />;
-      case '10': return <MinimalistIngredientsTemplate data={data} />;
-      case '11': return <MinimalistQuoteTemplate data={data} />;
-      case '12': return <ModernTemplate data={data} />;
-      case '13': return <MoodBoardTemplate data={data} />;
-      case '14': return <NewArticleTemplate data={data} />;
-      case '15': return <ProductSpotlightTemplate data={data} />;
-      case '16': return <QuoteOverlayTemplate data={data} />;
-      case '17': return <RecipeCardTemplate data={data} />;
-      case '18': return <RetroVibesTemplate data={data} />;
+      case '9': return <ModernTemplate data={data} />;
+      case '10': return <DetailedRecipeTemplate data={data} />;
+      case '11': return <BorderTemplate data={data} />;
+      case '12': return <ClassicTemplate data={data} />;
+      case '13': return <ProductSpotlightTemplate data={data} />;
+      case '14': return <MinimalistQuoteTemplate data={data} />;
+      case '15': return <TastyRecipeTemplate data={data} />;
+      case '16': return <ClassicTemplate data={data} />;
+      case '17': return <GourmetCloseUpTemplate data={data} />;
+      case '18': return <EditorialTemplate data={data} />;
       case '19': return <ShopTheLookTemplate data={data} />;
       case '20': return <SplitTemplate data={data} />;
-      case '21': return <StepByStepGuideTemplate data={data} />;
-      case '22': return <TastyRecipeTemplate data={data} />;
+      case '21': return <MoodBoardTemplate data={data} />;
+      case '22': return <BeforeAfterTemplate data={data} />;
       case '23': return <TrendyCollageTemplate data={data} />;
-      case '24': return <ElegantRecipeCardTemplate data={data} />;
-      case '25': return <BoldTitleOverlayTemplate data={data} />;
-      case '26': return <MagazineFeaturetteTemplate data={data} />;
-      case '27': return <HorizontalSplitTemplate data={data} />;
-      case '28': return <IngredientSpotlightTemplate data={data} />;
-      case '29': return <PinForLaterTemplate data={data} />;
-      case '30': return <LuxuryDarkModeTemplate data={data} />;
-      case '31': return <HolidayCheerTemplate data={data} />;
-      default:
-        return <ClassicTemplate data={data} />;
+      case '24': return <BoldTitleOverlayTemplate data={data} />;
+      case '25': return <QuoteOverlayTemplate data={data} />;
+      case '26': return <ElegantRecipeCardTemplate data={data} />;
+      case '27': return <MinimalistIngredientsTemplate data={data} />;
+      case '28': return <StepByStepGuideTemplate data={data} />;
+      case '29': return <RetroVibesTemplate data={data} />;
+      case '30': return <ChecklistTemplate data={data} />;
+      case '31': return <NewArticleTemplate data={data} />;
+      case '32': return <GardeningTipsTemplate data={data} />;
+      case '33': return <HomeDecorInspoTemplate data={data} />;
+      case '34': return <AuthorQuoteTemplate data={data} />;
+      case '35': return <SplitImageFourBlockTemplate data={data} />;
+      case '36': return <SimpleProductTemplate data={data} />;
+      case '37': return <FoodieSplitTemplate data={data} />;
+      case '38': return <MinimalistLivingTemplate data={data} />;
+      case '39': return <BoldFoodieTemplate data={data} />;
+      case '40': return <BoldFoodieSplitTemplate2 data={data} />;
+      case '41': return <VibrantFoodieSplitTemplate data={data} />;
+      case '42': return <ElegantFoodieSplitTemplate data={data} />;
+      case '43': return <ElegantFoodieSingleTemplate data={data} />;
+      default: return <ClassicTemplate data={data} />;
     }
   };
 
   return (
-    <div 
-        ref={ref} 
-        className="w-full bg-white rounded-2xl shadow-lg overflow-hidden ring-1 ring-slate-200"
-        style={{ aspectRatio: aspectRatio }}
-    >
-        {renderTemplate()}
+    <div ref={ref} className={`w-full bg-gray-300 shadow-lg rounded-xl overflow-hidden ${pinSizeClass}`}>
+      {renderTemplate()}
     </div>
   );
 });
