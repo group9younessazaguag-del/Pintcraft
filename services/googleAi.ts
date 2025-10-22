@@ -1,6 +1,5 @@
-
 import { GoogleGenAI, Type } from '@google/genai';
-import { GeneratedContentRow } from '../types';
+import { GeneratedContentRow, PinterestAccount } from '../types';
 
 // Helper to parse complex API errors
 const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic', message: string, helpLink?: string } => {
@@ -156,13 +155,12 @@ export const generateImage = async (
 
 
 export const generateDescription = async (
-    apiKey: string, // FIX: Added apiKey parameter
+    apiKey: string,
     model: string,
     title: string,
     subtitle: string
 ): Promise<string> => {
     try {
-        // FIX: Instantiate GoogleGenAI with user-provided API key.
         const ai = new GoogleGenAI({ apiKey });
         const prompt = `Write a short, engaging Pinterest description for a pin with the title "${title}" and board "${subtitle}". The description should be under 250 characters, use natural language, and end with a clear call to action. Do not include hashtags.`;
         
@@ -189,13 +187,12 @@ export const generateDescription = async (
 };
 
 export const generateKeywords = async (
-    apiKey: string, // FIX: Added apiKey parameter
+    apiKey: string,
     model: string,
     title: string,
     subtitle: string
 ): Promise<string> => {
     try {
-        // FIX: Instantiate GoogleGenAI with user-provided API key.
         const ai = new GoogleGenAI({ apiKey });
         const prompt = `Generate 8-12 relevant, comma-separated SEO keywords for a Pinterest pin with the title "${title}" for the board "${subtitle}". Focus on a mix of broad and long-tail keywords. Do not use hashtags. Do not use quotation marks. Return only the keywords.`;
         
@@ -222,12 +219,11 @@ export const generateKeywords = async (
 };
 
 export const generateShortTitle = async (
-    apiKey: string, // FIX: Added apiKey parameter
+    apiKey: string,
     model: string,
     longTitle: string
 ): Promise<string> => {
     try {
-        // FIX: Instantiate GoogleGenAI with user-provided API key.
         const ai = new GoogleGenAI({ apiKey });
         const prompt = `Rewrite this Pinterest title to be more catchy and concise. It must be under 35 characters. Return only the new title, without quotation marks.\n\nOriginal Title: "${longTitle}"`;
         
@@ -245,6 +241,124 @@ export const generateShortTitle = async (
 
     } catch (error: any) {
         console.error('Error generating short title with AI:', error);
+        const errorDetails = getApiErrorDetails(error);
+        const specificError = new Error(errorDetails.message);
+        (specificError as any).type = errorDetails.type;
+        (specificError as any).helpLink = errorDetails.helpLink;
+        throw specificError;
+    }
+};
+
+export interface PinIdea {
+    title: string;
+    description: string;
+    hashtags: string;
+}
+
+export const generatePinIdeas = async (
+    apiKey: string,
+    model: string,
+    accountName: string
+): Promise<PinIdea[]> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `You are a Pinterest marketing expert. Generate 3 creative and distinct pin ideas for a Pinterest account named "${accountName}". For each idea, provide a catchy title, an engaging description, and a list of 3-5 relevant hashtags.`;
+        
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        ideas: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    title: { type: Type.STRING, description: "A catchy and SEO-friendly pin title." },
+                                    description: { type: Type.STRING, description: "An engaging pin description with a call-to-action." },
+                                    hashtags: { type: Type.STRING, description: "A string of 3-5 relevant hashtags, separated by spaces (e.g., #food #recipe #dinner)." }
+                                },
+                                required: ["title", "description", "hashtags"]
+                            }
+                        }
+                    },
+                    required: ["ideas"]
+                }
+            }
+        });
+
+        const jsonStr = response.text.trim();
+        const parsed = JSON.parse(jsonStr);
+
+        if (!parsed.ideas || !Array.isArray(parsed.ideas)) {
+            throw new Error('The AI model returned data in an unexpected format.');
+        }
+        return parsed.ideas;
+
+    } catch (error: any) {
+        console.error('Error generating pin ideas with AI:', error);
+        const errorDetails = getApiErrorDetails(error);
+        const specificError = new Error(errorDetails.message);
+        (specificError as any).type = errorDetails.type;
+        (specificError as any).helpLink = errorDetails.helpLink;
+        throw specificError;
+    }
+};
+
+export interface AISuggestions {
+    bestTime: string;
+    nextPinType: string;
+    seasonalTheme: string;
+}
+
+export const getAiSuggestions = async (
+    apiKey: string,
+    model: string,
+    account: PinterestAccount
+): Promise<AISuggestions> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `
+            As a Pinterest marketing expert, provide strategic suggestions for the following account:
+            - Name: "${account.name}"
+            - Recent Performance Score: ${account.performance}/5
+
+            Based on this, suggest:
+            1.  **bestTime**: A general best time of day and week to post for this account's likely niche.
+            2.  **nextPinType**: A strategic suggestion for the next type of pin to create to ensure content diversity.
+            3.  **seasonalTheme**: A relevant upcoming seasonal or holiday theme idea.
+        `;
+
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        bestTime: { type: Type.STRING, description: "A general best time to post (e.g., 'Friday evenings around 8 PM EST')." },
+                        nextPinType: { type: Type.STRING, description: "A suggested next pin type (e.g., 'Video Pin', 'Infographic', 'Idea Pin')." },
+                        seasonalTheme: { type: Type.STRING, description: "A relevant upcoming seasonal or holiday theme idea (e.g., 'Back to School Lunches', 'Cozy Autumn Decor')." }
+                    },
+                    required: ["bestTime", "nextPinType", "seasonalTheme"]
+                }
+            }
+        });
+
+        const jsonStr = response.text.trim();
+        const parsed = JSON.parse(jsonStr);
+
+        if (!parsed || typeof parsed !== 'object') {
+            throw new Error('The AI model returned an invalid response.');
+        }
+        return parsed;
+
+    } catch (error: any) {
+        console.error('Error getting AI suggestions:', error);
         const errorDetails = getApiErrorDetails(error);
         const specificError = new Error(errorDetails.message);
         (specificError as any).type = errorDetails.type;

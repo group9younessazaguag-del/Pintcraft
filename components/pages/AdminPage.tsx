@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef } from 'react';
 import type { AdminSettings, BackupData } from '../../types';
 import RichTextEditor from '../RichTextEditor';
@@ -11,7 +12,7 @@ interface AdminPageProps {
   setIsAdminLoggedIn: (isLoggedIn: boolean) => void;
   settings: AdminSettings;
   setSettings: (settings: AdminSettings) => void;
-  allData: Omit<BackupData, 'adminSettings'> & { adminSettings: AdminSettings };
+  allData: BackupData;
   onImportSettings: (data: BackupData) => void;
 }
 
@@ -355,7 +356,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
                 <div className="flex-1">
                     <h4 className="font-semibold text-slate-800">Export Settings</h4>
                     <p className="text-xs text-slate-500 mt-1 mb-2">
-                        This will save all API keys and admin settings into a single JSON file.
+                        This will save all API keys, admin settings, and assistant accounts into a single JSON file.
                     </p>
                     <button
                         onClick={handleExport}

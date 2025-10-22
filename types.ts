@@ -1,5 +1,6 @@
+export type TemplateId = `${number}`;
+
 export type PinSize = 'standard' | 'long';
-export type TemplateId = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13' | '14' | '15' | '16' | '17' | '18' | '19' | '20' | '21' | '22' | '23' | '24' | '25' | '26' | '27' | '28' | '29' | '30' | '31' | '32' | '33' | '34' | '35' | '36' | '37' | '38' | '39' | '40' | '41' | '42' | '43';
 
 export interface TemplateData {
   title: string;
@@ -13,7 +14,7 @@ export interface TemplateData {
   description: string;
   keywords: string;
   mediaUrlPrefix: string;
-  pinsPerDay: number | string;
+  pinsPerDay: number;
   startDate: string;
   imageModel: string;
   textModel: string;
@@ -27,13 +28,13 @@ export interface CsvRow {
   keywords: string;
 }
 
-export interface WebsiteProfile {
+export type WebsiteProfile = {
   id: string;
   name: string;
   boardList: string;
   categoryList: string;
-  isDefault?: boolean;
-}
+  isDefault: boolean;
+};
 
 export interface AdminSettings {
   analyticsId: string;
@@ -48,18 +49,29 @@ export interface AdminSettings {
 }
 
 export interface GeneratedContentRow {
-  keyword: string;
-  title: string;
-  board: string;
-  imagePrompt: string;
-  description: string;
-  altText: string;
-  interests: string;
-  category: string;
+    keyword: string;
+    title: string;
+    board: string;
+    imagePrompt: string;
+    description: string;
+    altText: string;
+    interests: string;
+    category: string;
 }
+
+export type PinterestAccount = {
+  id: string;
+  name: string;
+  lastPostDate: string;
+  nextPostDate: string;
+  notes: string;
+  performance: number;
+};
+
 
 export interface BackupData {
   adminSettings: AdminSettings;
   googleAiApiKey: string;
   falAiApiKey: string;
+  pinterestAccounts: PinterestAccount[];
 }

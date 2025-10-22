@@ -1,6 +1,5 @@
-
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import type { TemplateData, CsvRow, AdminSettings, BackupData } from './types';
+import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutPage from './components/pages/AboutPage';
@@ -15,6 +14,8 @@ import GeneratorInterface from './components/GeneratorInterface';
 import HowToUsePage from './components/pages/HowToUsePage';
 import ContactPage from './components/pages/ContactPage';
 import ContentGeneratorPage from './components/pages/ContentGeneratorPage';
+import AssistantPage from './components/pages/AssistantPage';
+import HomePage from './components/pages/HomePage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -29,7 +30,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'home';
+  return hash || 'welcome';
 };
 
 
@@ -81,6 +82,9 @@ const App: React.FC = () => {
   const [adminSettings, setAdminSettings] = useLocalStorage<AdminSettings>('adminSettings', initialAdminSettings);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useLocalStorage<boolean>('isAdminLoggedIn', false);
   useAnalytics(adminSettings.analyticsId);
+
+  // Assistant Page State
+  const [pinterestAccounts, setPinterestAccounts] = useLocalStorage<PinterestAccount[]>('pinterestAccounts', []);
 
 
   const [isLoading, setIsLoading] = useState(false);
@@ -689,7 +693,17 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     if (typeof data.falAiApiKey === 'string') {
         setFalAiApiKey(data.falAiApiKey);
     }
+    if (Array.isArray(data.pinterestAccounts)) {
+        setPinterestAccounts(data.pinterestAccounts);
+    }
     alert('Settings imported successfully!');
+  };
+
+  const allData: BackupData = {
+    adminSettings,
+    googleAiApiKey: userApiKey,
+    falAiApiKey,
+    pinterestAccounts,
   };
 
   const controlProps = {
@@ -745,18 +759,27 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         websiteProfiles={adminSettings.websiteProfiles}
                         contentPrompt={adminSettings.contentPrompt}
                     />;
+        case 'assistant':
+             return <AssistantPage
+                        accounts={pinterestAccounts}
+                        setAccounts={setPinterestAccounts}
+                        userApiKey={userApiKey}
+                        textModel={templateData.textModel}
+                    />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
                         setIsAdminLoggedIn={setIsAdminLoggedIn}
                         settings={adminSettings}
                         setSettings={setAdminSettings}
-                        allData={{ adminSettings, googleAiApiKey: userApiKey, falAiApiKey }}
+                        allData={allData}
                         onImportSettings={handleImportSettings}
                     />;
         case 'home':
-        default:
              return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
+        case 'welcome':
+        default:
+            return <HomePage />;
     }
   };
 
@@ -765,7 +788,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
-        {(page === 'content-generator' || page === 'home') && <AdBanner adScript={adminSettings.adScript} />}
+        {(page === 'content-generator' || page === 'home' || page === 'assistant') && <AdBanner adScript={adminSettings.adScript} />}
         {renderPage()}
       </main>
       <Footer />
