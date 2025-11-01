@@ -1,3 +1,4 @@
+
 export type TemplateId = `${number}`;
 
 export type PinSize = 'standard' | 'long';
@@ -26,6 +27,7 @@ export interface CsvRow {
   website: string;
   description: string;
   keywords: string;
+  imagePrompt?: string;
 }
 
 export type WebsiteProfile = {

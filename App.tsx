@@ -191,9 +191,11 @@ const App: React.FC = () => {
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
-    const userPrompt = overridePrompt || templateData.title;
+    const csvImagePrompt = currentRowIndex !== null && csvData[currentRowIndex]?.imagePrompt ? csvData[currentRowIndex].imagePrompt : null;
+    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : null) || templateData.title;
+
     if (!userPrompt) {
-        const msg = 'Please enter a Title to generate an image.';
+        const msg = 'Please enter a Title or have an Image Prompt in your CSV to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
@@ -406,6 +408,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       const boardHeader = headerMap['pinterest board'] || headerMap['board'];
       const descriptionHeader = headerMap['description'];
       const keywordsHeader = headerMap['keywords'];
+      const imagePromptHeader = headerMap['image prompt'];
 
 
       if (!titleHeader) {
@@ -427,10 +430,11 @@ const handleGenerateShortTitle = async (): Promise<void> => {
           
           return {
               title: title,
-              subtitle: row[boardHeader] || '',
+              subtitle: boardHeader ? row[boardHeader] || '' : '',
               website: '',
-              description: row[descriptionHeader] || '',
-              keywords: row[keywordsHeader] || '',
+              description: descriptionHeader ? row[descriptionHeader] || '' : '',
+              keywords: keywordsHeader ? row[keywordsHeader] || '' : '',
+              imagePrompt: imagePromptHeader ? row[imagePromptHeader] || '' : '',
           };
       });
       
