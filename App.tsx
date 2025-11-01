@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -30,7 +31,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'welcome';
+  return hash || 'home';
 };
 
 
@@ -545,7 +546,11 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             }
 
             setBulkMessage(`Row ${i + 1}: Generating images...`);
-            const prompt = currentData.title;
+            const originalRowData = currentRunCsvData[i];
+            const imagePromptHeader = Object.keys(originalRowData).find(h => h.toLowerCase().trim() === 'image prompt');
+            const imagePromptValue = imagePromptHeader ? originalRowData[imagePromptHeader] : null;
+            
+            const prompt = imagePromptValue || currentData.title; // Fallback to title
             if (prompt) {
                  await handleGenerateImage(1, true, prompt);
                 

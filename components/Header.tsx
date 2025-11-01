@@ -6,7 +6,7 @@ import AssistantIcon from './icons/AssistantIcon';
 
 const getCurrentPage = () => {
     const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-    return hash || 'welcome';
+    return hash || 'home';
 };
 
 const NavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () => void; isActive: boolean }> = ({ href, children, onClick, isActive }) => (
@@ -54,7 +54,6 @@ const Header: React.FC = () => {
   const navItems = [
     { href: "/#/", label: "Home" },
     { href: "/#/assistant", label: "Assistant" },
-    { href: "/#/home", label: "Pin Generator" },
     { href: "/#/content-generator", label: "Content Generator" },
     { href: "/#/how-to-use", label: "How to Use" },
     { href: "/#/about", label: "About" },
@@ -87,7 +86,7 @@ const Header: React.FC = () => {
                 <NavLink 
                   key={item.href}
                   href={item.href}
-                  isActive={activePage === (item.href.substring(2) || 'welcome')}
+                  isActive={activePage === (item.href.substring(2) || 'home')}
                 >
                     {item.label}
                 </NavLink>
@@ -140,7 +139,7 @@ const Header: React.FC = () => {
                     key={item.href}
                     href={item.href}
                     onClick={closeMobileMenu}
-                    isActive={activePage === (item.href.substring(2) || 'welcome')}
+                    isActive={activePage === (item.href.substring(2) || 'home')}
                 >
                     {item.label}
                 </MobileNavLink>

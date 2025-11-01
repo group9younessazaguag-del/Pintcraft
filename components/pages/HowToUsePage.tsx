@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 const HowToUsePage: React.FC<{ content?: string }> = ({ content }) => {
@@ -62,7 +63,7 @@ const HowToUsePage: React.FC<{ content?: string }> = ({ content }) => {
           This is the most powerful feature for creating a large volume of content quickly.
       </p>
       <ol>
-          <li><strong>Prepare Your CSV:</strong> Create a CSV file with at least a column named <strong>Title</strong>. You can also include columns for <strong>Pinterest board</strong>, <strong>Description</strong>, and <strong>Keywords</strong>. If you leave Description or Keywords blank, the AI will generate them for you during the bulk process.</li>
+          <li><strong>Prepare Your CSV:</strong> Create a CSV file with at least a column named <strong>Title</strong>. You can also include columns for <strong>Pinterest board</strong>, <strong>Description</strong>, and <strong>Keywords</strong>. To use custom prompts for image generation, add a column named <strong>Image Prompt</strong>. If this column is empty or not present, the <strong>Title</strong> will be used as the prompt. If you leave Description or Keywords blank, the AI will generate them for you during the bulk process.</li>
           <li><strong>Upload CSV:</strong> In the "CSV Import" card, upload your prepared file.</li>
           <li><strong>Navigate Rows:</strong> Use the arrow buttons to preview each pin and make manual adjustments if needed.</li>
           <li><strong>Configure Bulk Settings:</strong> In the "Bulk Actions" card, set your desired "Pins Per Day," "Start Date" for scheduling, and the "Media URL Prefix" (the URL where you will host the generated images).</li>
