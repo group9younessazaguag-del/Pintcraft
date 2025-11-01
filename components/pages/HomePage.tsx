@@ -1,3 +1,4 @@
+
 import React from 'react';
 import AssistantIcon from '../icons/AssistantIcon';
 import PinIcon from '../icons/PinIcon';
@@ -42,7 +43,7 @@ const HomePage: React.FC = () => {
                         From scheduling and content ideas to bulk pin creation, our AI tools streamline your entire workflow, saving you time and boosting your creativity.
                     </p>
                     <a
-                        href="/#/assistant"
+                        href="/#/pin-generator"
                         className="mt-8 inline-block px-8 py-3 bg-pink-500 text-white font-semibold rounded-lg shadow-md hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all duration-300 transform hover:scale-105"
                     >
                         Get Started for Free
@@ -67,7 +68,7 @@ const HomePage: React.FC = () => {
                             title="Bulk Pin Generator"
                             description="Create hundreds of unique, on-brand pins in minutes. Upload a CSV, choose a template, and let our AI handle the design and scheduling data."
                             ctaText="Create Pins"
-                            href="/#/home"
+                            href="/#/pin-generator"
                         />
                         <FeatureCard
                             icon={<ContentIcon className="w-7 h-7" />}

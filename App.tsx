@@ -31,7 +31,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'home';
+  return hash || 'welcome';
 };
 
 
@@ -780,7 +780,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         allData={allData}
                         onImportSettings={handleImportSettings}
                     />;
-        case 'home':
+        case 'pin-generator':
              return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
         case 'welcome':
         default:
@@ -793,7 +793,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
-        {(page === 'content-generator' || page === 'home' || page === 'assistant') && <AdBanner adScript={adminSettings.adScript} />}
+        {(page === 'content-generator' || page === 'pin-generator' || page === 'assistant') && <AdBanner adScript={adminSettings.adScript} />}
         {renderPage()}
       </main>
       <Footer />
