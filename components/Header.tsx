@@ -57,6 +57,7 @@ const Header: React.FC = () => {
     { href: "/#/pin-generator", label: "Pin Generator" },
     { href: "/#/assistant", label: "Assistant" },
     { href: "/#/content-generator", label: "Content Generator" },
+    { href: "/#/dnrater", label: "DN Rater" },
     { href: "/#/how-to-use", label: "How to Use" },
     { href: "/#/about", label: "About" },
     { href: "/#/contact", label: "Contact Us" },

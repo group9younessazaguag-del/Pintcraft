@@ -4,6 +4,7 @@ import AssistantIcon from '../icons/AssistantIcon';
 import PinIcon from '../icons/PinIcon';
 import ContentIcon from '../icons/ContentIcon';
 import CheckIcon from '../icons/CheckIcon';
+import DomainIcon from '../icons/DomainIcon';
 
 const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; description: string; ctaText: string; href: string }> = ({ icon, title, description, ctaText, href }) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col text-center items-center">
@@ -55,7 +56,7 @@ const HomePage: React.FC = () => {
             <section>
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-800 text-center">Your All-in-One AI Toolkit</h2>
-                    <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                         <FeatureCard
                             icon={<AssistantIcon className="w-7 h-7" />}
                             title="AI Posting Assistant"
@@ -76,6 +77,13 @@ const HomePage: React.FC = () => {
                             description="Stuck on ideas? Turn a list of keywords into a complete content plan with titles, descriptions, and image prompts for your next campaign."
                             ctaText="Generate Ideas"
                             href="/#/content-generator"
+                        />
+                         <FeatureCard
+                            icon={<DomainIcon className="w-7 h-7" />}
+                            title="AI Domain Rater"
+                            description="Get an instant, AI-powered valuation for your domain names to help you set the perfect Buy It Now (BIN) price."
+                            ctaText="Value Domain"
+                            href="/#/dnrater"
                         />
                     </div>
                 </div>
