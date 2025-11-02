@@ -17,8 +17,6 @@ import ContactPage from './components/pages/ContactPage';
 import ContentGeneratorPage from './components/pages/ContentGeneratorPage';
 import AssistantPage from './components/pages/AssistantPage';
 import HomePage from './components/pages/HomePage';
-import DNRaterPage from './components/pages/DNRaterPage';
-import AuthorPage from './components/pages/AuthorPage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -777,17 +775,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         userApiKey={userApiKey}
                         textModel={templateData.textModel}
                     />;
-        case 'dnrater':
-            return <DNRaterPage />;
-        case 'author':
-            return <AuthorPage />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
                         setIsAdminLoggedIn={setIsAdminLoggedIn}
                         settings={adminSettings}
+// FIX: The prop 'setSettings' was passed an undefined variable 'setSettings'. It should be 'setAdminSettings' from the useState hook.
                         setSettings={setAdminSettings}
                         allData={allData}
+// FIX: The prop 'onImportSettings' was passed an undefined variable 'onImportSettings'. It should be the handler function 'handleImportSettings'.
                         onImportSettings={handleImportSettings}
                     />;
         case 'pin-generator':
@@ -803,7 +799,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
-        {(page === 'content-generator' || page === 'pin-generator' || page === 'assistant' || page === 'dnrater' || page === 'author') && <AdBanner adScript={adminSettings.adScript} />}
+        {(page === 'content-generator' || page === 'pin-generator' || page === 'assistant') && <AdBanner adScript={adminSettings.adScript} />}
         {renderPage()}
       </main>
       <Footer />
