@@ -58,15 +58,16 @@ const Header: React.FC = () => {
     { href: "/#/assistant", label: "Assistant" },
     { href: "/#/content-generator", label: "Content Generator" },
     { href: "/#/dnrater", label: "DN Rater" },
+    { href: "/#/author", label: "Author" },
     { href: "/#/how-to-use", label: "How to Use" },
     { href: "/#/about", label: "About" },
     { href: "/#/contact", label: "Contact Us" },
   ];
 
   const mobileNavItems = [
-      ...navItems.slice(0, 5),
+      ...navItems.slice(0, 6),
       { href: "/#/privacy", label: "Privacy Policy" },
-      ...navItems.slice(5),
+      ...navItems.slice(6),
   ];
 
 

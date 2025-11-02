@@ -18,6 +18,7 @@ import ContentGeneratorPage from './components/pages/ContentGeneratorPage';
 import AssistantPage from './components/pages/AssistantPage';
 import HomePage from './components/pages/HomePage';
 import DNRaterPage from './components/pages/DNRaterPage';
+import AuthorPage from './components/pages/AuthorPage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -778,6 +779,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     />;
         case 'dnrater':
             return <DNRaterPage />;
+        case 'author':
+            return <AuthorPage />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
@@ -800,7 +803,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow p-4 md:p-8">
-        {(page === 'content-generator' || page === 'pin-generator' || page === 'assistant' || page === 'dnrater') && <AdBanner adScript={adminSettings.adScript} />}
+        {(page === 'content-generator' || page === 'pin-generator' || page === 'assistant' || page === 'dnrater' || page === 'author') && <AdBanner adScript={adminSettings.adScript} />}
         {renderPage()}
       </main>
       <Footer />
