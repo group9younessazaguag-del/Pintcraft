@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
             <section>
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-800 text-center">Your All-in-One AI Toolkit</h2>
-                    <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                    <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         <FeatureCard
                             icon={<AssistantIcon className="w-7 h-7" />}
                             title="AI Posting Assistant"
