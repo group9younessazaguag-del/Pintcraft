@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -15,12 +16,14 @@ export interface ControlsProps {
   onFieldChange: (field: keyof TemplateData, value: any) => void;
   onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void;
   onGenerateImage: (imageNumber: 1 | 2 | 3) => void;
+  onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3) => void;
   onGenerateDescription: () => void;
   onGenerateKeywords: () => void;
   onGenerateShortTitle: () => void;
   onDownload: () => void;
   isLoading: boolean;
   isGeneratingImage: { [key: number]: boolean };
+  isGeneratingMidjourneyImage: { [key: number]: boolean };
   isGeneratingDescription: boolean;
   isGeneratingKeywords: boolean;
   isGeneratingShortTitle: boolean;
@@ -29,7 +32,7 @@ export interface ControlsProps {
   onPrevRow: () => void;
   csvData: CsvRow[];
   currentRowIndex: number | null;
-  onBulkGeneration: (resume: boolean) => void;
+  onBulkGeneration: (imageGenerator: 'fal' | 'midjourney', resume: boolean) => void;
   isBulkGenerating: boolean;
   bulkMessage: string;
   apiError: { type: string; message: string; helpLink?: string } | null;
@@ -37,11 +40,13 @@ export interface ControlsProps {
   onDownloadGeneratedAssets: () => void;
   lastCompletedRowIndex: number | null;
   onResetBulkGeneration: () => void;
-  // FIX: Added props for user-provided Google AI key.
   userApiKey: string;
   onSetUserApiKey: (key: string) => void;
   onSetFalAiApiKey: (key: string) => void;
   falAiApiKey: string;
+  apiframeApiKey: string;
+  onSetApiframeApiKey: (key: string) => void;
+  bulkJobType: 'fal' | 'midjourney' | null;
 }
 
 const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
@@ -106,38 +111,65 @@ const ToggleButtonGrid: React.FC<{ label: string; options: {id: string; name: st
 );
 
 
-const ImageUpload: React.FC<{id: 1 | 2 | 3, label: string; isGeneratingImage: { [key: number]: boolean }; onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void; onGenerateImage: (imageNumber: 1 | 2 | 3) => void; isBulkGenerating: boolean; isConfigured: boolean;}> = ({ id, label, isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isConfigured }) => {
-    const isGenerating = isGeneratingImage[id];
+const ImageUpload: React.FC<{
+    id: 1 | 2 | 3, 
+    label: string; 
+    isGeneratingImage: { [key: number]: boolean }; 
+    isGeneratingMidjourneyImage: { [key: number]: boolean };
+    onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void; 
+    onGenerateImage: (imageNumber: 1 | 2 | 3) => void; 
+    onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3) => void;
+    isBulkGenerating: boolean; 
+    isConfigured: boolean;
+    isMjConfigured: boolean;
+}> = ({ id, label, isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isConfigured, isGeneratingMidjourneyImage, onGenerateImageWithMidjourney, isMjConfigured }) => {
+    const isGeneratingFal = isGeneratingImage[id];
+    const isGeneratingMj = isGeneratingMidjourneyImage[id];
+
     return (
         <div>
-        <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
-        <div className="flex gap-2">
-            <label htmlFor={`file-upload-${id}`} className="flex-1 text-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors duration-200">
-                Upload
+            <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
+            <label htmlFor={`file-upload-${id}`} className="w-full block text-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors duration-200">
+                Upload Image
             </label>
             <input id={`file-upload-${id}`} type="file" className="sr-only" accept="image/*" onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
-                onImageUpload(e.target.files[0], id);
+                    onImageUpload(e.target.files[0], id);
                 }
             }} />
-            <button
-                type="button"
-                onClick={() => onGenerateImage(id)}
-                disabled={isGenerating || isBulkGenerating}
-                title={isConfigured ? 'Generate a high-quality image with Fal.ai based on the pin title' : 'Generate a basic placeholder image based on the pin title (add a Fal.ai API key to use AI)'}
-                className="flex-1 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
-            >
-              {isGenerating ? (
-                <>
-                  <LoadingSpinner className="mr-2"/>
-                  Generating...
-                </>
-              ) : '✨ Generate'}
-            </button>
-        </div>
+            <div className="flex flex-col gap-2 mt-2">
+                <button
+                    type="button"
+                    onClick={() => onGenerateImage(id)}
+                    disabled={isGeneratingFal || isGeneratingMj || isBulkGenerating}
+                    title={isConfigured ? 'Generate a high-quality image with Fal.ai based on the pin title' : 'Generate a basic placeholder image based on the pin title (add a Fal.ai API key to use AI)'}
+                    className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                >
+                {isGeneratingFal ? (
+                    <>
+                    <LoadingSpinner className="mr-2"/>
+                    Generating...
+                    </>
+                ) : '✨ Generate with Fal.ai'}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onGenerateImageWithMidjourney(id)}
+                    disabled={isGeneratingMj || isGeneratingFal || isBulkGenerating || !isMjConfigured}
+                    title={isMjConfigured ? 'Generate a high-quality image with Midjourney (via APIFrame.ai)' : 'Add an APIFrame.ai API key to use Midjourney'}
+                    className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                >
+                {isGeneratingMj ? (
+                    <>
+                    <LoadingSpinner className="mr-2"/>
+                    Generating (~60s)...
+                    </>
+                ) : '🎨 Generate with Midjourney'}
+                </button>
+            </div>
         </div>
     );
-  };
+};
 
 const ApiKeyInput: React.FC<{
     label: string;
@@ -200,7 +232,7 @@ const ApiKeyInput: React.FC<{
     );
 };
 
-export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey }) => {
+export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey, apiframeApiKey, onSetApiframeApiKey }) => {
     const templateCount = 43;
     const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
         id: `${i + 1}`,
@@ -215,27 +247,29 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
       };
       
     const [falApiKeyInput, setFalApiKeyInput] = useState(falAiApiKey);
-    // FIX: Add state for the Google AI key input field.
     const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
+    const [apiframeApiKeyInput, setApiframeApiKeyInput] = useState(apiframeApiKey);
 
     useEffect(() => { setFalApiKeyInput(falAiApiKey); }, [falAiApiKey]);
-    // FIX: Sync local input state with the global API key state.
     useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
+    useEffect(() => { setApiframeApiKeyInput(apiframeApiKey); }, [apiframeApiKey]);
     
     const handleSaveFalKey = () => onSetFalAiApiKey(falApiKeyInput.trim());
     const handleClearFalKey = () => { setFalApiKeyInput(''); onSetFalAiApiKey(''); };
-    // FIX: Add handlers for saving and clearing the Google AI key.
     const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
     const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
+    const handleSaveApiframeKey = () => onSetApiframeApiKey(apiframeApiKeyInput.trim());
+    const handleClearApiframeKey = () => { setApiframeApiKeyInput(''); onSetApiframeApiKey(''); };
+
 
     const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
+    const mjKeyIsConfigured = apiframeApiKey && apiframeApiKey.length > 5;
 
     return (
         <>
             <ControlCard icon={<SettingsIcon />} title="AI Configuration">
                 <div className="space-y-6">
-                    {/* FIX: Re-added the ApiKeyInput for Google AI. */}
                     <ApiKeyInput
                         label="Google AI API Key (for Text)"
                         value={googleApiKeyInput}
@@ -267,6 +301,23 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                                 <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Fal.ai key is saved in this browser.</p>
                             ) : (
                                 <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable AI image generation.</p>
+                            )
+                        }
+                    />
+                    <ApiKeyInput
+                        label="APIFrame.ai Key (for Midjourney)"
+                        value={apiframeApiKeyInput}
+                        onChange={setApiframeApiKeyInput}
+                        onSave={handleSaveApiframeKey}
+                        onClear={handleClearApiframeKey}
+                        placeholder="Enter your APIFrame.ai key"
+                        getLink="https://app.apiframe.ai/auth"
+                        getLinkText="Get an APIFrame.ai API Key"
+                        statusMessage={
+                            mjKeyIsConfigured ? (
+                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your APIFrame.ai key is saved in this browser.</p>
+                            ) : (
+                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable Midjourney image generation.</p>
                             )
                         }
                     />
@@ -397,30 +448,35 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
     );
 };
 
-export const CsvAndActionsControls: React.FC<ControlsProps> = ({ 
-    data, 
-    onFieldChange, 
-    onImageUpload, 
-    onGenerateImage, 
-    onDownload, 
-    isLoading, 
-    isGeneratingImage,
-    onCsvUpload,
-    onNextRow,
-    onPrevRow,
-    csvData,
-    currentRowIndex,
-    onBulkGeneration,
-    isBulkGenerating,
-    bulkMessage,
-    apiError,
-    generatedAssets,
-    onDownloadGeneratedAssets,
-    lastCompletedRowIndex,
-    onResetBulkGeneration,
-    userApiKey,
-    falAiApiKey,
-}) => {
+export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
+    const { 
+        data, 
+        onFieldChange, 
+        onImageUpload, 
+        onGenerateImage,
+        onGenerateImageWithMidjourney,
+        onDownload, 
+        isLoading, 
+        isGeneratingImage,
+        isGeneratingMidjourneyImage,
+        onCsvUpload,
+        onNextRow,
+        onPrevRow,
+        csvData,
+        currentRowIndex,
+        onBulkGeneration,
+        isBulkGenerating,
+        bulkMessage,
+        apiError,
+        generatedAssets,
+        onDownloadGeneratedAssets,
+        lastCompletedRowIndex,
+        onResetBulkGeneration,
+        falAiApiKey,
+        apiframeApiKey,
+        bulkJobType,
+    } = props;
+
     const handleCsvFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -433,6 +489,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
+    const mjKeyIsConfigured = apiframeApiKey && apiframeApiKey.length > 5;
 
     return (
         <>
@@ -478,12 +535,12 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
             </ControlCard>
 
              <ControlCard icon={<ImagesIcon />} title="Images">
-                <ImageUpload id={1} label="Background Image 1" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} />
+                <ImageUpload id={1} label="Background Image 1" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} />
                 {needsImage2 && (
-                    <ImageUpload id={2} label="Background Image 2" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} />
+                    <ImageUpload id={2} label="Background Image 2" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} />
                 )}
                 {needsImage3 && (
-                    <ImageUpload id={3} label="Background Image 3" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} />
+                    <ImageUpload id={3} label="Background Image 3" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} />
                 )}
              </ControlCard>
 
@@ -518,26 +575,39 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = ({
                 <div className="space-y-2">
                     {hasPausedJob ? (
                         <button
-                            onClick={() => onBulkGeneration(true)}
-                            disabled={isBulkGenerating || isQuotaError}
+                            onClick={() => bulkJobType && onBulkGeneration(bulkJobType, true)}
+                            disabled={isBulkGenerating || isQuotaError || !bulkJobType}
                             className="w-full flex items-center justify-center px-4 py-2.5 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                         >
                             {isBulkGenerating ? (
                                 <><LoadingSpinner className="mr-3" /> Resuming...</>
                             ) : (
-                                `Resume from Row ${lastCompletedRowIndex + 2}`
+                                `Resume from Row ${lastCompletedRowIndex + 2} with ${bulkJobType === 'midjourney' ? 'Midjourney' : 'Fal.ai'}`
                             )}
                         </button>
                     ) : (
-                        <button
-                            onClick={() => onBulkGeneration(false)}
-                            disabled={isBulkGenerating || csvData.length === 0 || isQuotaError}
-                            className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
-                        >
-                            {isBulkGenerating ? (
-                                <><LoadingSpinner className="mr-3" /> Generating...</>
-                            ) : '✨ Generate All Pins & CSV'}
-                        </button>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => onBulkGeneration('fal', false)}
+                                disabled={isBulkGenerating || csvData.length === 0 || isQuotaError}
+                                title={csvData.length === 0 ? 'Please upload a CSV first' : 'Generate all pins using Fal.ai for images'}
+                                className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                            >
+                                {isBulkGenerating && bulkJobType === 'fal' ? (
+                                    <><LoadingSpinner className="mr-3" /> Generating...</>
+                                ) : '✨ Generate with Fal.ai & CSV'}
+                            </button>
+                             <button
+                                onClick={() => onBulkGeneration('midjourney', false)}
+                                disabled={isBulkGenerating || csvData.length === 0 || isQuotaError || !mjKeyIsConfigured}
+                                title={!mjKeyIsConfigured ? 'Add APIFrame.ai key to use Midjourney' : 'Generate all pins using Midjourney for images'}
+                                className="w-full flex items-center justify-center px-4 py-2.5 bg-purple-500 text-white font-semibold rounded-lg shadow-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                            >
+                                {isBulkGenerating && bulkJobType === 'midjourney' ? (
+                                    <><LoadingSpinner className="mr-3" /> Generating...</>
+                                ) : '🎨 Generate with Midjourney & CSV'}
+                            </button>
+                        </div>
                     )}
                     {hasPausedJob && !isBulkGenerating && (
                          <button

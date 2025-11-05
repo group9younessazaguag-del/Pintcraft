@@ -1,4 +1,3 @@
-
 export type TemplateId = `${number}`;
 
 export type PinSize = 'standard' | 'long';
@@ -75,5 +74,6 @@ export interface BackupData {
   adminSettings: AdminSettings;
   googleAiApiKey: string;
   falAiApiKey: string;
+  apiframeApiKey: string;
   pinterestAccounts: PinterestAccount[];
 }
