@@ -1,4 +1,3 @@
-
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
 
@@ -1377,6 +1376,112 @@ const MontserratVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) 
     );
 };
 
+const MontserratVerticalTemplateGreen: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-xl', 'text-2xl', 'text-3xl');
+
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            {/* Top Image Section */}
+            <div className="flex-[3] relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
+            </div>
+
+            {/* Content Banner */}
+            <div
+                className="flex-[1] flex flex-col justify-center items-center text-center p-4 font-montserrat font-extrabold"
+                style={{ backgroundColor: '#A5D6A7', color: '#263238' }}
+            >
+                {subtitle && (
+                    <p
+                        className="text-xs tracking-wide mb-1 font-semibold"
+                        style={{ color: '#81C784' }}
+                    >
+                        {subtitle}
+                    </p>
+                )}
+                {title && (
+                    <h2
+                        className={`${titleFontSize} leading-tight tracking-tight uppercase`}
+                        style={{ wordBreak: 'break-word' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+            </div>
+
+            {/* Bottom Image Section */}
+            <div className="flex-[3] relative">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}
+            </div>
+
+            {/* Website Overlay at the bottom */}
+            {website && (
+                <div className="absolute bottom-0 left-0 w-full p-2 bg-black/50 text-center">
+                    <p className="text-xs tracking-[0.15em] text-white/80 uppercase font-semibold">
+                        {website}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const MontserratVerticalTemplateBrown: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-xl', 'text-2xl', 'text-3xl');
+
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            {/* Top Image Section */}
+            <div className="flex-[3] relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
+            </div>
+
+            {/* Content Banner */}
+            <div
+                className="flex-[1] flex flex-col justify-center items-center text-center p-4 font-montserrat font-extrabold"
+                style={{ backgroundColor: '#4B2E05', color: '#FFF8E1' }}
+            >
+                {subtitle && (
+                    <p
+                        className="text-xs tracking-wide mb-1 font-semibold"
+                        style={{ color: '#F5C16C' }}
+                    >
+                        {subtitle}
+                    </p>
+                )}
+                {title && (
+                    <h2
+                        className={`${titleFontSize} leading-tight tracking-tight uppercase`}
+                        style={{ wordBreak: 'break-word' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+            </div>
+
+            {/* Bottom Image Section */}
+            <div className="flex-[3] relative">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}
+            </div>
+
+            {/* Website Overlay at the bottom */}
+            {website && (
+                <div className="absolute bottom-0 left-0 w-full p-2 bg-black/50 text-center">
+                    <p className="text-xs tracking-[0.15em] text-white/80 uppercase font-semibold">
+                        {website}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const ThreePartVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
@@ -1393,6 +1498,59 @@ const ThreePartVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) =
             <div className="flex-[1] flex flex-col justify-center items-center text-center p-4 bg-black text-white font-fredoka-one">
                 {subtitle && (
                     <p className="text-sm tracking-wide mb-1 text-white/70">
+                        {subtitle}
+                    </p>
+                )}
+                {title && (
+                    <h2 
+                        className={`${titleFontSize} leading-tight tracking-tight`}
+                        style={{ wordBreak: 'break-word' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+            </div>
+
+            {/* Bottom Image Section */}
+            <div className="flex-[3] relative">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}
+            </div>
+
+            {/* Website Overlay at the bottom */}
+            {website && (
+                <div className="absolute bottom-0 left-0 w-full p-2 bg-black/50 text-center">
+                    <p className="text-xs tracking-[0.15em] text-white/80 uppercase font-semibold">
+                        {website}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const ThreePartVerticalTemplateDark: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            {/* Top Image Section */}
+            <div className="flex-[3] relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
+            </div>
+
+            {/* Content Banner */}
+            <div 
+                className="flex-[1] flex flex-col justify-center items-center text-center p-4 text-white font-fredoka-one"
+                style={{ backgroundColor: '#2E2E2E' }}
+            >
+                {subtitle && (
+                    <p 
+                        className="text-sm tracking-wide mb-1"
+                        style={{ color: '#EED9A3' }}
+                    >
                         {subtitle}
                     </p>
                 )}
@@ -1473,10 +1631,10 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
       case '42': return <ElegantFoodieSplitTemplate data={data} />;
       case '43': return <ElegantFoodieSingleTemplate data={data} />;
       case '44': return <MontserratVerticalTemplate data={data} />;
-      case '45': return <ThreePartVerticalTemplate data={data} />;
+      case '45': return <ThreePartVerticalTemplateDark data={data} />;
       case '46': return <AntonVerticalTemplate data={data} />;
-      case '47': return <MontserratVerticalTemplate data={data} />;
-      case '48': return <MontserratVerticalTemplate data={data} />;
+      case '47': return <MontserratVerticalTemplateGreen data={data} />;
+      case '48': return <MontserratVerticalTemplateBrown data={data} />;
       default: return <ClassicTemplate data={data} />;
     }
   };
