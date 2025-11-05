@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import type { TemplateData, TemplateId, PinSize, CsvRow } from '../types';
+import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
 import SettingsIcon from './icons/SettingsIcon';
 import PaletteIcon from './icons/PaletteIcon';
@@ -241,8 +241,13 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 
     const options = {
         sizes: [
-          { id: 'standard', name: 'Standard (3:4)' },
-          { id: 'long', name: 'Long (9:16)' },
+          { id: 'standard', name: 'Standard Pin (3:4)' },
+          { id: 'long', name: 'Long Pin (9:16)' },
+        ],
+        aspectRatios: [
+            { id: '1:1', name: 'Square (1:1)' },
+            { id: '3:4', name: 'Portrait (3:4)' },
+            { id: '9:16', name: 'Long (9:16)' },
         ],
       };
       
@@ -348,10 +353,17 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                     gridCols="grid-cols-4"
                 />
                 <ToggleButtonGrid 
-                    label="Pin Size"
+                    label="Pin Canvas Size"
                     options={options.sizes}
                     selected={data.pinSize}
                     onSelect={(id) => onFieldChange('pinSize', id as PinSize)}
+                />
+                 <ToggleButtonGrid 
+                    label="AI Image Aspect Ratio"
+                    options={options.aspectRatios}
+                    selected={data.imageAspectRatio}
+                    onSelect={(id) => onFieldChange('imageAspectRatio', id as ImageAspectRatio)}
+                    gridCols="grid-cols-3"
                 />
              </ControlCard>
         </>

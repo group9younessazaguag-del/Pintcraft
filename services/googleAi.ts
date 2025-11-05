@@ -1,6 +1,7 @@
 
+
 import { GoogleGenAI, Type } from '@google/genai';
-import { GeneratedContentRow, PinterestAccount } from '../types';
+import { GeneratedContentRow, PinterestAccount, ImageAspectRatio } from '../types';
 
 // Helper to parse complex API errors
 const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic', message: string, helpLink?: string } => {
@@ -90,7 +91,7 @@ export const generateImage = async (
     apiKey: string, // Fal.ai API key
     model: string,
     prompt: string,
-    aspectRatio: '3:4' | '9:16'
+    aspectRatio: ImageAspectRatio
 ): Promise<string> => {
     try {
         if (!model.includes('/')) {
@@ -159,7 +160,7 @@ export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, 
 export const generateImageWithMidjourney = async (
     apiKey: string, // APIFrame.pro API key
     prompt: string,
-    aspectRatio: '3:4' | '9:16'
+    aspectRatio: ImageAspectRatio
 ): Promise<string[]> => {
     const BASE_URL = 'https://api.apiframe.pro';
 
@@ -181,18 +182,30 @@ export const generateImageWithMidjourney = async (
         if (!imagineResponse.ok) {
             const errorText = await imagineResponse.text();
             console.error('APIFrame.pro imagine error response:', errorText);
+
+            if (imagineResponse.status === 401) {
+                throw new Error('Midjourney authentication failed. Please check your APIFrame.pro API key.');
+            }
+
             let message;
             try {
-                // Try to parse as JSON first
                 const errorData = JSON.parse(errorText);
-                message = errorData.detail?.msg || errorData.detail || `Midjourney imagine request failed with status: ${imagineResponse.status}`;
+                // Handle specific error structure for banned words etc.
+                if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors[0]?.msg) {
+                    message = `Midjourney error: ${errorData.errors[0].msg}.`;
+                } 
+                // Handle another common error structure
+                else if (errorData.detail?.msg || errorData.detail) {
+                    message = errorData.detail?.msg || errorData.detail;
+                }
+                // Fallback for other JSON errors
+                else {
+                    message = `Midjourney request failed with status: ${imagineResponse.status}.`;
+                }
             } catch (e) {
                 // If it's not JSON (like an HTML error page), strip tags and show a generic message
                 const strippedText = errorText.replace(/<[^>]*>?/gm, '').trim();
                 message = `Midjourney imagine request failed. Server returned: ${strippedText.substring(0, 200)}`;
-            }
-             if (imagineResponse.status === 401) {
-                message = 'Midjourney authentication failed. Please check your APIFrame.pro API key.';
             }
             throw new Error(message);
         }
@@ -291,10 +304,10 @@ export const generateImageWithMidjourney = async (
     }
 };
 
-export const generatePlaceholderImage = async (prompt: string, aspectRatio: '3:4' | '9:16'): Promise<string> => {
+export const generatePlaceholderImage = async (prompt: string, aspectRatio: ImageAspectRatio): Promise<string> => {
     return new Promise(resolve => {
         const canvas = document.createElement('canvas');
-        const [width, height] = aspectRatio === '3:4' ? [750, 1000] : [720, 1280];
+        const [width, height] = aspectRatio === '3:4' ? [750, 1000] : aspectRatio === '1:1' ? [1000, 1000] : [720, 1280];
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
@@ -395,6 +408,32 @@ export const generateShortTitle = async (apiKey: string, model: string, title: s
         
         return response.text.trim().replace(/"/g, ''); // Remove quotes from the response
     } catch (error: any) {
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const generateSafeImagePrompt = async (apiKey: string, model: string, title: string): Promise<string> => {
+    try {
+        if (!apiKey) {
+            // Fallback if no Google AI key is available
+            return `A high-quality, visually appealing image related to: ${title}`;
+        }
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `The following title is for a Pinterest pin: "${title}".
+        An AI image generator rejected a prompt based on this title due to a content filter (e.g., "banned words").
+        Your task is to create a new, safe, and descriptive image prompt that captures the essence of the title but is highly unlikely to trigger content filters.
+        The prompt should be suitable for models like Midjourney or Stable Diffusion. Focus on visual details, scenery, and objects. Avoid potentially ambiguous or sensitive terms.
+        
+        New Safe Prompt:`;
+        
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: prompt
+        });
+
+        return response.text.trim().replace(/"/g, '');
+    } catch (error: any) {
+        // If this itself fails, we can't do much. Re-throw the error.
         throw getApiErrorDetails(error);
     }
 };

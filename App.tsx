@@ -1,4 +1,5 @@
 
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -8,7 +9,7 @@ import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './components/pages/TermsOfServicePage';
 import AdminPage from './components/pages/AdminPage';
 import AdBanner from './components/AdBanner';
-import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, DEFAULT_CONTENT_PROMPT, generateImageWithMidjourney } from './services/googleAi';
+import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, DEFAULT_CONTENT_PROMPT, generateImageWithMidjourney, generateSafeImagePrompt } from './services/googleAi';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useAnalytics } from './hooks/useAnalytics';
 import GeneratorInterface from './components/GeneratorInterface';
@@ -18,6 +19,7 @@ import ContentGeneratorPage from './components/pages/ContentGeneratorPage';
 import AssistantPage from './components/pages/AssistantPage';
 import HomePage from './components/pages/HomePage';
 import DNRaterPage from './components/pages/DNRaterPage';
+import AuthorPage from './components/pages/AuthorPage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -44,6 +46,7 @@ const initialPersistedData: PersistedData = {
     website: 'YOURWEBSITE.COM',
     templateId: '15',
     pinSize: 'long',
+    imageAspectRatio: '9:16',
     description: 'These garlic herb mozzarella bites are the perfect easy appetizer! They\'re cheesy, flavorful, and so simple to make. Get the recipe now!',
     keywords: '',
     mediaUrlPrefix: 'http://yourwebsite.com/images/',
@@ -210,7 +213,7 @@ const App: React.FC = () => {
     setApiError(null);
 
     const apiKey = falAiApiKey; // Use Fal.ai key for image generation
-    const aspectRatio = templateData.pinSize === 'standard' ? '3:4' : '9:16';
+    const aspectRatio = templateData.imageAspectRatio;
 
     try {
         let imageUrl: string;
@@ -268,7 +271,7 @@ const App: React.FC = () => {
     setIsGeneratingMidjourneyImage({ 1: true, 2: true, 3: true });
     setApiError(null);
 
-    const aspectRatio = templateData.pinSize === 'standard' ? '3:4' : '9:16';
+    const aspectRatio = templateData.imageAspectRatio;
 
     try {
         const imageUrls = await generateImageWithMidjourney(
@@ -546,6 +549,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     
     const dataForGeneration = [...csvData];
     const fullDataForGeneration = JSON.parse(JSON.stringify(fullCsvData));
+    const generationErrors: string[] = [];
     
     setIsBulkGenerating(true);
     const startIndex = resume && lastCompletedRowIndex !== null ? lastCompletedRowIndex + 1 : 0;
@@ -598,25 +602,37 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             // Generate description if missing
             if (!currentRunCsvData[i][descriptionHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating description...`);
-                let description: string;
-                if (googleApiKey) {
-                    description = await generateDescription(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
-                } else {
-                    description = generatePlaceholderDescription(currentData.title, currentData.subtitle);
+                try {
+                    let description: string;
+                    if (googleApiKey) {
+                        description = await generateDescription(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
+                    } else {
+                        description = generatePlaceholderDescription(currentData.title, currentData.subtitle);
+                    }
+                    currentRunCsvData[i][descriptionHeaderKey] = description;
+                } catch (error: any) {
+                    console.warn(`Skipping description for row ${i + 1} due to error:`, error);
+                    if (error.type === 'quota') throw error;
+                    generationErrors.push(`Row ${i + 1}: Failed description - ${error.message}`);
                 }
-                currentRunCsvData[i][descriptionHeaderKey] = description;
             }
 
             // Generate keywords if missing
             if (!currentRunCsvData[i][keywordsHeaderKey]) {
                 setBulkMessage(`Row ${i + 1}: Generating keywords...`);
-                let keywords: string;
-                if (googleApiKey) {
-                    keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
-                } else {
-                    keywords = generatePlaceholderKeywords(currentData.title, currentData.subtitle);
+                try {
+                    let keywords: string;
+                    if (googleApiKey) {
+                        keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
+                    } else {
+                        keywords = generatePlaceholderKeywords(currentData.title, currentData.subtitle);
+                    }
+                    currentRunCsvData[i][keywordsHeaderKey] = keywords;
+                } catch (error: any) {
+                    console.warn(`Skipping keywords for row ${i + 1} due to error:`, error);
+                    if (error.type === 'quota') throw error;
+                    generationErrors.push(`Row ${i + 1}: Failed keywords - ${error.message}`);
                 }
-                currentRunCsvData[i][keywordsHeaderKey] = keywords;
             }
 
             setBulkMessage(`Row ${i + 1}: Generating images with ${imageGenerator === 'midjourney' ? 'Midjourney' : 'Fal.ai'}...`);
@@ -625,28 +641,82 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             const imagePromptValue = imagePromptHeader ? originalRowData[imagePromptHeader] : null;
             
             const prompt = imagePromptValue || currentData.title;
-            if (prompt) {
-                if (imageGenerator === 'midjourney') {
-                    if (mjApiKey) {
-                        await handleGenerateImageWithMidjourney(1, true, prompt);
-                        // Add a longer pause specifically for Midjourney to ensure all
-                        // received images have time to render in the preview component
-                        // before the screen capture happens. This prevents a race condition.
-                        await sleep(500);
-                    }
-                } else { // 'fal'
-                    await handleGenerateImage(1, true, prompt);
-                    
-                    const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '35', '37', '38', '40', '41', '42'].includes(templateData.templateId);
-                    if (templateNeeds2Images) await handleGenerateImage(2, true, prompt);
+            let imageGenerated = false;
 
-                    const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
-                    if (templateNeeds3Images) await handleGenerateImage(3, true, prompt);
+            if (prompt) {
+                try {
+                    if (imageGenerator === 'midjourney') {
+                        if (mjApiKey) {
+                            await handleGenerateImageWithMidjourney(1, true, prompt);
+                            await sleep(500);
+                            imageGenerated = true;
+                        }
+                    } else { // 'fal'
+                        await handleGenerateImage(1, true, prompt);
+                        
+                        const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '35', '37', '38', '40', '41', '42'].includes(templateData.templateId);
+                        if (templateNeeds2Images) await handleGenerateImage(2, true, prompt);
+    
+                        const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
+                        if (templateNeeds3Images) await handleGenerateImage(3, true, prompt);
+                        imageGenerated = true;
+                    }
+                } catch (error: any) {
+                    console.warn(`Original image generation failed for row ${i + 1}:`, error);
+                    if (error.type === 'quota') {
+                        throw error; // Re-throw critical quota errors
+                    }
+                    
+                    const isBannedWordsError = error.message && error.message.toLowerCase().includes('banned words');
+
+                    // Attempt to recover from "banned words" error if we have a Google API key for text generation
+                    if (isBannedWordsError && googleApiKey) {
+                        setBulkMessage(`Row ${i + 1}: Banned words detected. Regenerating prompt...`);
+                        await sleep(100);
+
+                        try {
+                            // Use AI to generate a safer prompt from the title
+                            const newPrompt = await generateSafeImagePrompt(googleApiKey, templateData.textModel, currentData.title);
+                            setBulkMessage(`Row ${i + 1}: Retrying with new prompt...`);
+                            
+                            // --- RETRY IMAGE GENERATION LOGIC ---
+                            if (imageGenerator === 'midjourney') {
+                                if (mjApiKey) {
+                                    await handleGenerateImageWithMidjourney(1, true, newPrompt);
+                                    await sleep(500);
+                                    imageGenerated = true;
+                                }
+                            } else { // 'fal'
+                                await handleGenerateImage(1, true, newPrompt);
+                                
+                                const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '35', '37', '38', '40', '41', '42'].includes(templateData.templateId);
+                                if (templateNeeds2Images) await handleGenerateImage(2, true, newPrompt);
+            
+                                const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
+                                if (templateNeeds3Images) await handleGenerateImage(3, true, newPrompt);
+                                imageGenerated = true;
+                            }
+                            console.log(`Row ${i + 1}: Image generation succeeded on retry.`);
+
+                        } catch (retryError: any) {
+                             console.warn(`Retry failed for row ${i + 1}:`, retryError);
+                             const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
+                             // Add a more specific error message to the user summary
+                             generationErrors.push(`Row ${i + 1} (${shortTitle}): Banned words, retry failed: ${retryError.message}`);
+                             imageGenerated = false;
+                        }
+                    } else {
+                        // Original behavior for other errors or if no google key is available to retry
+                        const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
+                        generationErrors.push(`Row ${i + 1} (${shortTitle}): ${error.message}`);
+                        imageGenerated = false;
+                    }
                 }
             }
+
             await sleep(100);
 
-            if (previewRef.current) {
+            if (imageGenerated && previewRef.current) {
                 const dataUrl = await window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2, fetchRequestInit: { mode: 'cors' }});
                 const safeTitle = currentData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
                 const filename = `pin_${i + 1}_${safeTitle}.png`;
@@ -657,36 +727,47 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 const prefix = templateData.mediaUrlPrefix.endsWith('/') ? templateData.mediaUrlPrefix : `${templateData.mediaUrlPrefix}/`;
                 const imageUrl = `${prefix}${filename}`;
                 currentRunCsvData[i][mediaUrlHeaderKey] = imageUrl;
-
-                const daysToAdd = Math.floor(i / pinsPerDayNum);
-                const publishDate = new Date(start);
-                publishDate.setDate(start.getDate() + daysToAdd);
-
-                const pinIndexInDay = i % pinsPerDayNum;
-                const startHour = 9;
-                const endHour = 17;
-                const totalHoursInWindow = endHour - startHour;
-                const hourIncrement = pinsPerDayNum > 1 ? totalHoursInWindow / (pinsPerDayNum - 1) : 0;
-                const publishHourFloat = startHour + (pinIndexInDay * hourIncrement);
-                const publishHour = Math.floor(publishHourFloat);
-                const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
-                
-                publishDate.setHours(publishHour, publishMinute, 0, 0);
-
-                const year = publishDate.getFullYear();
-                const month = (publishDate.getMonth() + 1).toString().padStart(2, '0');
-                const day = publishDate.getDate().toString().padStart(2, '0');
-                const hour = publishDate.getHours().toString().padStart(2, '0');
-                const minute = publishDate.getMinutes().toString().padStart(2, '0');
-                const formattedPublishDate = `${year}-${month}-${day}T${hour}:${minute}:00`;
-                currentRunCsvData[i][publishDateHeaderKey] = formattedPublishDate;
             }
+
+            const daysToAdd = Math.floor(i / pinsPerDayNum);
+            const publishDate = new Date(start);
+            publishDate.setDate(start.getDate() + daysToAdd);
+
+            const pinIndexInDay = i % pinsPerDayNum;
+            const startHour = 9;
+            const endHour = 17;
+            const totalHoursInWindow = endHour - startHour;
+            const hourIncrement = pinsPerDayNum > 1 ? totalHoursInWindow / (pinsPerDayNum - 1) : 0;
+            const publishHourFloat = startHour + (pinIndexInDay * hourIncrement);
+            const publishHour = Math.floor(publishHourFloat);
+            const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
+            
+            publishDate.setHours(publishHour, publishMinute, 0, 0);
+
+            const year = publishDate.getFullYear();
+            const month = (publishDate.getMonth() + 1).toString().padStart(2, '0');
+            const day = publishDate.getDate().toString().padStart(2, '0');
+            const hour = publishDate.getHours().toString().padStart(2, '0');
+            const minute = publishDate.getMinutes().toString().padStart(2, '0');
+            const formattedPublishDate = `${year}-${month}-${day}T${hour}:${minute}:00`;
+            currentRunCsvData[i][publishDateHeaderKey] = formattedPublishDate;
+            
             setInProgressCsvData([...currentRunCsvData]);
             setLastCompletedRowIndex(i);
             await sleep(100);
         }
 
-        setBulkMessage('Finalizing files...');
+        let finalMessage = 'Generation complete! Your files are ready to download.';
+        if (generationErrors.length > 0) {
+            finalMessage = `Generation completed with ${generationErrors.length} error(s). Some content may be missing. Files are ready.`;
+            const errorDetails = `Bulk generation finished, but some rows had issues:\n\n${generationErrors.slice(0, 5).join('\n')}${generationErrors.length > 5 ? `\n...and ${generationErrors.length - 5} more.` : ''}`;
+            setApiError({ type: 'generic', message: errorDetails });
+        } else {
+            setApiError(null);
+        }
+
+        setBulkMessage(finalMessage);
+        
         const outputHeaders = ['Title', 'Media URL', 'Pinterest board', 'Description', 'Link', 'Publish date', 'Keywords'];
 
         const getOriginalHeader = (canonicalName: string): string | undefined => {
@@ -730,7 +811,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         const zipContent = await zip.generateAsync({ type: 'blob' });
 
         setGeneratedAssets({ zip: zipContent, csv: csvBlob });
-        setBulkMessage('Generation complete! Your files are ready to download.');
 
     } catch (e: any) {
         console.error('Bulk generation failed:', e);
@@ -866,6 +946,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     />;
         case 'domain-suggestor':
             return <DNRaterPage />;
+        case 'author':
+            return <AuthorPage />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}

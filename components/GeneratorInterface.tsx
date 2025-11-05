@@ -43,7 +43,7 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
                     </div>
                     <div className="ml-3">
                         <p className="text-sm font-semibold">An error occurred</p>
-                        <p className="text-sm mt-1">{apiError.message}</p>
+                        <p className="text-sm mt-1 whitespace-pre-wrap">{apiError.message}</p>
                     </div>
                 </div>
             )}

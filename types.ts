@@ -2,6 +2,8 @@ export type TemplateId = `${number}`;
 
 export type PinSize = 'standard' | 'long';
 
+export type ImageAspectRatio = '1:1' | '3:4' | '9:16';
+
 export interface TemplateData {
   title: string;
   subtitle: string;
@@ -11,6 +13,7 @@ export interface TemplateData {
   backgroundImage3: string | null;
   templateId: TemplateId;
   pinSize: PinSize;
+  imageAspectRatio: ImageAspectRatio;
   description: string;
   keywords: string;
   mediaUrlPrefix: string;
