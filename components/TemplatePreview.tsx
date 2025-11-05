@@ -1,3 +1,4 @@
+
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
 
@@ -1338,12 +1339,12 @@ const MontserratVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) 
             {/* Content Banner */}
             <div
                 className="flex-[1] flex flex-col justify-center items-center text-center p-4 font-montserrat font-extrabold"
-                style={{ backgroundColor: '#3E2723', color: '#F8E4B5' }}
+                style={{ backgroundColor: 'black', color: '#FFFFFF' }}
             >
                 {subtitle && (
                     <p
                         className="text-xs tracking-wide mb-1 font-semibold" /* Adjusted weight for subtitle */
-                        style={{ color: '#e3445f' }}
+                        style={{ color: '#B50202' }}
                     >
                         {subtitle}
                     </p>
@@ -1475,6 +1476,7 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
       case '45': return <ThreePartVerticalTemplate data={data} />;
       case '46': return <AntonVerticalTemplate data={data} />;
       case '47': return <MontserratVerticalTemplate data={data} />;
+      case '48': return <MontserratVerticalTemplate data={data} />;
       default: return <ClassicTemplate data={data} />;
     }
   };

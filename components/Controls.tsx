@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -234,7 +233,7 @@ const ApiKeyInput: React.FC<{
 };
 
 export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey, apiframeApiKey, onSetApiframeApiKey }) => {
-    const templateCount = 47;
+    const templateCount = 48;
     const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
         id: `${i + 1}`,
         name: `${i + 1}`
@@ -497,7 +496,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
         }
     };
 
-    const needsImage2 = ['1', '3', '6', '10', '13', '15', '19', '20', '21', '23', '27', '28', '35', '37', '38', '40', '41', '42', '44', '45', '46', '47'].includes(data.templateId);
+    const needsImage2 = ['1', '3', '6', '10', '13', '15', '19', '20', '21', '23', '27', '28', '35', '37', '38', '40', '41', '42', '44', '45', '46', '47', '48'].includes(data.templateId);
     const needsImage3 = ['6', '13', '19', '21'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;
