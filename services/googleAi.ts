@@ -164,144 +164,134 @@ export const generateImageWithMidjourney = async (
 ): Promise<string[]> => {
     const BASE_URL = 'https://api.apiframe.pro';
 
-    try {
-        // Step 1: Start the image generation job
-        const imagineResponse = await fetch(`${BASE_URL}/imagine`, {
+    // Step 1: Start the image generation job
+    const imagineResponse = await fetch(`${BASE_URL}/imagine`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            prompt: prompt,
+            aspect_ratio: aspectRatio,
+            mode: 'fast'
+        })
+    });
+
+    if (!imagineResponse.ok) {
+        const errorText = await imagineResponse.text();
+        console.error('APIFrame.pro imagine error response:', errorText);
+
+        const specificError = new Error();
+        (specificError as any).type = 'generic';
+
+        if (imagineResponse.status === 401) {
+            specificError.message = 'Midjourney authentication failed. Please check your APIFrame.pro API key.';
+            (specificError as any).type = 'auth';
+            throw specificError;
+        }
+
+        try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors[0]?.msg) {
+                specificError.message = `Midjourney error: ${errorData.errors[0].msg}.`;
+            } else if (errorData.detail?.msg || errorData.detail) {
+                specificError.message = errorData.detail?.msg || errorData.detail;
+            } else {
+                specificError.message = `Midjourney request failed with status: ${imagineResponse.status}.`;
+            }
+        } catch (e) {
+            const strippedText = errorText.replace(/<[^>]*>?/gm, '').trim();
+            specificError.message = `Midjourney imagine request failed. Server returned: ${strippedText.substring(0, 200)}`;
+        }
+        throw specificError;
+    }
+
+    const imagineData = await imagineResponse.json();
+    const taskId = imagineData.task_id || imagineData.job_id;
+
+    if (!taskId) {
+        console.error('APIFrame.pro response missing task_id:', imagineData);
+        throw new Error('APIFrame.pro did not return a task ID.');
+    }
+
+    // Step 2: Poll for the job result using the /fetch endpoint
+    let jobStatus = '';
+    let jobData;
+    const maxAttempts = 30; // ~150 seconds timeout
+    let attempt = 0;
+
+    while (jobStatus !== 'finished' && attempt < maxAttempts) {
+        await sleep(5000);
+        attempt++;
+
+        const jobResponse = await fetch(`${BASE_URL}/fetch`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                prompt: prompt,
-                aspect_ratio: aspectRatio,
-                mode: 'fast'
-            })
+            body: JSON.stringify({ task_id: taskId })
         });
 
-        if (!imagineResponse.ok) {
-            const errorText = await imagineResponse.text();
-            console.error('APIFrame.pro imagine error response:', errorText);
-
-            if (imagineResponse.status === 401) {
-                throw new Error('Midjourney authentication failed. Please check your APIFrame.pro API key.');
+        if (!jobResponse.ok) {
+            console.error(`Failed to check job status for ${taskId}, attempt ${attempt}, status: ${jobResponse.status}`);
+            if (jobResponse.status === 401) {
+                throw new Error('Midjourney authentication failed while checking job status. Please check your APIFrame.pro API key.');
             }
+            if (jobResponse.status === 404) {
+                throw new Error('Midjourney job not found. It might have expired or been deleted.');
+            }
+            if (attempt > 3) {
+                throw new Error(`Failed to get job status after multiple attempts. Status: ${jobResponse.status}`);
+            }
+            continue;
+        }
 
-            let message;
+        jobData = await jobResponse.json();
+        jobStatus = jobData.status;
+
+        if (jobStatus === 'failed') {
+            throw new Error(jobData.error || 'Midjourney image generation failed. Please try a different prompt.');
+        }
+    }
+
+    if (jobStatus !== 'finished') {
+        throw new Error('Image generation timed out. The service might be busy. Please try again later.');
+    }
+
+    const imageUrls = jobData?.image_urls;
+
+    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+        console.error('Final job data from APIFrame.pro did not contain an image URL array:', JSON.stringify(jobData, null, 2));
+        throw new Error('The AI model did not return any valid image URLs. See browser console for the full API response.');
+    }
+
+    // Step 3: Fetch all images and convert to base64 in parallel
+    const base64Images = await Promise.all(
+        imageUrls.map(async (url: string) => {
             try {
-                const errorData = JSON.parse(errorText);
-                // Handle specific error structure for banned words etc.
-                if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors[0]?.msg) {
-                    message = `Midjourney error: ${errorData.errors[0].msg}.`;
-                } 
-                // Handle another common error structure
-                else if (errorData.detail?.msg || errorData.detail) {
-                    message = errorData.detail?.msg || errorData.detail;
-                }
-                // Fallback for other JSON errors
-                else {
-                    message = `Midjourney request failed with status: ${imagineResponse.status}.`;
-                }
-            } catch (e) {
-                // If it's not JSON (like an HTML error page), strip tags and show a generic message
-                const strippedText = errorText.replace(/<[^>]*>?/gm, '').trim();
-                message = `Midjourney imagine request failed. Server returned: ${strippedText.substring(0, 200)}`;
-            }
-            throw new Error(message);
-        }
-
-        const imagineData = await imagineResponse.json();
-        const taskId = imagineData.task_id || imagineData.job_id;
-
-        if (!taskId) {
-            console.error('APIFrame.pro response missing task_id:', imagineData);
-            throw new Error('APIFrame.pro did not return a task ID.');
-        }
-
-        // Step 2: Poll for the job result using the /fetch endpoint
-        let jobStatus = '';
-        let jobData;
-        const maxAttempts = 30; // ~150 seconds timeout
-        let attempt = 0;
-
-        while (jobStatus !== 'finished' && attempt < maxAttempts) {
-            await sleep(5000);
-            attempt++;
-
-            const jobResponse = await fetch(`${BASE_URL}/fetch`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ task_id: taskId })
-            });
-
-            if (!jobResponse.ok) {
-                console.error(`Failed to check job status for ${taskId}, attempt ${attempt}, status: ${jobResponse.status}`);
-                if (jobResponse.status === 401) {
-                    throw new Error('Midjourney authentication failed while checking job status. Please check your APIFrame.pro API key.');
-                }
-                if (jobResponse.status === 404) {
-                    throw new Error('Midjourney job not found. It might have expired or been deleted.');
-                }
-                if (attempt > 3) {
-                    throw new Error(`Failed to get job status after multiple attempts. Status: ${jobResponse.status}`);
-                }
-                continue;
-            }
-
-            jobData = await jobResponse.json();
-            jobStatus = jobData.status;
-
-            if (jobStatus === 'failed') {
-                throw new Error(jobData.error || 'Midjourney image generation failed. Please try a different prompt.');
-            }
-        }
-
-        if (jobStatus !== 'finished') {
-            throw new Error('Image generation timed out. The service might be busy. Please try again later.');
-        }
-
-        const imageUrls = jobData?.image_urls;
-
-        if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-            console.error('Final job data from APIFrame.pro did not contain an image URL array:', JSON.stringify(jobData, null, 2));
-            throw new Error('The AI model did not return any valid image URLs. See browser console for the full API response.');
-        }
-
-        // Step 3: Fetch all images and convert to base64 in parallel
-        const base64Images = await Promise.all(
-            imageUrls.map(async (url: string) => {
-                try {
-                    const imageResponse = await fetch(url);
-                    if (!imageResponse.ok) {
-                        console.error(`Failed to download generated image from ${url}`);
-                        return null;
-                    }
-                    const imageBlob = await imageResponse.blob();
-                    return await blobToBase64(imageBlob);
-                } catch (e) {
-                    console.error(`Error fetching image blob from ${url}:`, e);
+                const imageResponse = await fetch(url);
+                if (!imageResponse.ok) {
+                    console.error(`Failed to download generated image from ${url}`);
                     return null;
                 }
-            })
-        );
-        
-        const validImages = base64Images.filter(img => img !== null) as string[];
+                const imageBlob = await imageResponse.blob();
+                return await blobToBase64(imageBlob);
+            } catch (e) {
+                console.error(`Error fetching image blob from ${url}:`, e);
+                return null;
+            }
+        })
+    );
+    
+    const validImages = base64Images.filter(img => img !== null) as string[];
 
-        if (validImages.length === 0) {
-            throw new Error('Failed to download any of the generated images.');
-        }
-
-        return validImages;
-
-    } catch (error: any) {
-        console.error('Error generating image with Midjourney/APIFrame.pro:', error);
-        const specificError = new Error(error.message || 'An unknown error occurred during Midjourney image generation.');
-        (specificError as any).type = 'generic';
-        throw specificError;
+    if (validImages.length === 0) {
+        throw new Error('Failed to download any of the generated images.');
     }
+
+    return validImages;
 };
 
 export const generateImageWithMidApiAi = async (
