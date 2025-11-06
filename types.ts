@@ -78,5 +78,6 @@ export interface BackupData {
   googleAiApiKey: string;
   falAiApiKey: string;
   apiframeApiKey: string;
+  midapiApiKey: string;
   pinterestAccounts: PinterestAccount[];
 }

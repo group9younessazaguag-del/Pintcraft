@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow, PinterestAccount, ImageAspectRatio } from '../types';
 
@@ -303,6 +302,174 @@ export const generateImageWithMidjourney = async (
         throw specificError;
     }
 };
+
+export const generateImageWithMidApiAi = async (
+    apiKey: string, // midapi.ai API key
+    prompt: string,
+    aspectRatio: ImageAspectRatio,
+    onProgressUpdate?: (message: string) => void
+): Promise<string[]> => {
+    
+    const generationTask = async (): Promise<string[]> => {
+        const BASE_URL = 'https://api.midapi.ai/api/v1/mj';
+        
+        let arValue = '1:1';
+        if (aspectRatio === '9:16') arValue = '9:16';
+        if (aspectRatio === '3:4') arValue = '3:4';
+        
+        const generateResponse = await fetch(`${BASE_URL}/generate`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                taskType: 'mj_txt2img',
+                prompt: prompt,
+                speed: 'relaxed',
+                aspectRatio: arValue,
+                version: '7'
+            })
+        });
+
+        if (!generateResponse.ok) {
+            const errorText = await generateResponse.text();
+            console.error('midapi.ai generate error response:', errorText);
+
+            if (generateResponse.status === 401) {
+                throw new Error('Midjourney 2 authentication failed. Please check your midapi.ai API key.');
+            }
+            
+            let message;
+            try {
+                const errorData = JSON.parse(errorText);
+                message = `midapi.ai error: ${errorData.msg || JSON.stringify(errorData)}`;
+            } catch (e) {
+                const strippedText = errorText.replace(/<[^>]*>?/gm, '').trim();
+                message = `midapi.ai request failed. Server returned: ${strippedText.substring(0, 200)}`;
+            }
+            throw new Error(message);
+        }
+
+        const generateData = await generateResponse.json();
+        
+        if (generateData.code !== 200) {
+            throw new Error(`midapi.ai failed to start task: ${generateData.msg || 'Unknown error'}`);
+        }
+
+        const taskId = generateData.data?.taskId;
+        if (!taskId) {
+            throw new Error('midapi.ai did not return a task ID.');
+        }
+
+        if (onProgressUpdate) {
+            onProgressUpdate(`Task submitted. Waiting for result (this can take over a minute)...`);
+        }
+
+        const maxPollAttempts = 60;
+        let pollAttempt = 0;
+        let taskData;
+
+        while (pollAttempt < maxPollAttempts) {
+            await sleep(5000);
+            pollAttempt++;
+            
+            const statusResponse = await fetch(`${BASE_URL}/record-info?taskId=${taskId}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+            
+            if (!statusResponse.ok) {
+                const errorText = await statusResponse.text();
+                console.warn(`midapi.ai status check failed for ${taskId}, attempt ${pollAttempt}:`, errorText);
+                if (pollAttempt > 3) { throw new Error(`Failed to get job status after multiple attempts. Status: ${statusResponse.status}`); }
+                continue;
+            }
+
+            const result = await statusResponse.json();
+            if (result.code !== 200) {
+                console.warn(`midapi.ai status check for ${taskId} returned API error: ${result.msg}`);
+                if (pollAttempt > 3) { throw new Error(`API returned an error while checking status: ${result.msg}`); }
+                continue;
+            }
+
+            taskData = result.data;
+            const successFlag = taskData.successFlag;
+            
+            if (successFlag === 1) break;
+            if (successFlag === 2 || successFlag === 3) {
+                throw new Error(`midapi.ai task failed: ${taskData.errorMessage || 'Generation failed without a specific error message.'}`);
+            }
+        }
+
+        if (taskData?.successFlag !== 1) {
+            throw new Error('Image generation timed out. The service might be busy. Please try again later.');
+        }
+
+        const resultUrlsInfo = taskData.resultInfoJson?.resultUrls;
+        if (!resultUrlsInfo || !Array.isArray(resultUrlsInfo) || resultUrlsInfo.length === 0) {
+            console.error('Final job data from midapi.ai did not contain result URLs:', JSON.stringify(taskData, null, 2));
+            throw new Error('The AI model did not return any valid image URLs.');
+        }
+
+        const imageUrls = resultUrlsInfo.map((item: any) => item.resultUrl).filter(Boolean);
+
+        const base64Images = await Promise.all(
+            imageUrls.map(async (url: string) => {
+                try {
+                    const imageResponse = await fetch(url);
+                    if (!imageResponse.ok) {
+                        console.error(`Failed to download generated image from ${url}`);
+                        return null;
+                    }
+                    const imageBlob = await imageResponse.blob();
+                    return await blobToBase64(imageBlob);
+                } catch (e) {
+                    console.error(`Error fetching image blob from ${url}:`, e);
+                    return null;
+                }
+            })
+        );
+
+        const validImages = base64Images.filter(img => img !== null) as string[];
+        if (validImages.length === 0) {
+            throw new Error('Failed to download any of the generated images.');
+        }
+        return validImages;
+    };
+
+    const maxRetries = 25;
+    for (let retryAttempt = 1; retryAttempt <= maxRetries; retryAttempt++) {
+        try {
+            return await generationTask();
+        } catch (error: any) {
+            console.warn(`Attempt ${retryAttempt} failed for midapi.ai:`, error.message);
+            const isRetryableError = error.message && error.message.includes('internal error, please try again later');
+
+            if (isRetryableError && retryAttempt < maxRetries) {
+                const baseDelay = 15000;
+                const maxDelay = 90000;
+                const backoff = Math.min(baseDelay * Math.pow(2, retryAttempt - 1), maxDelay);
+                const jitter = backoff * 0.2 * (Math.random() - 0.5);
+                const delay = backoff + jitter;
+                
+                const retryMessage = `Service error on attempt ${retryAttempt}/${maxRetries}. Retrying in ~${Math.round(delay / 1000)}s...`;
+                console.log(retryMessage);
+                if (onProgressUpdate) {
+                    onProgressUpdate(retryMessage);
+                }
+                await sleep(delay);
+            } else {
+                const specificError = new Error(error.message || 'An unknown error occurred during Midjourney 2 image generation.');
+                (specificError as any).type = 'generic';
+                throw specificError;
+            }
+        }
+    }
+
+    throw new Error(`Failed to generate image with midapi.ai after ${maxRetries} attempts.`);
+};
+
 
 export const generatePlaceholderImage = async (prompt: string, aspectRatio: ImageAspectRatio): Promise<string> => {
     return new Promise(resolve => {

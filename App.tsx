@@ -9,7 +9,7 @@ import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './components/pages/TermsOfServicePage';
 import AdminPage from './components/pages/AdminPage';
 import AdBanner from './components/AdBanner';
-import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, DEFAULT_CONTENT_PROMPT, generateImageWithMidjourney, generateSafeImagePrompt } from './services/googleAi';
+import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, DEFAULT_CONTENT_PROMPT, generateImageWithMidjourney, generateSafeImagePrompt, generateImageWithMidApiAi } from './services/googleAi';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useAnalytics } from './hooks/useAnalytics';
 import GeneratorInterface from './components/GeneratorInterface';
@@ -83,6 +83,8 @@ const App: React.FC = () => {
   const [userApiKey, setUserApiKey] = useLocalStorage('googleAiApiKey', ''); // For Google AI (text)
   const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
   const [apiframeApiKey, setApiframeApiKey] = useLocalStorage('apiframeApiKey', ''); // For APIFrame.ai (Midjourney)
+  const [midapiApiKey, setMidapiApiKey] = useLocalStorage('midapiApiKey', ''); // For midapi.ai (Midjourney 2)
+
 
   // Admin and Analytics State
   const [adminSettings, setAdminSettings] = useLocalStorage<AdminSettings>('adminSettings', initialAdminSettings);
@@ -96,6 +98,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState<{ [key: number]: boolean }>({});
   const [isGeneratingMidjourneyImage, setIsGeneratingMidjourneyImage] = useState<{ [key: number]: boolean }>({});
+  const [isGeneratingMidjourney2Image, setIsGeneratingMidjourney2Image] = useState<{ [key: number]: boolean }>({});
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isGeneratingKeywords, setIsGeneratingKeywords] = useState(false);
   const [isGeneratingShortTitle, setIsGeneratingShortTitle] = useState(false);
@@ -112,7 +115,7 @@ const App: React.FC = () => {
   const [page, setPage] = useState(getCurrentPage());
   const [lastCompletedRowIndex, setLastCompletedRowIndex] = useState<number | null>(null);
   const [inProgressCsvData, setInProgressCsvData] = useState<{[key: string]: string}[]>([]);
-  const [bulkJobType, setBulkJobType] = useState<'fal' | 'midjourney' | null>(null);
+  const [bulkJobType, setBulkJobType] = useState<'fal' | 'midjourney' | 'midjourney2' | null>(null);
   
   const zipRef = useRef<any>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -299,6 +302,59 @@ const App: React.FC = () => {
         });
     } finally {
         setIsGeneratingMidjourneyImage({ 1: false, 2: false, 3: false });
+    }
+  };
+
+  const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
+    const csvImagePrompt = currentRowIndex !== null && csvData[currentRowIndex]?.imagePrompt ? csvData[currentRowIndex].imagePrompt : null;
+    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : null) || templateData.title;
+
+    if (!userPrompt) {
+        const msg = 'Please enter a Title or have an Image Prompt in your CSV to generate an image.';
+        if (throwOnError) throw new Error(msg);
+        setApiError({ type: 'generic', message: msg });
+        return;
+    }
+
+    if (!midapiApiKey || midapiApiKey.length < 5) {
+        const msg = 'Please enter a midapi.ai API key in the AI Configuration settings to use Midjourney 2.';
+        if (throwOnError) throw new Error(msg);
+        setApiError({ type: 'generic', message: msg });
+        return;
+    }
+
+    setIsGeneratingMidjourney2Image({ 1: true, 2: true, 3: true });
+    setApiError(null);
+
+    const aspectRatio = templateData.imageAspectRatio;
+
+    try {
+        const imageUrls = await generateImageWithMidApiAi(
+            midapiApiKey,
+            userPrompt,
+            aspectRatio,
+            onProgressUpdate
+        );
+        
+        // Populate up to 3 image slots from the returned array
+        setImageData(prev => ({
+            ...prev,
+            backgroundImage: imageUrls[0] || prev.backgroundImage,
+            backgroundImage2: imageUrls[1] || prev.backgroundImage2,
+            backgroundImage3: imageUrls[2] || prev.backgroundImage3,
+        }));
+    } catch (error: any) {
+        console.error(`Error generating image with Midjourney 2:`, error);
+        if (throwOnError) {
+            throw error; // Re-throw for bulk processor
+        }
+        setApiError({
+            type: error.type || 'generic',
+            message: error.message || 'Failed to generate image with Midjourney 2.',
+            helpLink: error.helpLink
+        });
+    } finally {
+        setIsGeneratingMidjourney2Image({ 1: false, 2: false, 3: false });
     }
   };
 
@@ -513,11 +569,11 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex - 1);
+      setCurrentRowIndex(currentRowIndex + 1);
     }
   };
 
-  const handleBulkGeneration = async (imageGenerator: 'fal' | 'midjourney', resume = false) => {
+  const handleBulkGeneration = async (imageGenerator: 'fal' | 'midjourney' | 'midjourney2', resume = false) => {
     setApiError(null);
     setGeneratedAssets(null);
     if (csvData.length === 0) {
@@ -528,6 +584,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     const googleApiKey = userApiKey;
     const falApiKey = falAiApiKey;
     const mjApiKey = apiframeApiKey;
+    const mj2ApiKey = midapiApiKey;
 
     if (!googleApiKey) {
         if (!window.confirm("You are missing a Google AI API key. Only basic placeholder text will be created. Do you want to continue?")) {
@@ -543,6 +600,12 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     
     if (imageGenerator === 'midjourney' && !mjApiKey) {
         if (!window.confirm("You are missing an APIFrame.ai API key for Midjourney. No images will be generated. Do you want to continue?")) {
+            return;
+        }
+    }
+
+    if (imageGenerator === 'midjourney2' && !mj2ApiKey) {
+        if (!window.confirm("You are missing a midapi.ai API key for Midjourney 2. No images will be generated. Do you want to continue?")) {
             return;
         }
     }
@@ -635,7 +698,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 }
             }
 
-            setBulkMessage(`Row ${i + 1}: Generating images with ${imageGenerator === 'midjourney' ? 'Midjourney' : 'Fal.ai'}...`);
+            const generatorName = imageGenerator === 'midjourney' ? 'Midjourney' : imageGenerator === 'midjourney2' ? 'Midjourney 2' : 'Fal.ai';
+            setBulkMessage(`Row ${i + 1}: Generating images with ${generatorName}...`);
+
             const originalRowData = currentRunCsvData[i];
             const imagePromptHeader = Object.keys(originalRowData).find(h => h.toLowerCase().trim() === 'image prompt');
             const imagePromptValue = imagePromptHeader ? originalRowData[imagePromptHeader] : null;
@@ -648,6 +713,13 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     if (imageGenerator === 'midjourney') {
                         if (mjApiKey) {
                             await handleGenerateImageWithMidjourney(1, true, prompt);
+                            await sleep(500);
+                            imageGenerated = true;
+                        }
+                    } else if (imageGenerator === 'midjourney2') {
+                        if (mj2ApiKey) {
+                            const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
+                            await handleGenerateImageWithMidApiAi(1, true, prompt, onProgress);
                             await sleep(500);
                             imageGenerated = true;
                         }
@@ -683,6 +755,13 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                             if (imageGenerator === 'midjourney') {
                                 if (mjApiKey) {
                                     await handleGenerateImageWithMidjourney(1, true, newPrompt);
+                                    await sleep(500);
+                                    imageGenerated = true;
+                                }
+                            } else if (imageGenerator === 'midjourney2') {
+                                if (mj2ApiKey) {
+                                    const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
+                                    await handleGenerateImageWithMidApiAi(1, true, newPrompt, onProgress);
                                     await sleep(500);
                                     imageGenerated = true;
                                 }
@@ -865,6 +944,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     if (typeof data.apiframeApiKey === 'string') {
         setApiframeApiKey(data.apiframeApiKey);
     }
+    if (typeof data.midapiApiKey === 'string') {
+        setMidapiApiKey(data.midapiApiKey);
+    }
     if (Array.isArray(data.pinterestAccounts)) {
         setPinterestAccounts(data.pinterestAccounts);
     }
@@ -876,6 +958,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     googleAiApiKey: userApiKey,
     falAiApiKey,
     apiframeApiKey,
+    midapiApiKey,
     pinterestAccounts,
   };
 
@@ -885,6 +968,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     onImageUpload: handleImageUpload,
     onGenerateImage: handleGenerateImage,
     onGenerateImageWithMidjourney: handleGenerateImageWithMidjourney,
+    onGenerateImageWithMidApiAi: handleGenerateImageWithMidApiAi,
     onGenerateDescription: handleGenerateDescription,
     onGenerateKeywords: handleGenerateKeywords,
     onGenerateShortTitle: handleGenerateShortTitle,
@@ -892,6 +976,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     isLoading: isLoading,
     isGeneratingImage: isGeneratingImage,
     isGeneratingMidjourneyImage: isGeneratingMidjourneyImage,
+    isGeneratingMidjourney2Image: isGeneratingMidjourney2Image,
     isGeneratingDescription: isGeneratingDescription,
     isGeneratingKeywords: isGeneratingKeywords,
     isGeneratingShortTitle: isGeneratingShortTitle,
@@ -914,6 +999,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     falAiApiKey: falAiApiKey,
     apiframeApiKey: apiframeApiKey,
     onSetApiframeApiKey: setApiframeApiKey,
+    midapiApiKey: midapiApiKey,
+    onSetMidapiApiKey: setMidapiApiKey,
     bulkJobType: bulkJobType,
   };
   
