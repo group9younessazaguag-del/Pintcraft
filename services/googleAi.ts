@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow, PinterestAccount, ImageAspectRatio } from '../types';
 
@@ -337,7 +338,7 @@ export const generateImageWithMidApiAi = async (
             console.error('midapi.ai generate error response:', errorText);
 
             if (generateResponse.status === 401) {
-                throw new Error('Midjourney 2 authentication failed. Please check your midapi.ai API key.');
+                throw new Error('midapi.ai authentication failed. Please check your midapi.ai API key.');
             }
             
             let message;
@@ -460,7 +461,7 @@ export const generateImageWithMidApiAi = async (
                 }
                 await sleep(delay);
             } else {
-                const specificError = new Error(error.message || 'An unknown error occurred during Midjourney 2 image generation.');
+                const specificError = new Error(error.message || 'An unknown error occurred during midapi.ai image generation.');
                 (specificError as any).type = 'generic';
                 throw specificError;
             }

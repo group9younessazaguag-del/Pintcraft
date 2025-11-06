@@ -180,7 +180,7 @@ const ImageUpload: React.FC<{
                     type="button"
                     onClick={() => onGenerateImageWithMidApiAi(id)}
                     disabled={isAnyGenerating || isBulkGenerating || !isMj2Configured}
-                    title={isMj2Configured ? 'Generate a high-quality image with Midjourney 2 (via midapi.ai)' : 'Add a midapi.ai API key to use Midjourney 2'}
+                    title={isMj2Configured ? 'Generate a high-quality image with midapi.ai' : 'Add a midapi.ai API key to use this generator'}
                     className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
                 >
                 {isGeneratingMj2 ? (
@@ -188,7 +188,7 @@ const ImageUpload: React.FC<{
                     <LoadingSpinner className="mr-2"/>
                     Generating (~60s)...
                     </>
-                ) : '🚀 Generate with Midjourney 2'}
+                ) : '🚀 Generate with midapi.ai'}
                 </button>
             </div>
         </div>
@@ -356,7 +356,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         }
                     />
                     <ApiKeyInput
-                        label="midapi.ai Key (for Midjourney 2)"
+                        label="midapi.ai API Key"
                         value={midapiApiKeyInput}
                         onChange={setMidapiApiKeyInput}
                         onSave={handleSaveMidapiKey}
@@ -368,7 +368,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                             mj2KeyIsConfigured ? (
                                 <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your midapi.ai key is saved in this browser.</p>
                             ) : (
-                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable Midjourney 2 image generation.</p>
+                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable midapi.ai image generation.</p>
                             )
                         }
                     />
@@ -555,7 +555,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
 
     const getBulkJobName = () => {
         if (bulkJobType === 'midjourney') return 'Midjourney';
-        if (bulkJobType === 'midjourney2') return 'Midjourney 2';
+        if (bulkJobType === 'midjourney2') return 'midapi.ai';
         return 'Fal.ai';
     };
 
@@ -678,12 +678,12 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                             <button
                                 onClick={() => onBulkGeneration('midjourney2', false)}
                                 disabled={isBulkGenerating || csvData.length === 0 || isQuotaError || !mj2KeyIsConfigured}
-                                title={!mj2KeyIsConfigured ? 'Add midapi.ai key to use Midjourney 2' : 'Generate all pins using Midjourney 2 for images'}
+                                title={!mj2KeyIsConfigured ? 'Add a midapi.ai API key to use this generator' : 'Generate all pins using midapi.ai for images'}
                                 className="w-full flex items-center justify-center px-4 py-2.5 bg-cyan-500 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                             >
                                 {isBulkGenerating && bulkJobType === 'midjourney2' ? (
                                     <><LoadingSpinner className="mr-3" /> Generating...</>
-                                ) : '🚀 Generate with Midjourney 2 & CSV'}
+                                ) : '🚀 Generate with midapi.ai & CSV'}
                             </button>
                         </div>
                     )}

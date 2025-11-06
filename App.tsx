@@ -317,7 +317,7 @@ const App: React.FC = () => {
     }
 
     if (!midapiApiKey || midapiApiKey.length < 5) {
-        const msg = 'Please enter a midapi.ai API key in the AI Configuration settings to use Midjourney 2.';
+        const msg = 'Please enter a midapi.ai API key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
@@ -344,13 +344,13 @@ const App: React.FC = () => {
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
     } catch (error: any) {
-        console.error(`Error generating image with Midjourney 2:`, error);
+        console.error(`Error generating image with midapi.ai:`, error);
         if (throwOnError) {
             throw error; // Re-throw for bulk processor
         }
         setApiError({
             type: error.type || 'generic',
-            message: error.message || 'Failed to generate image with Midjourney 2.',
+            message: error.message || 'Failed to generate image with midapi.ai.',
             helpLink: error.helpLink
         });
     } finally {
@@ -605,7 +605,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     }
 
     if (imageGenerator === 'midjourney2' && !mj2ApiKey) {
-        if (!window.confirm("You are missing a midapi.ai API key for Midjourney 2. No images will be generated. Do you want to continue?")) {
+        if (!window.confirm("You are missing a midapi.ai API key. No images will be generated. Do you want to continue?")) {
             return;
         }
     }
@@ -698,7 +698,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 }
             }
 
-            const generatorName = imageGenerator === 'midjourney' ? 'Midjourney' : imageGenerator === 'midjourney2' ? 'Midjourney 2' : 'Fal.ai';
+            const generatorName = imageGenerator === 'midjourney' ? 'Midjourney' : imageGenerator === 'midjourney2' ? 'midapi.ai' : 'Fal.ai';
             setBulkMessage(`Row ${i + 1}: Generating images with ${generatorName}...`);
 
             const originalRowData = currentRunCsvData[i];
