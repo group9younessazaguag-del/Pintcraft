@@ -60,8 +60,8 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
         const isServiceUnavailable = errorBody.status === 'UNAVAILABLE' || errorBody.code === 503;
         
         if (isQuotaError) {
-            const userMessage = "You exceeded your current quota, please check your plan and billing details.";
-            return { type: 'quota', message: userMessage, helpLink: helpLink || 'https://ai.google.dev/gemini-api/docs/rate-limits' };
+            const userMessage = "You've exceeded the free usage limit for your Google AI API key. To continue, please enable billing on your Google Cloud project or wait for your quota to reset.";
+            return { type: 'quota', message: userMessage, helpLink: helpLink || 'https://ai.google.dev/gemini-api/docs/billing' };
         }
         if (isServiceUnavailable) {
             return { type: 'service', message: 'Image generation service is temporarily unavailable.', helpLink: helpLink || undefined };
@@ -777,6 +777,204 @@ export const generatePinContentFromKeyword = async (
             throw error;
         }
         throw getApiErrorDetails(error);
+    }
+};
+
+/**
+ * Attempts to repair a malformed JSON string commonly produced by LLMs.
+ * It removes comments and trailing commas.
+ * @param jsonString The potentially malformed JSON string.
+ * @returns A cleaned JSON string.
+ */
+const repairJson = (jsonString: string): string => {
+    if (!jsonString) return '';
+    let repaired = jsonString.trim();
+
+    // Remove JS-style comments
+    repaired = repaired.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
+    
+    // Remove trailing commas from objects
+    repaired = repaired.replace(/,(\s*})/g, '$1');
+    
+    // Remove trailing commas from arrays
+    repaired = repaired.replace(/,(\s*])/g, '$1');
+
+    return repaired;
+};
+
+export const generatePinContentFromKeywordWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    keyword: string,
+    boardOptions?: string,
+    categoryOptions?: string
+): Promise<GeneratedContentRow> => {
+    try {
+        let systemPrompt = DEFAULT_CONTENT_PROMPT; // Reusing the same detailed prompt
+
+        if (boardOptions && boardOptions.trim()) {
+            systemPrompt += `\n\n**Constraint for 'board':** You MUST choose one board from this list: [${boardOptions}]. Do not invent a new one.`;
+        }
+        if (categoryOptions && categoryOptions.trim()) {
+            systemPrompt += `\n\n**Constraint for 'category':** You MUST choose one category from this list: [${categoryOptions}]. Do not invent a new one.`;
+        }
+
+        const userPrompt = `Generate the content plan for the keyword: "${keyword}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+                response_format: { type: "json_object" },
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            const specificError = new Error(message);
+            (specificError as any).type = response.status === 429 ? 'quota' : 'generic';
+            throw specificError;
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+        
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+        
+        // 1. Extract potential JSON string from response
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('{');
+            const endIndex = potentialJson.lastIndexOf('}');
+            if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            }
+        }
+        
+        // If we couldn't find a JSON object, throw an error.
+        if (!potentialJson.startsWith('{') || !potentialJson.endsWith('}')) {
+             const err = new Error("The AI response does not appear to contain a JSON object.");
+             (err as any).originalText = jsonText;
+             throw err;
+        }
+        
+        // 2. Try to parse it; if it fails, try to repair it and parse again.
+        let parsedObject;
+        try {
+            parsedObject = JSON.parse(potentialJson);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting to repair.", { error: e, json: potentialJson });
+            try {
+                const repairedJson = repairJson(potentialJson);
+                parsedObject = JSON.parse(repairedJson);
+                console.log("Successfully parsed repaired JSON.");
+            } catch (repairError) {
+                 console.error("Failed to parse even after repairing JSON.", { error: repairError, original: potentialJson });
+                 const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                 (err as any).originalText = jsonText;
+                 throw err;
+            }
+        }
+
+        const finalObject: GeneratedContentRow = {
+            keyword: keyword,
+            title: String(parsedObject.title || ''),
+            board: String(parsedObject.board || ''),
+            image_prompt: String(parsedObject.image_prompt || ''),
+            description: String(parsedObject.description || ''),
+            alt_text: String(parsedObject.alt_text || ''),
+            interests: Array.isArray(parsedObject.interests) ? parsedObject.interests.map(String) : [],
+            category: String(parsedObject.category || ''),
+        };
+
+        return finalObject;
+
+    } catch (error: any) {
+        console.error("Error in generatePinContentFromKeywordWithOpenRouter:", error);
+        if (error.type) { 
+            throw error;
+        }
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
+};
+
+export const rewriteKeyword = async (apiKey: string, model: string, keyword: string): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Rewrite the following keyword to be more descriptive and clear, while keeping the core topic the same. The original keyword might have caused an error with an AI model.
+        Original Keyword: "${keyword}"
+        
+        Rewritten Keyword:`;
+        
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt
+        }));
+        
+        const rewritten = response.text.trim().replace(/"/g, '');
+        return rewritten || keyword;
+    } catch (error: any) {
+        console.error("Failed to rewrite keyword:", error);
+        return keyword;
+    }
+};
+
+export const rewriteKeywordWithOpenRouter = async (apiKey: string, model: string, keyword: string): Promise<string> => {
+    try {
+        const prompt = `Rewrite the following keyword to be more descriptive and clear, while keeping the core topic the same. The original keyword might have caused an error with an AI model.
+        Original Keyword: "${keyword}"
+        
+        Rewritten Keyword:`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "user", content: prompt },
+                ],
+            }),
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter rewrite API error:', errorData);
+            return keyword; // return original on error
+        }
+
+        const result = await response.json();
+        const rewrittenKeyword = result.choices[0]?.message?.content;
+
+        return rewrittenKeyword ? rewrittenKeyword.trim().replace(/"/g, '') : keyword;
+    } catch (error) {
+        console.error("Error rewriting keyword with OpenRouter:", error);
+        return keyword;
     }
 };
 

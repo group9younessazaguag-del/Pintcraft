@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { generatePinContentFromKeyword } from '../../services/googleAi';
+import { generatePinContentFromKeyword, generatePinContentFromKeywordWithOpenRouter, rewriteKeyword, rewriteKeywordWithOpenRouter } from '../../services/googleAi';
 import type { AdminSettings, GeneratedContentRow } from '../../types';
 import CsvIcon from '../icons/CsvIcon';
 import LoadingSpinner from '../icons/LoadingSpinner';
@@ -12,6 +12,8 @@ import ProfileIcon from '../icons/ProfileIcon';
 interface ContentGeneratorPageProps {
     userApiKey: string;
     onSetUserApiKey: (key: string) => void;
+    openRouterApiKey: string;
+    onSetOpenRouterApiKey: (key: string) => void;
     textModel: string;
     adminSettings: AdminSettings;
 }
@@ -40,7 +42,29 @@ const parseCsvLine = (line: string): string[] => {
     return result;
 };
 
-const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, textModel, adminSettings }) => {
+const ServiceToggleButton: React.FC<{
+    options: { id: 'google' | 'openrouter'; name: string }[];
+    selected: 'google' | 'openrouter';
+    onSelect: (id: 'google' | 'openrouter') => void;
+}> = ({ options, selected, onSelect }) => (
+    <div>
+        <label className="block text-sm font-medium text-slate-600 mb-2">AI Service</label>
+        <div className="grid grid-cols-2 gap-2">
+            {options.map(option => (
+                <button
+                    key={option.id}
+                    onClick={() => onSelect(option.id)}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 ${selected === option.id ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                >
+                    {option.name}
+                </button>
+            ))}
+        </div>
+    </div>
+);
+
+
+const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, openRouterApiKey, onSetOpenRouterApiKey, textModel, adminSettings }) => {
     const [keywords, setKeywords] = useState<string[]>([]);
     const [generatedData, setGeneratedData] = useState<GeneratedContentRow[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -48,8 +72,15 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
     const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
     const [selectedProfileId, setSelectedProfileId] = useState<string>('');
     
+    const [service, setService] = useState<'google' | 'openrouter'>('google');
+    const [openRouterModel, setOpenRouterModel] = useState('mistralai/mistral-7b-instruct');
+    
     const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
     useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
+    
+    const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
+    useEffect(() => { setOpenRouterApiKeyInput(openRouterApiKey); }, [openRouterApiKey]);
+
 
     // Set the default profile when the component loads or profiles change
     useEffect(() => {
@@ -68,7 +99,14 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
         onSetUserApiKey('');
     };
     
+    const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
+    const handleClearOpenRouterKey = () => {
+        setOpenRouterApiKeyInput('');
+        onSetOpenRouterApiKey('');
+    };
+    
     const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
+    const openRouterKeyIsConfigured = openRouterApiKey && openRouterApiKey.length > 5;
 
     const resetState = () => {
         setKeywords([]);
@@ -118,8 +156,12 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
     };
 
     const handleGenerateContent = async () => {
-        if (!googleKeyIsConfigured) {
+        if (service === 'google' && !googleKeyIsConfigured) {
             setApiError({type: 'generic', message: "A Google AI API key is required. Please add one in the 'AI Configuration' settings."});
+            return;
+        }
+        if (service === 'openrouter' && !openRouterKeyIsConfigured) {
+            setApiError({type: 'generic', message: "An OpenRouter API key is required. Please add one in the 'AI Configuration' settings."});
             return;
         }
         if (keywords.length === 0) {
@@ -132,40 +174,95 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
         setGeneratedData([]);
         
         const results: GeneratedContentRow[] = [];
+        const generationErrors: string[] = [];
 
         const selectedProfile = adminSettings.websiteProfiles.find(p => p.id === selectedProfileId);
         const boardOptions = selectedProfile?.boardList.split('\n').filter(Boolean).join(', ');
         const categoryOptions = selectedProfile?.categoryList.split('\n').filter(Boolean).join(', ');
 
         for (let i = 0; i < keywords.length; i++) {
-            const keyword = keywords[i];
-            setProgressMessage(`Processing keyword ${i + 1} of ${keywords.length}: "${keyword}"`);
-            try {
-                const content = await generatePinContentFromKeyword(
-                    userApiKey, 
-                    textModel, 
-                    keyword,
-                    boardOptions,
-                    categoryOptions
-                );
-                results.push({ keyword, ...content });
-                setGeneratedData([...results]); // Update table as we go
-            } catch (error: any) {
-                console.error(error);
-                const originalText = (error as any).originalText;
-                let message = `Error on keyword "${keyword}": ${error.message}`;
-                if (originalText) {
-                    message += `\n\nAI Response:\n${originalText}`;
-                }
+            const originalKeyword = keywords[i];
+            let currentKeyword = originalKeyword;
+            setProgressMessage(`Processing keyword ${i + 1} of ${keywords.length}: "${originalKeyword}"`);
+            
+            let success = false;
+            let attempt = 1;
+            const maxAttempts = 2; // Original attempt + 1 retry
 
-                setApiError({type: error.type || 'generic', message: message, helpLink: error.helpLink});
-                setIsLoading(false);
-                setProgressMessage(`Failed at keyword ${i + 1}. Please check the error message.`);
-                return; // Stop on error
+            while (attempt <= maxAttempts && !success) {
+                try {
+                    let content;
+                    if (service === 'openrouter') {
+                        content = await generatePinContentFromKeywordWithOpenRouter(
+                            openRouterApiKey,
+                            openRouterModel,
+                            currentKeyword,
+                            boardOptions,
+                            categoryOptions
+                        );
+                    } else {
+                        content = await generatePinContentFromKeyword(
+                            userApiKey, 
+                            textModel, 
+                            currentKeyword,
+                            boardOptions,
+                            categoryOptions
+                        );
+                    }
+                    results.push({ keyword: originalKeyword, ...content }); // Push with original keyword
+                    setGeneratedData([...results]);
+                    success = true;
+
+                } catch (error: any) {
+                    console.error(`Attempt ${attempt} failed for keyword "${currentKeyword}":`, error);
+                    
+                    // Don't retry quota errors
+                    if (error.type === 'quota') {
+                        setApiError({type: error.type, message: `API Quota Exceeded on keyword "${originalKeyword}". Generation stopped.`, helpLink: error.helpLink});
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    if (attempt < maxAttempts) {
+                        setProgressMessage(`Attempt ${attempt} failed for "${originalKeyword}". Rewriting and retrying...`);
+                        
+                        try {
+                            let rewrittenKeyword;
+                            if (service === 'openrouter') {
+                                rewrittenKeyword = await rewriteKeywordWithOpenRouter(openRouterApiKey, openRouterModel, originalKeyword);
+                            } else {
+                                rewrittenKeyword = await rewriteKeyword(userApiKey, textModel, originalKeyword);
+                            }
+                            
+                            if (rewrittenKeyword && rewrittenKeyword.toLowerCase() !== originalKeyword.toLowerCase()) {
+                               currentKeyword = rewrittenKeyword;
+                               setProgressMessage(`Retrying with new keyword: "${currentKeyword}"`);
+                            } else {
+                               setProgressMessage(`Could not rewrite keyword, retrying with original.`);
+                            }
+
+                        } catch (rewriteError) {
+                            console.error("Failed to rewrite keyword, will use original for next attempt.", rewriteError);
+                        }
+                    } else {
+                        // Final attempt failed
+                        const errorMessage = `Failed on keyword "${originalKeyword}": ${error.message}`;
+                        generationErrors.push(errorMessage);
+                    }
+                }
+                attempt++;
             }
         }
 
-        setProgressMessage('Content generation complete!');
+        if (generationErrors.length > 0) {
+            setProgressMessage(`Content generation complete with ${generationErrors.length} error(s).`);
+            const summaryError = `Failed to process ${generationErrors.length} keyword(s). First error: ${generationErrors[0]}`;
+            setApiError({ type: 'generic', message: summaryError });
+        } else {
+            setProgressMessage('Content generation complete!');
+            setApiError(null); // Clear any transient errors if the whole process succeeded
+        }
+        
         setIsLoading(false);
     };
 
@@ -223,23 +320,72 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                 {/* Controls Column */}
                 <div className="lg:col-span-1 space-y-6">
                      <ControlCard icon={<SettingsIcon />} title="AI Configuration">
-                        <ApiKeyInput
-                            label="Google AI API Key (for Text)"
-                            value={googleApiKeyInput}
-                            onChange={setGoogleApiKeyInput}
-                            onSave={handleSaveGoogleKey}
-                            onClear={handleClearGoogleKey}
-                            placeholder="Enter your Google AI key"
-                            getLink="https://aistudio.google.com/app/apikey"
-                            getLinkText="Get a Google AI API Key"
-                            statusMessage={
-                                googleKeyIsConfigured ? (
-                                    <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Google AI key is saved in this browser.</p>
-                                ) : (
-                                    <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
-                                )
-                            }
-                        />
+                        <div className="space-y-6">
+                            <ServiceToggleButton
+                                options={[
+                                    { id: 'google', name: 'Google AI' },
+                                    { id: 'openrouter', name: 'OpenRouter' }
+                                ]}
+                                selected={service}
+                                onSelect={setService}
+                            />
+                            
+                            {service === 'google' && (
+                                <ApiKeyInput
+                                    label="Google AI API Key (for Text)"
+                                    value={googleApiKeyInput}
+                                    onChange={setGoogleApiKeyInput}
+                                    onSave={handleSaveGoogleKey}
+                                    onClear={handleClearGoogleKey}
+                                    placeholder="Enter your Google AI key"
+                                    getLink="https://aistudio.google.com/app/apikey"
+                                    getLinkText="Get a Google AI API Key"
+                                    statusMessage={
+                                        googleKeyIsConfigured ? (
+                                            <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Google AI key is saved in this browser.</p>
+                                        ) : (
+                                            <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
+                                        )
+                                    }
+                                />
+                            )}
+
+                             {service === 'openrouter' && (
+                                <>
+                                    <ApiKeyInput
+                                        label="OpenRouter.ai API Key"
+                                        value={openRouterApiKeyInput}
+                                        onChange={setOpenRouterApiKeyInput}
+                                        onSave={handleSaveOpenRouterKey}
+                                        onClear={handleClearOpenRouterKey}
+                                        placeholder="Enter your OpenRouter key"
+                                        getLink="https://openrouter.ai/keys"
+                                        getLinkText="Get an OpenRouter API Key"
+                                        statusMessage={
+                                            openRouterKeyIsConfigured ? (
+                                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your OpenRouter key is saved in this browser.</p>
+                                            ) : (
+                                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
+                                            )
+                                        }
+                                    />
+                                    <div>
+                                        <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 mb-1.5">OpenRouter Model</label>
+                                        <input
+                                            type="text"
+                                            id="openrouter-model"
+                                            value={openRouterModel}
+                                            onChange={(e) => setOpenRouterModel(e.target.value)}
+                                            placeholder="e.g., mistralai/mistral-7b-instruct"
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                        />
+                                        <p className="text-xs text-slate-500 mt-1.5">
+                                            Find models on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline text-pink-600">OpenRouter models page</a>.
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </ControlCard>
                     
                      <ControlCard icon={<ProfileIcon />} title="Website Profile">
@@ -287,7 +433,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                         <div className="space-y-3">
                              <button
                                 onClick={handleGenerateContent}
-                                disabled={isLoading || keywords.length === 0 || !googleKeyIsConfigured}
+                                disabled={isLoading || keywords.length === 0 || (service === 'google' && !googleKeyIsConfigured) || (service === 'openrouter' && !openRouterKeyIsConfigured)}
                                 className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                             >
                                 {isLoading ? (
@@ -311,7 +457,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                                 <p className="whitespace-pre-wrap">{apiError.message}</p>
                                                 {apiError.type === 'quota' && apiError.helpLink && (
                                                     <a href={apiError.helpLink} target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-amber-900 mt-2 block">
-                                                        Learn more about Google AI rate limits &rarr;
+                                                        Learn more about API billing &rarr;
                                                     </a>
                                                 )}
                                             </div>

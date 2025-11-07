@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -82,6 +83,7 @@ const App: React.FC = () => {
   const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
   const [apiframeApiKey, setApiframeApiKey] = useLocalStorage('apiframeApiKey', ''); // For APIFrame.ai (Midjourney)
   const [midapiApiKey, setMidapiApiKey] = useLocalStorage('midapiApiKey', ''); // For midapi.ai (Midjourney 2)
+  const [openRouterApiKey, setOpenRouterApiKey] = useLocalStorage('openRouterApiKey', ''); // For OpenRouter.ai (text)
 
 
   // Admin and Analytics State
@@ -945,6 +947,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     if (typeof data.midapiApiKey === 'string') {
         setMidapiApiKey(data.midapiApiKey);
     }
+    if (typeof data.openRouterApiKey === 'string') {
+        setOpenRouterApiKey(data.openRouterApiKey);
+    }
     if (Array.isArray(data.pinterestAccounts)) {
         setPinterestAccounts(data.pinterestAccounts);
     }
@@ -957,6 +962,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     falAiApiKey,
     apiframeApiKey,
     midapiApiKey,
+    openRouterApiKey,
     pinterestAccounts,
   };
 
@@ -1018,6 +1024,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <ContentGeneratorPage
                         userApiKey={userApiKey}
                         onSetUserApiKey={setUserApiKey}
+                        openRouterApiKey={openRouterApiKey}
+                        onSetOpenRouterApiKey={setOpenRouterApiKey}
                         textModel={templateData.textModel}
                         adminSettings={adminSettings}
                     />;

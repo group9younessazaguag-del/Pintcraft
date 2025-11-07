@@ -80,5 +80,6 @@ export interface BackupData {
   falAiApiKey: string;
   apiframeApiKey: string;
   midapiApiKey: string;
+  openRouterApiKey: string;
   pinterestAccounts: PinterestAccount[];
 }

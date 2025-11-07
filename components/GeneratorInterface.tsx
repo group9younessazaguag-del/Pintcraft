@@ -57,11 +57,11 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
                                 <div className="ml-3">
                                     <h3 className="text-base font-semibold">API Quota Reached</h3>
                                     <div className="text-sm mt-2 space-y-1">
-                                        <p>The Google AI API key you're using has exceeded its free usage limits. This is an issue with your Google account, not the application.</p>
-                                        <p>To continue, please check your billing status with Google or use a different API key.</p>
+                                        <p>You've exceeded the free usage limit for your Google AI API key. This is an issue with your Google account, not the application.</p>
+                                        <p>To continue, please enable billing on your Google Cloud project or use a different API key.</p>
                                         {apiError.helpLink && (
                                             <a href={apiError.helpLink} target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-amber-900">
-                                                Check your quota details here.
+                                                Learn how to enable billing here.
                                             </a>
                                         )}
                                     </div>
