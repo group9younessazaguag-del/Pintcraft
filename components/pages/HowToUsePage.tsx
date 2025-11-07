@@ -12,14 +12,16 @@ const HowToUsePage: React.FC<{ content?: string }> = ({ content }) => {
 
       <h2>Step 1: Configure Your AI Keys</h2>
       <p>
-        To unlock the full power of AI generation for text and images, you need to provide your own API keys. You'll find the configuration panel on the left side of the main generator page.
+        To unlock the full power of AI generation for text and images, you need to provide your own API keys. You'll find the configuration panel on the left side of the main generator page. This app supports multiple AI services to give you flexibility.
       </p>
       <ul>
-          <li><strong>Google AI API Key (for Text):</strong> This key is used for generating pin descriptions, keywords, and shortening titles. You can get a key from the <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>.</li>
-          <li><strong>Fal.ai API Key (for Images):</strong> This key is used for generating high-quality background images from your pin titles. You can get a key from the <a href="https://fal.ai/dashboard/keys" target="_blank" rel="noopener noreferrer">Fal.ai dashboard</a>.</li>
+          <li><strong>Google AI API Key (for Text):</strong> This key is required for generating pin descriptions, keywords, and shortening titles. You can get a key from the <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>.</li>
+          <li><strong>Fal.ai API Key (for Images):</strong> This is one option for generating high-quality background images. You can get a key from the <a href="https://fal.ai/dashboard/keys" target="_blank" rel="noopener noreferrer">Fal.ai dashboard</a>.</li>
+          <li><strong>APIFrame.ai API Key (for Midjourney):</strong> Use this key to generate images with the popular Midjourney model via the APIFrame.ai service. Get a key from the <a href="https://app.apiframe.ai/auth" target="_blank" rel="noopener noreferrer">APIFrame.ai dashboard</a>.</li>
+          <li><strong>midapi.ai API Key (for Midjourney):</strong> This is an alternative service for generating images using Midjourney. Get a key from the <a href="https://midapi.ai/" target="_blank" rel="noopener noreferrer">midapi.ai website</a>.</li>
       </ul>
       <p>
-          Enter each key into its respective field and click "Save". Your keys are stored securely in your browser's local storage and are never sent to our servers.
+          Enter each key into its respective field and click "Save". Your keys are stored securely in your browser's local storage and are never sent to our servers. You only need to provide keys for the services you wish to use.
       </p>
 
       <h2>Step 2: Customize Your Pin's Look</h2>
@@ -48,7 +50,7 @@ const HowToUsePage: React.FC<{ content?: string }> = ({ content }) => {
       </p>
       <ul>
           <li><strong>Upload:</strong> Click "Upload" to choose an image from your computer.</li>
-          <li><strong>Generate:</strong> Click "✨ Generate" to create a unique image using AI based on your pin's title.</li>
+          <li><strong>Generate:</strong> You have multiple options! Click one of the "Generate" buttons (e.g., "Generate with Fal.ai", "Generate with Midjourney") to create a unique image using various AI models based on your pin's title. Make sure you have configured the corresponding API key in Step 1.</li>
       </ul>
       
       <h2>Step 5: Generate a Single Pin</h2>

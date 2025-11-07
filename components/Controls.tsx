@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -54,7 +52,7 @@ export interface ControlsProps {
   bulkJobType: 'fal' | 'midjourney' | 'midjourney2' | null;
 }
 
-const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
+export const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
         <div className="flex items-center gap-3">
             <div className="flex-shrink-0 text-slate-500">{icon}</div>
@@ -195,7 +193,7 @@ const ImageUpload: React.FC<{
     );
 };
 
-const ApiKeyInput: React.FC<{
+export const ApiKeyInput: React.FC<{
     label: string;
     value: string;
     onChange: (value: string) => void;

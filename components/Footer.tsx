@@ -9,10 +9,10 @@ const Footer: React.FC = () => {
             &copy; {new Date().getFullYear()} Pin4You. All Rights Reserved.
           </p>
           <nav className="flex flex-wrap justify-center gap-4 md:gap-6">
-            <a href="/#/pin-generator" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Home</a>
+            <a href="/#/content-generator" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Home</a>
+            <a href="/#/pin-generator" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Pin Generator</a>
             <a href="/#/welcome" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Overview</a>
             <a href="/#/assistant" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Assistant</a>
-            <a href="/#/content-generator" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Content Generator</a>
             <a href="/#/domain-suggestor" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">Domain Rater</a>
             <a href="/#/how-to-use" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">How to Use</a>
             <a href="/#/about" className="text-sm text-slate-600 hover:text-pink-500 transition-colors">About</a>

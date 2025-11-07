@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow, PinterestAccount, ImageAspectRatio } from '../types';
 
@@ -62,7 +60,8 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
         const isServiceUnavailable = errorBody.status === 'UNAVAILABLE' || errorBody.code === 503;
         
         if (isQuotaError) {
-            return { type: 'quota', message: 'API Quota Exceeded.', helpLink: helpLink || undefined };
+            const userMessage = "The Google AI API key you're using has exceeded its free usage limits. This is an issue with your Google account, not this application. To continue, please check your billing status with Google or use a different API key.";
+            return { type: 'quota', message: userMessage, helpLink: helpLink || 'https://ai.google.dev/gemini-api/docs/rate-limits' };
         }
         if (isServiceUnavailable) {
             return { type: 'service', message: 'Image generation service is temporarily unavailable.', helpLink: helpLink || undefined };
@@ -77,6 +76,43 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
 
     return { type: 'generic', message, helpLink: helpLink || undefined };
 };
+
+/**
+ * Wraps an API call with a retry mechanism to handle transient server errors.
+ * @param apiCall The function that makes the API call.
+ * @returns The result of the API call.
+ */
+async function generateWithRetry(apiCall: () => Promise<any>) {
+    const MAX_RETRIES = 3;
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            return await apiCall();
+        } catch (error: any) {
+            lastError = error;
+            const errorString = JSON.stringify(error).toLowerCase();
+            
+            // These are signs of transient issues that might be resolved by retrying.
+            const isRetryable = 
+                errorString.includes('500') ||       // Internal Server Error
+                errorString.includes('503') ||       // Service Unavailable
+                errorString.includes('xhr error') || // Network issue
+                errorString.includes('rpc failed') || // another form of network issue
+                errorString.includes('unavailable'); // Service unavailable status
+
+            if (isRetryable && attempt < MAX_RETRIES) {
+                console.warn(`Attempt ${attempt}/${MAX_RETRIES} failed with a transient error. Retrying...`, error);
+                await new Promise(resolve => setTimeout(resolve, 1500 * attempt)); // Increasing delay
+            } else {
+                // Not a retryable error, or it's the last attempt. Re-throw the error.
+                throw error;
+            }
+        }
+    }
+    // This code path should be unreachable, but for type safety, we throw the last known error.
+    throw lastError;
+}
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -510,10 +546,10 @@ export const generateDescription = async (apiKey: string, model: string, title: 
         
         Description:`;
         
-        const response = await ai.models.generateContent({
+        const response = await generateWithRetry(() => ai.models.generateContent({
             model: model,
             contents: prompt
-        });
+        }));
 
         return response.text.trim();
     } catch (error: any) {
@@ -532,10 +568,10 @@ export const generateKeywords = async (apiKey: string, model: string, title: str
 
         Keywords:`;
         
-        const response = await ai.models.generateContent({
+        const response = await generateWithRetry(() => ai.models.generateContent({
             model: model,
             contents: prompt
-        });
+        }));
 
         return response.text.trim().replace(/, /g, ',').replace(/\n/g, '');
     } catch (error: any) {
@@ -559,10 +595,10 @@ export const generateShortTitle = async (apiKey: string, model: string, title: s
         
         Shortened Title:`;
         
-        const response = await ai.models.generateContent({
+        const response = await generateWithRetry(() => ai.models.generateContent({
             model: model,
             contents: prompt
-        });
+        }));
         
         return response.text.trim().replace(/"/g, ''); // Remove quotes from the response
     } catch (error: any) {
@@ -584,10 +620,10 @@ export const generateSafeImagePrompt = async (apiKey: string, model: string, tit
         
         New Safe Prompt:`;
         
-        const response = await ai.models.generateContent({
+        const response = await generateWithRetry(() => ai.models.generateContent({
             model: model,
             contents: prompt
-        });
+        }));
 
         return response.text.trim().replace(/"/g, '');
     } catch (error: any) {
@@ -596,47 +632,44 @@ export const generateSafeImagePrompt = async (apiKey: string, model: string, tit
     }
 };
 
-export const DEFAULT_CONTENT_PROMPT = `As an expert Pinterest content strategist, your task is to generate a complete content plan for a single pin based on a provided keyword. Your output must be a JSON object with the following structure and adhere to these rules:
-{
-  "title": "A compelling, SEO-friendly title, 100 characters max.",
-  "board": "A relevant Pinterest board name selected from the provided list: {board_options}",
-  "imagePrompt": "A highly detailed, visually rich prompt for an AI image generator to create a stunning, eye-catching pin image. Describe the scene, lighting, colors, and style.",
-  "description": "An engaging, SEO-optimized description (100-500 characters).",
-  "altText": "A descriptive alt text for accessibility and SEO (max 500 characters).",
-  "interests": "A comma-separated list of 3-5 related Pinterest interests or niches.",
-  "category": "The single most relevant recipe category, chosen ONLY from this list: {category_options}"
-}
-- IMPORTANT: You MUST select one board from the provided list for the "board" field.
-- IMPORTANT: You MUST select one category from the provided list for the "category" field. If no categories are provided or none are relevant, use an empty string "".
-- Do not include any explanatory text, markdown formatting, or anything outside of the single JSON object.
-- The entire output must be a single, valid JSON object.
-`;
+export const DEFAULT_CONTENT_PROMPT = `You are an expert Pinterest SEO marketer. For each keyword provided, generate a full Pinterest pin content plan.
+
+**RULES:**
+- **Uniqueness:** Each generated plan must be unique and original. Do not repeat phrases, especially for titles and descriptions.
+- **Title:** Create one catchy, SEO-optimized title (60–100 characters). It must include the keyword naturally and be clickable.
+- **Description:** Write one engaging, keyword-rich description (250–400 characters) that encourages clicks. Do not use fluff or hashtags.
+- **Board:** Suggest one relevant Pinterest board name.
+- **Image Prompt:** Write one detailed, creative prompt for an AI image generator (e.g., Midjourney). Describe style, lighting, and mood.
+- **Alt Text:** Write one short, descriptive text (100–120 characters) for accessibility and SEO.
+- **Interests:** Suggest an array of 5–8 related Pinterest interests/niches.
+- **Category:** Suggest the single best Pinterest category.
+
+**OUTPUT FORMAT:**
+Your entire response MUST be a single, valid JSON object. Do not include any extra text, commentary, or markdown formatting like \`\`\`json.`;
+
 
 export const generatePinContentFromKeyword = async (
     apiKey: string, 
     model: string, 
     keyword: string,
-    systemPromptTemplate: string,
-    boardOptions: string[],
-    categoryOptions: string[],
+    boardOptions?: string,
+    categoryOptions?: string
 ): Promise<GeneratedContentRow> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
 
-        let systemInstruction = systemPromptTemplate
-            .replace('{board_options}', boardOptions.join(', '))
-            .replace('{category_options}', categoryOptions.join(', '));
-        
-        if (boardOptions.length === 0) {
-            systemInstruction = systemInstruction.replace('selected from the provided list: ,', 'that you create based on the keyword');
+        let systemInstruction = DEFAULT_CONTENT_PROMPT;
+
+        if (boardOptions && boardOptions.trim()) {
+            systemInstruction += `\n\n**Constraint for 'board':** You MUST choose one board from this list: [${boardOptions}]. Do not invent a new one.`;
         }
-         if (categoryOptions.length === 0) {
-            systemInstruction = systemInstruction.replace('chosen ONLY from this list: ,', 'that you create based on the keyword');
+        if (categoryOptions && categoryOptions.trim()) {
+            systemInstruction += `\n\n**Constraint for 'category':** You MUST choose one category from this list: [${categoryOptions}]. Do not invent a new one.`;
         }
 
         const prompt = `Generate the content plan for the keyword: "${keyword}"`;
         
-        const response = await ai.models.generateContent({
+        const response = await generateWithRetry(() => ai.models.generateContent({
             model: model,
             contents: prompt,
             config: {
@@ -645,30 +678,75 @@ export const generatePinContentFromKeyword = async (
                 responseSchema: {
                     type: Type.OBJECT,
                     properties: {
-                        title: { type: Type.STRING },
-                        board: { type: Type.STRING },
-                        imagePrompt: { type: Type.STRING },
-                        description: { type: Type.STRING },
-                        altText: { type: Type.STRING },
-                        interests: { type: Type.STRING },
-                        category: { type: Type.STRING },
-                    }
+                        title: { type: Type.STRING, description: "Pin title." },
+                        description: { type: Type.STRING, description: "Pin description." },
+                        board: { type: Type.STRING, description: "Pinterest board name." },
+                        image_prompt: { type: Type.STRING, description: "AI image generator prompt." },
+                        alt_text: { type: Type.STRING, description: "Accessibility alt text." },
+                        interests: { 
+                            type: Type.ARRAY, 
+                            items: { type: Type.STRING },
+                            description: "Related Pinterest interests."
+                        },
+                        category: { type: Type.STRING, description: "Pinterest category." },
+                    },
+                    required: ["title", "description", "board", "image_prompt", "alt_text", "interests", "category"]
                 }
             }
-        });
+        }));
         
         const jsonText = response.text.trim();
-        const parsedObject = JSON.parse(jsonText);
+        let parsedObject;
 
-        // Ensure all fields are strings, even if the model messes up
+        try {
+            // First, try to parse directly, which is most efficient.
+            parsedObject = JSON.parse(jsonText);
+        } catch (e) {
+            // If direct parsing fails, attempt recovery.
+            console.warn("Direct JSON parsing failed, attempting recovery.", jsonText);
+            
+            let recoveredJsonString = null;
+
+            // Recovery Attempt 1: Extract from markdown block
+            const markdownMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (markdownMatch && markdownMatch[1]) {
+                recoveredJsonString = markdownMatch[1];
+            } else {
+                // Recovery Attempt 2: Find first '{' and last '}'
+                const startIndex = jsonText.indexOf('{');
+                const endIndex = jsonText.lastIndexOf('}');
+                if (startIndex !== -1 && endIndex > startIndex) {
+                    recoveredJsonString = jsonText.substring(startIndex, endIndex + 1);
+                }
+            }
+
+            if (recoveredJsonString) {
+                try {
+                    parsedObject = JSON.parse(recoveredJsonString);
+                } catch (finalError) {
+                    console.error("Failed to parse recovered JSON string.", recoveredJsonString);
+                    const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                    (err as any).originalText = jsonText;
+                    throw err;
+                }
+            } else {
+                // All recovery methods failed
+                console.error("The AI response does not appear to contain a JSON object.", jsonText);
+                const err = new Error("The AI response does not appear to contain a JSON object.");
+                (err as any).originalText = jsonText;
+                throw err;
+            }
+        }
+
+        // Ensure all fields are correctly typed
         const finalObject: GeneratedContentRow = {
             keyword: keyword,
             title: String(parsedObject.title || ''),
             board: String(parsedObject.board || ''),
-            imagePrompt: String(parsedObject.imagePrompt || ''),
+            image_prompt: String(parsedObject.image_prompt || ''),
             description: String(parsedObject.description || ''),
-            altText: String(parsedObject.altText || ''),
-            interests: String(parsedObject.interests || ''),
+            alt_text: String(parsedObject.alt_text || ''),
+            interests: Array.isArray(parsedObject.interests) ? parsedObject.interests.map(String) : [],
             category: String(parsedObject.category || ''),
         };
 
@@ -676,6 +754,9 @@ export const generatePinContentFromKeyword = async (
 
     } catch (error: any) {
         console.error("Error in generatePinContentFromKeyword:", error);
+        if (error.type) { 
+            throw error;
+        }
         throw getApiErrorDetails(error);
     }
 };
@@ -693,9 +774,14 @@ export const generatePinIdeas = async (
 ): Promise<PinIdea[]> => {
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const prompt = `Generate 3 creative and engaging Pinterest pin ideas for an account named "${accountName}". For each idea, provide a catchy title, a short description, and a few relevant hashtags.`;
+    const prompt = `As an expert Pinterest SEO marketer, generate 3 unique, creative, and engaging Pinterest pin ideas for an account named "${accountName}".
+
+**RULES:**
+- **Title:** 50-100 characters, catchy, keyword-rich, clickable, emotional, and naturally capitalized.
+- **Variety:** Do NOT use the same starting phrases for each title.
+- **Output:** For each idea, provide a title, a short description, and a few relevant hashtags.`;
     
-    const response = await ai.models.generateContent({
+    const response = await generateWithRetry(() => ai.models.generateContent({
       model: model,
       contents: prompt,
       config: {
@@ -705,14 +791,15 @@ export const generatePinIdeas = async (
           items: {
             type: Type.OBJECT,
             properties: {
-              title: { type: Type.STRING },
-              description: { type: Type.STRING },
-              hashtags: { type: Type.STRING },
+              title: { type: Type.STRING, description: "A catchy, SEO-optimized pin title." },
+              description: { type: Type.STRING, description: "A short, engaging description for the pin." },
+              hashtags: { type: Type.STRING, description: "A few relevant hashtags, separated by spaces." },
             },
+            required: ['title', 'description', 'hashtags']
           },
         },
       },
-    });
+    }));
 
     return JSON.parse(response.text.trim());
   } catch (error: any) {
@@ -745,7 +832,7 @@ export const getAiSuggestions = async (
     2. A suggestion for the *type* of pin to create next (e.g., Idea Pin, Video Pin, standard image).
     3. A relevant seasonal or trending theme idea for the next pin.`;
 
-    const response = await ai.models.generateContent({
+    const response = await generateWithRetry(() => ai.models.generateContent({
       model: model,
       contents: prompt,
       config: {
@@ -759,7 +846,7 @@ export const getAiSuggestions = async (
           },
         },
       },
-    });
+    }));
 
     return JSON.parse(response.text.trim());
   } catch (error: any) {

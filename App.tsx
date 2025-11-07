@@ -1,5 +1,3 @@
-
-
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -34,7 +32,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'pin-generator';
+  return hash || 'content-generator';
 };
 
 
@@ -1021,8 +1019,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         userApiKey={userApiKey}
                         onSetUserApiKey={setUserApiKey}
                         textModel={templateData.textModel}
-                        websiteProfiles={adminSettings.websiteProfiles}
-                        contentPrompt={adminSettings.contentPrompt}
+                        adminSettings={adminSettings}
                     />;
         case 'assistant':
              return <AssistantPage

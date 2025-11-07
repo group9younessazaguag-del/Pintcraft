@@ -14,27 +14,31 @@ const PrivacyPolicyPage: React.FC<{ content?: string }> = ({ content }) => {
       
       <h2>Information We Handle</h2>
       <p>
-        The Application is designed to function without collecting or storing any of your personal information on our servers. The key piece of data you interact with is your Google AI API Key.
+        The Application is designed to function without collecting or storing any of your personal information on our servers. The key pieces of data you interact with are your API Keys for various AI services.
       </p>
       
-      <h3>Google AI API Key</h3>
+      <h3>API Keys (Google AI, Fal.ai, etc.)</h3>
       <p>
-        To use the AI image and text generation features, you must provide your own Google AI API Key. We are committed to handling this key with the utmost respect for your security and privacy.
-      </p>
-      <p>
-        If an API key is not configured securely in the application's environment, you will be prompted to enter one in the user interface.
+        To use the AI text and image generation features, you must provide your own API keys. We are committed to handling these keys with the utmost respect for your security and privacy.
       </p>
       <ul>
-        <li><strong>Local Storage:</strong> If you enter an API key in the input field, it is stored exclusively in your web browser's local storage. This allows you to use the application without re-entering the key on every visit.</li>
-        <li><strong>Not Sent to Our Servers:</strong> Your API key is <strong>never</strong> transmitted to, stored on, or logged by our servers. It is used directly from your browser to communicate with the Google AI API for authentication.</li>
-        <li><strong>Your Control:</strong> You have full control over your API key. You can view, change, or clear it from the "Model Settings" panel at any time. Clearing your browser's site data will also remove the key.</li>
-        <li><strong>Security Responsibility:</strong> By storing the key in your browser, you accept responsibility for its security. We recommend using this feature only on a trusted, personal computer and avoiding public or shared devices. For the highest level of security, configure the key as an environment variable.</li>
+        <li><strong>Local Storage:</strong> When you enter an API key, it is stored exclusively in your web browser's local storage. This allows you to use the application without re-entering the key on every visit.</li>
+        <li><strong>Not Sent to Our Servers:</strong> Your API keys are <strong>never</strong> transmitted to, stored on, or logged by our servers. They are used directly from your browser to communicate with the respective AI service APIs for authentication.</li>
+        <li><strong>Your Control:</strong> You have full control over your API keys. You can view, change, or clear them from the "AI Configuration" panel at any time. Clearing your browser's site data will also remove the keys.</li>
+        <li><strong>Security Responsibility:</strong> By storing keys in your browser, you accept responsibility for their security. We recommend using this feature only on a trusted, personal computer.</li>
       </ul>
 
-      <h2>Information Google Collects</h2>
+      <h2>Third-Party AI Services</h2>
       <p>
-          When you use your API key to generate images or text, your requests are sent directly to Google's Generative Language API. Your use of the Google AI API is subject to Google's own <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="https://ai.google.dev/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>. We do not have access to or control over the data processed by Google.
+          When you use an API key to generate content, your requests are sent directly from your browser to the corresponding third-party service. Your use of these services is subject to their own privacy policies and terms.
       </p>
+      <ul>
+        <li><strong>Google AI (for Text):</strong> Text generation requests (descriptions, keywords) are sent to Google's Generative Language API. Your use is subject to Google's <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="https://ai.google.dev/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.</li>
+        <li><strong>Fal.ai (for Images):</strong> Image generation requests using Fal.ai are subject to their <a href="https://fal.ai/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</li>
+        <li><strong>APIFrame.ai (for Midjourney Images):</strong> Requests using APIFrame.ai are subject to their <a href="https://www.apiframe.ai/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</li>
+        <li><strong>midapi.ai (for Midjourney Images):</strong> Requests using midapi.ai are subject to their <a href="https://midapi.ai/docs/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</li>
+      </ul>
+      <p>We do not have access to or control over the data processed by these third-party services.</p>
       
       <h2>Uploaded Content</h2>
       <p>

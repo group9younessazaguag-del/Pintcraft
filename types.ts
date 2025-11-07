@@ -1,3 +1,4 @@
+
 export type TemplateId = `${number}`;
 
 export type PinSize = 'standard' | 'long';
@@ -55,11 +56,11 @@ export interface AdminSettings {
 export interface GeneratedContentRow {
     keyword: string;
     title: string;
-    board: string;
-    imagePrompt: string;
     description: string;
-    altText: string;
-    interests: string;
+    board: string;
+    image_prompt: string;
+    alt_text: string;
+    interests: string[];
     category: string;
 }
 

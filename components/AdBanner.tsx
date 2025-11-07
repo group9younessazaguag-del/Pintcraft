@@ -26,8 +26,6 @@ const AdBanner: React.FC<AdBannerProps> = ({ adScript }) => {
       // Find all script tags within the newly added content and re-create them
       // to ensure they execute. Setting innerHTML doesn't execute scripts.
       const scripts = Array.from(adContainer.getElementsByTagName('script'));
-      // FIX: Explicitly type `oldScript` to resolve errors where its properties were being accessed on an `unknown` type.
-      // This resolves all downstream type inference errors for `attr` as well.
       scripts.forEach((oldScript: HTMLScriptElement) => {
         const newScript = document.createElement('script');
         

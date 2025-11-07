@@ -1,70 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
 import { generatePinContentFromKeyword } from '../../services/googleAi';
-import type { GeneratedContentRow, WebsiteProfile } from '../../types';
+import type { AdminSettings, GeneratedContentRow } from '../../types';
 import CsvIcon from '../icons/CsvIcon';
-import SettingsIcon from '../icons/SettingsIcon';
 import LoadingSpinner from '../icons/LoadingSpinner';
 import DownloadIcon from '../icons/DownloadIcon';
 import ErrorIcon from '../icons/ErrorIcon';
+import SettingsIcon from '../icons/SettingsIcon';
+import { ApiKeyInput, ControlCard } from '../Controls';
+import ProfileIcon from '../icons/ProfileIcon';
 
 interface ContentGeneratorPageProps {
     userApiKey: string;
     onSetUserApiKey: (key: string) => void;
     textModel: string;
-    websiteProfiles: WebsiteProfile[];
-    contentPrompt: string;
+    adminSettings: AdminSettings;
 }
-
-// Copied from Controls.tsx to avoid circular dependency
-const ApiKeyInput: React.FC<{
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    onSave: () => void;
-    onClear: () => void;
-    placeholder: string;
-    getLink: string;
-    getLinkText: string;
-    statusMessage: React.ReactNode;
-}> = ({ label, value, onChange, onSave, onClear, placeholder, getLink, getLinkText, statusMessage }) => {
-    const [isKeyVisible, setIsKeyVisible] = useState(false);
-    return (
-        <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
-            <div className="relative">
-                <input
-                    type={isKeyVisible ? 'text' : 'password'}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                />
-                <button
-                    type="button"
-                    onClick={() => setIsKeyVisible(!isKeyVisible)}
-                    className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500"
-                    aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
-                >
-                    {isKeyVisible ? (
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>
-                    ) : (
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074L3.707 2.293zM10 12a2 2 0 110-4 2 2 0 010 4z" clipRule="evenodd" /></svg>
-                    )}
-                </button>
-            </div>
-            <div className="flex gap-2 mt-2">
-                <button onClick={onSave} className="flex-1 px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">Save</button>
-                {value && <button onClick={onClear} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">Clear</button>}
-            </div>
-            <div className="mt-3 text-xs space-y-2">
-                {statusMessage}
-                <a href={getLink} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:text-pink-800 hover:underline !mt-3 w-full text-left block">{getLinkText} &rarr;</a>
-            </div>
-        </div>
-    );
-};
-
 
 const parseCsvLine = (line: string): string[] => {
     const result: string[] = [];
@@ -90,34 +40,34 @@ const parseCsvLine = (line: string): string[] => {
     return result;
 };
 
-const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, textModel, websiteProfiles, contentPrompt }) => {
+const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey, onSetUserApiKey, textModel, adminSettings }) => {
     const [keywords, setKeywords] = useState<string[]>([]);
     const [generatedData, setGeneratedData] = useState<GeneratedContentRow[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [progressMessage, setProgressMessage] = useState('');
     const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
-    const [apiKeyInput, setApiKeyInput] = useState(userApiKey);
-    const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+    const [selectedProfileId, setSelectedProfileId] = useState<string>('');
     
-    useEffect(() => { setApiKeyInput(userApiKey); }, [userApiKey]);
-    
+    const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
+    useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
+
+    // Set the default profile when the component loads or profiles change
     useEffect(() => {
-        if (websiteProfiles.length > 0) {
-            const defaultProfile = websiteProfiles.find(p => p.isDefault);
-            if (defaultProfile) {
-                setSelectedProfileId(defaultProfile.id);
-            } else {
-                // If no default is explicitly set, default to the first one in the list.
-                setSelectedProfileId(websiteProfiles[0].id);
-            }
-        } else {
-            setSelectedProfileId(null);
+        const defaultProfile = adminSettings.websiteProfiles.find(p => p.isDefault);
+        if (defaultProfile) {
+            setSelectedProfileId(defaultProfile.id);
+        } else if (adminSettings.websiteProfiles.length > 0) {
+            setSelectedProfileId(adminSettings.websiteProfiles[0].id);
         }
-    }, [websiteProfiles]);
+    }, [adminSettings.websiteProfiles]);
 
 
-    const handleSaveKey = () => onSetUserApiKey(apiKeyInput.trim());
-    const handleClearKey = () => { setApiKeyInput(''); onSetUserApiKey(''); };
+    const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
+    const handleClearGoogleKey = () => {
+        setGoogleApiKeyInput('');
+        onSetUserApiKey('');
+    };
+    
     const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
 
     const resetState = () => {
@@ -154,9 +104,8 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                 if (keywordIndex !== -1) {
                     return values[keywordIndex] || '';
                 }
-                // If no 'keywords' header, assume it's the first column
                 return values[0] || '';
-            }).filter(Boolean); // Filter out any empty keywords
+            }).filter(Boolean);
 
             if (extractedKeywords.length === 0) {
                 setApiError({type: 'generic', message: "No valid keywords found in the CSV. Please ensure there is a 'Keywords' column or that keywords are in the first column."})
@@ -170,7 +119,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
 
     const handleGenerateContent = async () => {
         if (!googleKeyIsConfigured) {
-            setApiError({type: 'generic', message: "A Google AI API key is required. Please add one in the configuration."});
+            setApiError({type: 'generic', message: "A Google AI API key is required. Please add one in the 'AI Configuration' settings."});
             return;
         }
         if (keywords.length === 0) {
@@ -182,37 +131,34 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
         setApiError(null);
         setGeneratedData([]);
         
-        let boardOptions: string[] = [];
-        let categoryOptions: string[] = [];
-
-        if (websiteProfiles.length > 0) {
-             if (!selectedProfileId) {
-                setApiError({type: 'generic', message: "Please select a website profile to use for generation."});
-                setIsLoading(false);
-                return;
-            }
-            const selectedProfile = websiteProfiles.find(p => p.id === selectedProfileId);
-            if (!selectedProfile) {
-                setApiError({type: 'generic', message: "The selected website profile could not be found. Please check the admin panel."});
-                setIsLoading(false);
-                return;
-            }
-            boardOptions = selectedProfile.boardList.split('\n').map(b => b.trim()).filter(Boolean);
-            categoryOptions = selectedProfile.categoryList.split('\n').map(c => c.trim()).filter(Boolean);
-        }
-
         const results: GeneratedContentRow[] = [];
+
+        const selectedProfile = adminSettings.websiteProfiles.find(p => p.id === selectedProfileId);
+        const boardOptions = selectedProfile?.boardList.split('\n').filter(Boolean).join(', ');
+        const categoryOptions = selectedProfile?.categoryList.split('\n').filter(Boolean).join(', ');
 
         for (let i = 0; i < keywords.length; i++) {
             const keyword = keywords[i];
             setProgressMessage(`Processing keyword ${i + 1} of ${keywords.length}: "${keyword}"`);
             try {
-                const content = await generatePinContentFromKeyword(userApiKey, textModel, keyword, contentPrompt, boardOptions, categoryOptions);
+                const content = await generatePinContentFromKeyword(
+                    userApiKey, 
+                    textModel, 
+                    keyword,
+                    boardOptions,
+                    categoryOptions
+                );
                 results.push({ keyword, ...content });
                 setGeneratedData([...results]); // Update table as we go
             } catch (error: any) {
                 console.error(error);
-                setApiError({type: error.type || 'generic', message: error.message, helpLink: error.helpLink});
+                const originalText = (error as any).originalText;
+                let message = `Error on keyword "${keyword}": ${error.message}`;
+                if (originalText) {
+                    message += `\n\nAI Response:\n${originalText}`;
+                }
+
+                setApiError({type: error.type || 'generic', message: message, helpLink: error.helpLink});
                 setIsLoading(false);
                 setProgressMessage(`Failed at keyword ${i + 1}. Please check the error message.`);
                 return; // Stop on error
@@ -226,38 +172,36 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
     const handleDownloadCsv = () => {
         if (generatedData.length === 0) return;
 
-        const escapeCsvCell = (cell: string): string => {
-            const value = cell || '';
+        const escapeCsvCell = (cell: any): string => {
+            const value = cell ? String(cell) : '';
             if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
                 return `"${value.replace(/"/g, '""')}"`;
             }
             return value;
         };
 
-        const headers = ['Title of recipes', 'Board', 'Image Prompt', 'Description', 'Description Alt Text', 'Interest Used', 'SITE', 'Categorie'];
+        const headers = ['Title', 'Pinterest board', 'Image Prompt', 'Description', 'Keywords', 'Alt Text', 'Category'];
         const headerString = headers.map(escapeCsvCell).join(',');
 
         const rows = generatedData.map(row => {
             const rowData = [
                 row.title,
                 row.board,
-                row.imagePrompt,
+                row.image_prompt,
                 row.description,
-                row.altText,
-                row.interests,
-                '', // Empty SITE column
-                row.category
+                row.interests.join(','),
+                row.alt_text,
+                row.category,
             ];
             return rowData.map(escapeCsvCell).join(',');
         });
 
-        // Use Windows-style line endings (\r\n) and add a BOM for better Excel compatibility.
         const csvContent = [headerString, ...rows].join('\r\n');
         const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', 'pinterest_content_ideas.csv');
+        link.setAttribute('download', 'pinterest_content_for_pin_generator.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -266,7 +210,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
     
 
     return (
-        <div className="container mx-auto max-w-6xl">
+        <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold tracking-tight text-slate-800">AI Content Idea Generator</h1>
                 <p className="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">
@@ -274,57 +218,59 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Controls Column */}
-                <div className="md:col-span-1 space-y-6">
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0 text-slate-500"><SettingsIcon/></div>
-                            <h3 className="text-md font-semibold text-slate-800 tracking-tight">Configuration</h3>
+                <div className="lg:col-span-1 space-y-6">
+                     <ControlCard icon={<SettingsIcon />} title="AI Configuration">
+                        <ApiKeyInput
+                            label="Google AI API Key (for Text)"
+                            value={googleApiKeyInput}
+                            onChange={setGoogleApiKeyInput}
+                            onSave={handleSaveGoogleKey}
+                            onClear={handleClearGoogleKey}
+                            placeholder="Enter your Google AI key"
+                            getLink="https://aistudio.google.com/app/apikey"
+                            getLinkText="Get a Google AI API Key"
+                            statusMessage={
+                                googleKeyIsConfigured ? (
+                                    <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Google AI key is saved in this browser.</p>
+                                ) : (
+                                    <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
+                                )
+                            }
+                        />
+                    </ControlCard>
+                    
+                     <ControlCard icon={<ProfileIcon />} title="Website Profile">
+                        <div>
+                           <label htmlFor="profile-select" className="block text-sm font-medium text-slate-600 mb-1.5">Select Profile</label>
+                            <select
+                                id="profile-select"
+                                value={selectedProfileId}
+                                onChange={(e) => setSelectedProfileId(e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                                disabled={adminSettings.websiteProfiles.length === 0}
+                            >
+                                {adminSettings.websiteProfiles.length > 0 ? (
+                                    adminSettings.websiteProfiles.map(profile => (
+                                        <option key={profile.id} value={profile.id}>
+                                            {profile.name} {profile.isDefault && '(Default)'}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option>No profiles configured</option>
+                                )}
+                            </select>
+                            {adminSettings.websiteProfiles.length === 0 && (
+                                <p className="text-xs text-slate-500 mt-1.5">
+                                    You can create profiles in the <a href="/#/admin" className="underline text-pink-600">Admin Panel</a> to pre-fill board and category lists.
+                                </p>
+                            )}
                         </div>
-                        <div className="space-y-4 pt-4 border-t border-slate-200/80">
-                           <ApiKeyInput
-                                label="Google AI API Key"
-                                value={apiKeyInput}
-                                onChange={setApiKeyInput}
-                                onSave={handleSaveKey}
-                                onClear={handleClearKey}
-                                placeholder="Enter your Google AI key"
-                                getLink="https://aistudio.google.com/app/apikey"
-                                getLinkText="Get a Google AI API Key"
-                                statusMessage={
-                                    googleKeyIsConfigured ? (
-                                        <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your key is saved and ready.</p>
-                                    ) : (
-                                        <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI features.</p>
-                                    )
-                                }
-                           />
-                        </div>
-                        {websiteProfiles.length > 0 && (
-                            <div className="space-y-4 pt-4 border-t border-slate-200/80">
-                                <label htmlFor="website-profile-select" className="block text-sm font-medium text-slate-600 mb-1.5">Website Profile</label>
-                                <select
-                                    id="website-profile-select"
-                                    value={selectedProfileId || ''}
-                                    onChange={(e) => setSelectedProfileId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 appearance-none bg-no-repeat bg-right pr-8 transition-colors duration-200"
-                                    style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.5em 1.5em'}}
-                                >
-                                    <option value="" disabled>Select a profile...</option>
-                                    {websiteProfiles.map(profile => (
-                                        <option key={profile.id} value={profile.id}>{profile.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-                    </div>
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0 text-slate-500"><CsvIcon/></div>
-                            <h3 className="text-md font-semibold text-slate-800 tracking-tight">1. Upload Keywords</h3>
-                        </div>
-                        <div className="space-y-4 pt-4 border-t border-slate-200/80">
+                    </ControlCard>
+
+                     <ControlCard icon={<CsvIcon/>} title="1. Upload Keywords">
+                        <div className="space-y-4">
                             <input
                                 id="csv-upload"
                                 type="file"
@@ -334,18 +280,13 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                             />
                             <p className="text-xs text-slate-500">Upload a CSV with a 'Keywords' column, or a single-column list of keywords.</p>
                         </div>
-                    </div>
-                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0 text-slate-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.9 5.8-5.6.8 4 3.9-1 5.5L12 16l5.5 2.9-1-5.5 4-3.9-5.6-.8z"/></svg>
-                            </div>
-                            <h3 className="text-md font-semibold text-slate-800 tracking-tight">2. Generate Content</h3>
-                        </div>
-                        <div className="space-y-3 pt-4 border-t border-slate-200/80">
+                    </ControlCard>
+
+                     <ControlCard icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.9 5.8-5.6.8 4 3.9-1 5.5L12 16l5.5 2.9-1-5.5 4-3.9-5.6-.8z"/></svg>} title="2. Generate Content">
+                        <div className="space-y-3">
                              <button
                                 onClick={handleGenerateContent}
-                                disabled={isLoading || keywords.length === 0 || (websiteProfiles.length > 0 && !selectedProfileId)}
+                                disabled={isLoading || keywords.length === 0 || !googleKeyIsConfigured}
                                 className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
                             >
                                 {isLoading ? (
@@ -356,25 +297,32 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                 <p className="text-sm text-center text-slate-600 bg-slate-100 p-3 rounded-lg border border-slate-200">{progressMessage}</p>
                             )}
                             {apiError && (
-                                <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-xl flex items-start" role="alert">
-                                    <div className="flex-shrink-0">
-                                        <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500" />
-                                    </div>
-                                    <div className="ml-3">
-                                        <p className="text-sm font-semibold">An error occurred</p>
-                                        <p className="text-sm mt-1">{apiError.message}</p>
+                                <div className={`border p-3 rounded-xl ${apiError.type === 'quota' ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-red-50 border-red-200 text-red-800'}`} role="alert">
+                                    <div className="flex items-start">
+                                        <div className="flex-shrink-0">
+                                            <ErrorIcon className={`w-5 h-5 mt-0.5 ${apiError.type === 'quota' ? 'text-amber-500' : 'text-red-500'}`} />
+                                        </div>
+                                        <div className="ml-3">
+                                            <h3 className="text-sm font-semibold">
+                                                {apiError.type === 'quota' ? 'API Quota Reached' : 'An Error Occurred'}
+                                            </h3>
+                                            <div className="text-sm mt-1 space-y-1">
+                                                <p className="whitespace-pre-wrap">{apiError.message}</p>
+                                                {apiError.type === 'quota' && apiError.helpLink && (
+                                                    <a href={apiError.helpLink} target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-amber-900 mt-2 block">
+                                                        Learn more about Google AI rate limits &rarr;
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </ControlCard>
                     {generatedData.length > 0 && !isLoading && (
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-                             <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0 text-slate-500"><DownloadIcon /></div>
-                                <h3 className="text-md font-semibold text-slate-800 tracking-tight">3. Download CSV</h3>
-                            </div>
-                            <div className="pt-4 border-t border-slate-200/80">
+                        <ControlCard icon={<DownloadIcon />} title="3. Download CSV">
+                            <div>
                                 <button
                                     onClick={handleDownloadCsv}
                                     className="w-full flex items-center justify-center px-4 py-2.5 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105"
@@ -382,14 +330,14 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                     <DownloadIcon className="w-5 h-5 mr-2" />
                                     Download Content CSV
                                 </button>
-                                <p className="text-xs text-slate-500 mt-2">You can use this file with the Pin Generator.</p>
+                                <p className="text-xs text-slate-500 mt-2">You can upload this file directly into the Pin Generator.</p>
                             </div>
-                        </div>
+                        </ControlCard>
                     )}
                 </div>
 
                 {/* Results Column */}
-                <div className="md:col-span-2">
+                <div className="lg:col-span-2">
                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
                         <h3 className="text-lg font-semibold text-slate-800 tracking-tight mb-4">Generated Content ({generatedData.length} / {keywords.length})</h3>
                         <div className="overflow-x-auto max-h-[80vh] rounded-lg border border-slate-200">
@@ -397,12 +345,13 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                <thead className="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0">
                                    <tr>
                                        <th scope="col" className="px-4 py-3">Keyword</th>
-                                       <th scope="col" className="px-4 py-3">Generated Title</th>
+                                       <th scope="col" className="px-4 py-3">Title</th>
                                        <th scope="col" className="px-4 py-3">Board</th>
+                                       <th scope="col" className="px-4 py-3">Image Prompt</th>
                                        <th scope="col" className="px-4 py-3">Description</th>
-                                       <th scope="col" className="px-4 py-3">Description Alt Text</th>
-                                       <th scope="col" className="px-4 py-3">Interest Used</th>
-                                       <th scope="col" className="px-4 py-3">Categorie</th>
+                                       <th scope="col" className="px-4 py-3">Alt Text</th>
+                                       <th scope="col" className="px-4 py-3">Interests</th>
+                                       <th scope="col" className="px-4 py-3">Category</th>
                                    </tr>
                                </thead>
                                <tbody>
@@ -412,15 +361,16 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                                <td className="px-4 py-3 font-semibold text-slate-800 align-top">{row.keyword}</td>
                                                <td className="px-4 py-3 align-top min-w-[200px]">{row.title}</td>
                                                <td className="px-4 py-3 align-top">{row.board}</td>
+                                               <td className="px-4 py-3 align-top min-w-[250px] font-mono text-xs">{row.image_prompt}</td>
                                                <td className="px-4 py-3 align-top min-w-[250px]">{row.description}</td>
-                                               <td className="px-4 py-3 align-top min-w-[200px]">{row.altText}</td>
-                                               <td className="px-4 py-3 align-top min-w-[200px]">{row.interests}</td>
+                                               <td className="px-4 py-3 align-top min-w-[200px]">{row.alt_text}</td>
+                                               <td className="px-4 py-3 align-top min-w-[200px]">{row.interests.join(', ')}</td>
                                                <td className="px-4 py-3 align-top">{row.category}</td>
                                            </tr>
                                        ))
                                    ) : (
                                        <tr>
-                                           <td colSpan={7} className="text-center py-10 px-4 text-slate-500">
+                                           <td colSpan={8} className="text-center py-10 px-4 text-slate-500">
                                                {keywords.length > 0 ? 'Generated content will appear here...' : 'Upload a keyword CSV to get started.'}
                                            </td>
                                        </tr>
