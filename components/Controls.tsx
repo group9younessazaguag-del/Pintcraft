@@ -301,6 +301,28 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 
     return (
         <>
+            <ControlCard icon={<PaletteIcon />} title="Customize Your Pin">
+                <ToggleButtonGrid 
+                    label="Template"
+                    options={templateOptions}
+                    selected={data.templateId}
+                    onSelect={(id) => onFieldChange('templateId', id as TemplateId)}
+                    gridCols="grid-cols-4"
+                />
+                <ToggleButtonGrid 
+                    label="Pin Canvas Size"
+                    options={options.sizes}
+                    selected={data.pinSize}
+                    onSelect={(id) => onFieldChange('pinSize', id as PinSize)}
+                />
+                 <ToggleButtonGrid 
+                    label="AI Image Aspect Ratio"
+                    options={options.aspectRatios}
+                    selected={data.imageAspectRatio}
+                    onSelect={(id) => onFieldChange('imageAspectRatio', id as ImageAspectRatio)}
+                    gridCols="grid-cols-3"
+                />
+             </ControlCard>
             <ControlCard icon={<SettingsIcon />} title="AI Configuration">
                 <div className="space-y-6">
                     <ApiKeyInput
@@ -389,28 +411,6 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                     />
                 </div>
             </ControlCard>
-             <ControlCard icon={<PaletteIcon />} title="Customize Your Pin">
-                <ToggleButtonGrid 
-                    label="Template"
-                    options={templateOptions}
-                    selected={data.templateId}
-                    onSelect={(id) => onFieldChange('templateId', id as TemplateId)}
-                    gridCols="grid-cols-4"
-                />
-                <ToggleButtonGrid 
-                    label="Pin Canvas Size"
-                    options={options.sizes}
-                    selected={data.pinSize}
-                    onSelect={(id) => onFieldChange('pinSize', id as PinSize)}
-                />
-                 <ToggleButtonGrid 
-                    label="AI Image Aspect Ratio"
-                    options={options.aspectRatios}
-                    selected={data.imageAspectRatio}
-                    onSelect={(id) => onFieldChange('imageAspectRatio', id as ImageAspectRatio)}
-                    gridCols="grid-cols-3"
-                />
-             </ControlCard>
         </>
     );
 };
