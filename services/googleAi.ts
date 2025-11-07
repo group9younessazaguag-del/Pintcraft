@@ -540,14 +540,14 @@ export const generatePlaceholderImage = async (prompt: string, aspectRatio: Imag
 export const generateDescription = async (apiKey: string, model: string, title: string, subtitle: string): Promise<string> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Act as a Pinterest SEO expert. Write a Pinterest pin description of 300–500 characters, optimized for search and engagement for a pin with this title: "${title}" and for the board: "${subtitle}".
+        const prompt = `Act as a Pinterest SEO expert. Write a Pinterest pin description up to 200 characters, optimized for search and engagement for a pin with this title: "${title}" and for the board: "${subtitle}".
 
 - Include 5–8 relevant keywords naturally.
 - Use active, inspiring language.
 - Place the main keyword in the first 50 characters.
 - Add a call to action at the end (e.g., "Click to learn more").
 - Keep it clear, conversational, and do not stuff keywords.
-- You can add 1-2 relevant emojis, but do not use hashtags.
+- Do not use hashtags.
 
 Description:`;
         
@@ -642,13 +642,13 @@ export const DEFAULT_CONTENT_PROMPT = `You are an expert Pinterest SEO marketer 
 **RULES FOR EACH COMPONENT:**
 1.  **Title:**
     *   Create ONE catchy, SEO-optimized title.
-    *   Length MUST be between 60 and 100 characters.
+    *   Length MUST be a maximum of 56 characters.
     *   It must be unique, clickable, and include the keyword naturally.
     *   **CRITICAL: ABSOLUTELY NO EMOJIS IN THE TITLE.**
 
 2.  **Description:**
     *   Write ONE engaging, keyword-rich description.
-    *   Length MUST be between 250 and 400 characters.
+    *   Length MUST be a maximum of 200 characters.
     *   It must encourage clicks and saves. Avoid fluff and hashtags.
 
 3.  **Board:** Suggest ONE relevant Pinterest board name.
@@ -697,8 +697,8 @@ export const generatePinContentFromKeyword = async (
                 responseSchema: {
                     type: Type.OBJECT,
                     properties: {
-                        title: { type: Type.STRING, description: "A catchy, SEO-optimized pin title between 60-100 characters. No emojis." },
-                        description: { type: Type.STRING, description: "An engaging pin description between 250-400 characters." },
+                        title: { type: Type.STRING, description: "A catchy, SEO-optimized pin title with a maximum of 56 characters. No emojis." },
+                        description: { type: Type.STRING, description: "An engaging pin description with a maximum of 200 characters." },
                         board: { type: Type.STRING, description: "A relevant Pinterest board name." },
                         image_prompt: { type: Type.STRING, description: "A detailed AI image generator prompt." },
                         alt_text: { type: Type.STRING, description: "A descriptive alt text between 100-120 characters." },
