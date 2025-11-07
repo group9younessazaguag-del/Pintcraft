@@ -180,7 +180,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
             return value;
         };
 
-        const headers = ['Title', 'Pinterest board', 'Image Prompt', 'Description', 'Keywords', 'Alt Text', 'Category'];
+        const headers = ['Title of recipes', 'Pinterest board', 'Image Prompt', 'Description', 'Interest Used', 'Description Alt Text', 'SITE', 'Category'];
         const headerString = headers.map(escapeCsvCell).join(',');
 
         const rows = generatedData.map(row => {
@@ -191,6 +191,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                 row.description,
                 row.interests.join(','),
                 row.alt_text,
+                '', // Site is always void as requested
                 row.category,
             ];
             return rowData.map(escapeCsvCell).join(',');
@@ -345,12 +346,13 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                <thead className="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0">
                                    <tr>
                                        <th scope="col" className="px-4 py-3">Keyword</th>
-                                       <th scope="col" className="px-4 py-3">Title</th>
+                                       <th scope="col" className="px-4 py-3">Title of recipes</th>
                                        <th scope="col" className="px-4 py-3">Board</th>
                                        <th scope="col" className="px-4 py-3">Image Prompt</th>
                                        <th scope="col" className="px-4 py-3">Description</th>
-                                       <th scope="col" className="px-4 py-3">Alt Text</th>
-                                       <th scope="col" className="px-4 py-3">Interests</th>
+                                       <th scope="col" className="px-4 py-3">Description Alt Text</th>
+                                       <th scope="col" className="px-4 py-3">Interest Used</th>
+                                       <th scope="col" className="px-4 py-3">SITE</th>
                                        <th scope="col" className="px-4 py-3">Category</th>
                                    </tr>
                                </thead>
@@ -365,12 +367,13 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                                <td className="px-4 py-3 align-top min-w-[250px]">{row.description}</td>
                                                <td className="px-4 py-3 align-top min-w-[200px]">{row.alt_text}</td>
                                                <td className="px-4 py-3 align-top min-w-[200px]">{row.interests.join(', ')}</td>
+                                               <td className="px-4 py-3 align-top"></td>
                                                <td className="px-4 py-3 align-top">{row.category}</td>
                                            </tr>
                                        ))
                                    ) : (
                                        <tr>
-                                           <td colSpan={8} className="text-center py-10 px-4 text-slate-500">
+                                           <td colSpan={9} className="text-center py-10 px-4 text-slate-500">
                                                {keywords.length > 0 ? 'Generated content will appear here...' : 'Upload a keyword CSV to get started.'}
                                            </td>
                                        </tr>

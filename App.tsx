@@ -521,7 +521,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       const titleHeader = headerMap['title'] || headerMap['title of recipes'];
       const boardHeader = headerMap['pinterest board'] || headerMap['board'];
       const descriptionHeader = headerMap['description'];
-      const keywordsHeader = headerMap['keywords'];
+      const keywordsHeader = headerMap['keywords'] || headerMap['interest used'];
       const imagePromptHeader = headerMap['image prompt'];
 
 
@@ -646,7 +646,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     const mediaUrlHeaderKey = 'Media URL';
     const publishDateHeaderKey = 'Publish date';
     const descriptionHeaderKey = Object.keys(currentRunCsvData[0] || {}).find(k => k.toLowerCase().trim() === 'description') || 'Description';
-    const keywordsHeaderKey = Object.keys(currentRunCsvData[0] || {}).find(k => k.toLowerCase().trim() === 'keywords') || 'Keywords';
+    const keywordsHeaderKey = Object.keys(currentRunCsvData[0] || {}).find(k => k.toLowerCase().trim() === 'keywords' || k.toLowerCase().trim() === 'interest used') || 'Keywords';
 
     let i = startIndex;
     try {
