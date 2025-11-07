@@ -60,7 +60,7 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
         const isServiceUnavailable = errorBody.status === 'UNAVAILABLE' || errorBody.code === 503;
         
         if (isQuotaError) {
-            const userMessage = "The Google AI API key you're using has exceeded its free usage limits. This is an issue with your Google account, not this application. To continue, please check your billing status with Google or use a different API key.";
+            const userMessage = "You exceeded your current quota, please check your plan and billing details.";
             return { type: 'quota', message: userMessage, helpLink: helpLink || 'https://ai.google.dev/gemini-api/docs/rate-limits' };
         }
         if (isServiceUnavailable) {
@@ -540,11 +540,16 @@ export const generatePlaceholderImage = async (prompt: string, aspectRatio: Imag
 export const generateDescription = async (apiKey: string, model: string, title: string, subtitle: string): Promise<string> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Create a compelling and SEO-friendly Pinterest description for a pin with the following details. The description must be between 100 and 500 characters. Do not include hashtags.
-        Title: "${title}"
-        Board/Subtitle: "${subtitle}"
-        
-        Description:`;
+        const prompt = `Act as a Pinterest SEO expert. Write a Pinterest pin description of 300–500 characters, optimized for search and engagement for a pin with this title: "${title}" and for the board: "${subtitle}".
+
+- Include 5–8 relevant keywords naturally.
+- Use active, inspiring language.
+- Place the main keyword in the first 50 characters.
+- Add a call to action at the end (e.g., "Click to learn more").
+- Keep it clear, conversational, and do not stuff keywords.
+- You can add 1-2 relevant emojis, but do not use hashtags.
+
+Description:`;
         
         const response = await generateWithRetry(() => ai.models.generateContent({
             model: model,
@@ -632,20 +637,34 @@ export const generateSafeImagePrompt = async (apiKey: string, model: string, tit
     }
 };
 
-export const DEFAULT_CONTENT_PROMPT = `You are an expert Pinterest SEO marketer. For each keyword provided, generate a full Pinterest pin content plan.
+export const DEFAULT_CONTENT_PROMPT = `You are an expert Pinterest SEO marketer who generates content plans. For the given keyword, you must generate a complete content plan according to these strict rules.
 
-**RULES:**
-- **Uniqueness:** Each generated plan must be unique and original. Do not repeat phrases, especially for titles and descriptions.
-- **Title:** Create one catchy, SEO-optimized title (60–100 characters). It must include the keyword naturally and be clickable.
-- **Description:** Write one engaging, keyword-rich description (250–400 characters) that encourages clicks. Do not use fluff or hashtags.
-- **Board:** Suggest one relevant Pinterest board name.
-- **Image Prompt:** Write one detailed, creative prompt for an AI image generator (e.g., Midjourney). Describe style, lighting, and mood.
-- **Alt Text:** Write one short, descriptive text (100–120 characters) for accessibility and SEO.
-- **Interests:** Suggest an array of 5–8 related Pinterest interests/niches.
-- **Category:** Suggest the single best Pinterest category.
+**RULES FOR EACH COMPONENT:**
+1.  **Title:**
+    *   Create ONE catchy, SEO-optimized title.
+    *   Length MUST be between 60 and 100 characters.
+    *   It must be unique, clickable, and include the keyword naturally.
+    *   **CRITICAL: ABSOLUTELY NO EMOJIS IN THE TITLE.**
 
-**OUTPUT FORMAT:**
-Your entire response MUST be a single, valid JSON object. Do not include any extra text, commentary, or markdown formatting like \`\`\`json.`;
+2.  **Description:**
+    *   Write ONE engaging, keyword-rich description.
+    *   Length MUST be between 250 and 400 characters.
+    *   It must encourage clicks and saves. Avoid fluff and hashtags.
+
+3.  **Board:** Suggest ONE relevant Pinterest board name.
+
+4.  **Image Prompt:** Write ONE detailed, creative prompt for an AI image generator (e.g., Midjourney). Describe the style, lighting, and mood.
+
+5.  **Alt Text:** Write ONE short, descriptive text for accessibility and SEO. Length MUST be between 100 and 120 characters.
+
+6.  **Interests:** Suggest an array of 5 to 8 related Pinterest interests or niches as strings.
+
+7.  **Category:** Suggest the single most appropriate Pinterest category.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object.
+*   Do NOT include any text, commentary, or markdown like \`\`\`json before or after the JSON object.
+*   Strictly follow the JSON schema provided in the request.`;
 
 
 export const generatePinContentFromKeyword = async (
@@ -678,17 +697,17 @@ export const generatePinContentFromKeyword = async (
                 responseSchema: {
                     type: Type.OBJECT,
                     properties: {
-                        title: { type: Type.STRING, description: "Pin title." },
-                        description: { type: Type.STRING, description: "Pin description." },
-                        board: { type: Type.STRING, description: "Pinterest board name." },
-                        image_prompt: { type: Type.STRING, description: "AI image generator prompt." },
-                        alt_text: { type: Type.STRING, description: "Accessibility alt text." },
+                        title: { type: Type.STRING, description: "A catchy, SEO-optimized pin title between 60-100 characters. No emojis." },
+                        description: { type: Type.STRING, description: "An engaging pin description between 250-400 characters." },
+                        board: { type: Type.STRING, description: "A relevant Pinterest board name." },
+                        image_prompt: { type: Type.STRING, description: "A detailed AI image generator prompt." },
+                        alt_text: { type: Type.STRING, description: "A descriptive alt text between 100-120 characters." },
                         interests: { 
                             type: Type.ARRAY, 
                             items: { type: Type.STRING },
-                            description: "Related Pinterest interests."
+                            description: "An array of 5-8 related Pinterest interests."
                         },
-                        category: { type: Type.STRING, description: "Pinterest category." },
+                        category: { type: Type.STRING, description: "The best Pinterest category for the pin." },
                     },
                     required: ["title", "description", "board", "image_prompt", "alt_text", "interests", "category"]
                 }
@@ -774,12 +793,22 @@ export const generatePinIdeas = async (
 ): Promise<PinIdea[]> => {
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const prompt = `As an expert Pinterest SEO marketer, generate 3 unique, creative, and engaging Pinterest pin ideas for an account named "${accountName}".
+    const prompt = `You are an expert Pinterest SEO marketer. Generate 3 unique, creative, and engaging Pinterest pin ideas for an account named "${accountName}".
 
-**RULES:**
-- **Title:** 50-100 characters, catchy, keyword-rich, clickable, emotional, and naturally capitalized.
-- **Variety:** Do NOT use the same starting phrases for each title.
-- **Output:** For each idea, provide a title, a short description, and a few relevant hashtags.`;
+**RULES FOR EACH IDEA:**
+1.  **Title:**
+    *   Must be 50-100 characters.
+    *   Must be catchy, keyword-rich, and clickable.
+    *   Capitalize naturally.
+    *   **CRITICAL: ABSOLUTELY NO EMOJIS in the title.**
+2.  **Variety:** Each of the 3 titles must be unique and should not start with the same phrase.
+3.  **Description:** A short, engaging description for the pin.
+4.  **Hashtags:** A few relevant hashtags, separated by spaces.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON array of objects.
+*   Do NOT include any extra text, commentary, or markdown.
+*   Strictly follow the JSON schema provided.`;
     
     const response = await generateWithRetry(() => ai.models.generateContent({
       model: model,
@@ -791,7 +820,7 @@ export const generatePinIdeas = async (
           items: {
             type: Type.OBJECT,
             properties: {
-              title: { type: Type.STRING, description: "A catchy, SEO-optimized pin title." },
+              title: { type: Type.STRING, description: "A catchy, SEO-optimized pin title. No emojis." },
               description: { type: Type.STRING, description: "A short, engaging description for the pin." },
               hashtags: { type: Type.STRING, description: "A few relevant hashtags, separated by spaces." },
             },
