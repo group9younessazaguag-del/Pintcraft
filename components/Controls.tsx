@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -377,7 +378,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         onFieldChange={onFieldChange}
                         id="imageModel"
                         label="Image Generation Model (Fal.ai)"
-                        description={!falKeyIsConfigured ? 'Add Fal.ai key to use.' : 'e.g., fal-ai/stable-diffusion-v3-medium'}
+                        description={!falKeyIsConfigured ? 'Add Fal.ai key to use.' : 'e.g., fal-ai/recraft/v3/text-to-image'}
                     />
                     <InputField
                         data={data}

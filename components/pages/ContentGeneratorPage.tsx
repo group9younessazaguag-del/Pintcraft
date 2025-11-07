@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { generatePinContentFromKeyword, generatePinContentFromKeywordWithOpenRouter, rewriteKeyword, rewriteKeywordWithOpenRouter } from '../../services/googleAi';
 import type { AdminSettings, GeneratedContentRow } from '../../types';
@@ -73,7 +74,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
     const [selectedProfileId, setSelectedProfileId] = useState<string>('');
     
     const [service, setService] = useState<'google' | 'openrouter'>('google');
-    const [openRouterModel, setOpenRouterModel] = useState('mistralai/mistral-7b-instruct');
+    const [openRouterModel, setOpenRouterModel] = useState('google/gemini-2.5-flash');
     
     const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
     useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
@@ -376,7 +377,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ userApiKey,
                                             id="openrouter-model"
                                             value={openRouterModel}
                                             onChange={(e) => setOpenRouterModel(e.target.value)}
-                                            placeholder="e.g., mistralai/mistral-7b-instruct"
+                                            placeholder="e.g., google/gemini-2.5-flash"
                                             className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                                         />
                                         <p className="text-xs text-slate-500 mt-1.5">

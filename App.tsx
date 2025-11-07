@@ -51,7 +51,7 @@ const initialPersistedData: PersistedData = {
     mediaUrlPrefix: 'http://yourwebsite.com/images/',
     pinsPerDay: 3,
     startDate: new Date().toISOString().split('T')[0],
-    imageModel: 'fal-ai/stable-diffusion-v3-medium',
+    imageModel: 'fal-ai/recraft/v3/text-to-image',
     textModel: 'gemini-2.5-flash',
 };
 
