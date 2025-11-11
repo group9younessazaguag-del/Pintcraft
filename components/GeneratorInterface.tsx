@@ -18,7 +18,9 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
     const anyImageKeyIsConfigured =
         (controlProps.falAiApiKey && controlProps.falAiApiKey.length > 5) ||
         (controlProps.apiframeApiKey && controlProps.apiframeApiKey.length > 5) ||
-        (controlProps.midapiApiKey && controlProps.midapiApiKey.length > 5);
+        (controlProps.midapiApiKey && controlProps.midapiApiKey.length > 5) ||
+        (controlProps.imagineApiKey && controlProps.imagineApiKey.length > 5) ||
+        (controlProps.useapiApiKey && controlProps.useapiApiKey.length > 5);
 
     return (
         <div className="container mx-auto">
@@ -36,7 +38,7 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
                             </p>
                             <ul className="list-disc list-inside mt-2 text-sm space-y-1">
                                 {!googleKeyIsConfigured && <li><strong>Google AI API Key (Text):</strong> Required for generating descriptions, keywords, and titles.</li>}
-                                {!anyImageKeyIsConfigured && <li><strong>Image AI API Key:</strong> Required for generating images. Add a key for Fal.ai, APIFrame.ai, or midapi.ai.</li>}
+                                {!anyImageKeyIsConfigured && <li><strong>Image AI API Key:</strong> Required for generating images. Add a key for Fal.ai, APIFrame.ai, midapi.ai, ImagineAPI, or useapi.net.</li>}
                             </ul>
                             <p className="text-sm mt-3">
                                 Please add your key(s) in the <strong>AI Configuration</strong> panel below to enable all features.

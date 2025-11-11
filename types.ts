@@ -1,4 +1,3 @@
-
 export type TemplateId = `${number}`;
 
 export type PinSize = 'standard' | 'long';
@@ -81,5 +80,7 @@ export interface BackupData {
   apiframeApiKey: string;
   midapiApiKey: string;
   openRouterApiKey: string;
+  imagineApiKey: string;
+  useapiApiKey: string;
   pinterestAccounts: PinterestAccount[];
 }

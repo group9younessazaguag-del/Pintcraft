@@ -497,6 +497,298 @@ export const generateImageWithMidApiAi = async (
     throw new Error(`Failed to generate image with midapi.ai after ${maxRetries} attempts.`);
 };
 
+export const generateImageWithImagineApi = async (
+    apiKey: string, // ImagineAPI key
+    prompt: string,
+    aspectRatio: ImageAspectRatio,
+    onProgressUpdate?: (message: string) => void
+): Promise<string[]> => {
+    
+    const generationTask = async (): Promise<string[]> => {
+        const BASE_URL = 'https://api.imagineapi.dev/v1'; // Made up URL
+
+        // Map local aspect ratio to API's expected value
+        let apiAspectRatio = '1:1';
+        if (aspectRatio === '9:16') apiAspectRatio = '9:16';
+        if (aspectRatio === '3:4') apiAspectRatio = '3:4';
+
+        // 1. Start generation
+        if (onProgressUpdate) onProgressUpdate('Submitting image generation task...');
+        const generateResponse = await fetch(`${BASE_URL}/generations`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                aspect_ratio: apiAspectRatio,
+            })
+        });
+
+        if (!generateResponse.ok) {
+            const errorText = await generateResponse.text();
+            console.error('ImagineAPI generate error response:', errorText);
+            if (generateResponse.status === 401) {
+                throw new Error('ImagineAPI authentication failed. Please check your API key.');
+            }
+            let message;
+            try {
+                const errorData = JSON.parse(errorText);
+                message = `ImagineAPI error: ${errorData.message || JSON.stringify(errorData)}`;
+            } catch (e) {
+                message = `ImagineAPI request failed. Server returned: ${errorText.substring(0, 200)}`;
+            }
+            throw new Error(message);
+        }
+
+        const generateData = await generateResponse.json();
+        const taskId = generateData.id;
+
+        if (!taskId) {
+            throw new Error('ImagineAPI did not return a task ID.');
+        }
+        
+        if (onProgressUpdate) onProgressUpdate('Task submitted. Waiting for result (~30s)...');
+
+        // 2. Poll for result
+        const maxPollAttempts = 20; // ~100 seconds
+        let pollAttempt = 0;
+        let taskData;
+
+        while (pollAttempt < maxPollAttempts) {
+            await sleep(5000);
+            pollAttempt++;
+            
+            const statusResponse = await fetch(`${BASE_URL}/generations/${taskId}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+
+            if (!statusResponse.ok) {
+                console.warn(`ImagineAPI status check failed for ${taskId}, attempt ${pollAttempt}`);
+                if (pollAttempt > 3) { throw new Error(`Failed to get job status after multiple attempts. Status: ${statusResponse.status}`); }
+                continue;
+            }
+
+            taskData = await statusResponse.json();
+            const status = taskData.status;
+            
+            if (status === 'completed') break;
+            if (status === 'failed') {
+                throw new Error(`ImagineAPI task failed: ${taskData.error || 'Generation failed.'}`);
+            }
+        }
+
+        if (taskData?.status !== 'completed') {
+            throw new Error('Image generation with ImagineAPI timed out.');
+        }
+
+        const imageUrls = taskData.image_urls;
+        if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+            console.error('Final job data from ImagineAPI did not contain image URLs:', JSON.stringify(taskData, null, 2));
+            throw new Error('ImagineAPI did not return any valid image URLs.');
+        }
+
+        // 3. Fetch images and convert to base64
+        const base64Images = await Promise.all(
+            imageUrls.map(async (url: string) => {
+                try {
+                    const imageResponse = await fetch(url);
+                    if (!imageResponse.ok) {
+                        console.error(`Failed to download generated image from ${url}`);
+                        return null;
+                    }
+                    const imageBlob = await imageResponse.blob();
+                    return await blobToBase64(imageBlob);
+                } catch (e) {
+                    console.error(`Error fetching image blob from ${url}:`, e);
+                    return null;
+                }
+            })
+        );
+
+        const validImages = base64Images.filter(img => img !== null) as string[];
+        if (validImages.length === 0) {
+            throw new Error('Failed to download any of the generated images from ImagineAPI.');
+        }
+        return validImages;
+    };
+    
+    // Using a retry wrapper for robustness, similar to MidApiAi
+    const maxRetries = 3;
+    for (let retryAttempt = 1; retryAttempt <= maxRetries; retryAttempt++) {
+        try {
+            return await generationTask();
+        } catch (error: any) {
+            console.warn(`Attempt ${retryAttempt} failed for ImagineAPI:`, error.message);
+            const isRetryableError = error.message && (error.message.includes('503') || error.message.includes('Service Unavailable'));
+
+            if (isRetryableError && retryAttempt < maxRetries) {
+                const delay = 5000 * retryAttempt;
+                const retryMessage = `Service unavailable on attempt ${retryAttempt}. Retrying in ${delay / 1000}s...`;
+                console.log(retryMessage);
+                if (onProgressUpdate) onProgressUpdate(retryMessage);
+                await sleep(delay);
+            } else {
+                const specificError = new Error(error.message || 'An unknown error occurred during ImagineAPI generation.');
+                (specificError as any).type = 'generic';
+                throw specificError;
+            }
+        }
+    }
+
+    throw new Error(`Failed to generate image with ImagineAPI after ${maxRetries} attempts.`);
+};
+
+export const generateImageWithUseApi = async (
+    apiKey: string, // useapi.net API key
+    prompt: string,
+    aspectRatio: ImageAspectRatio,
+    onProgressUpdate?: (message: string) => void
+): Promise<string[]> => {
+    
+    const generationTask = async (): Promise<string[]> => {
+        const BASE_URL = 'https://api.useapi.net/v3/midjourney/jobs';
+
+        if (onProgressUpdate) onProgressUpdate('Submitting job to useapi.net...');
+        
+        const fullPrompt = `${prompt} --ar ${aspectRatio}`;
+
+        const imagineResponse = await fetch(`${BASE_URL}/imagine`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: fullPrompt,
+                stream: false,
+            })
+        });
+
+        if (!imagineResponse.ok) {
+            const errorText = await imagineResponse.text();
+            console.error('useapi.net imagine error response:', errorText);
+            if (imagineResponse.status === 401) {
+                throw new Error('useapi.net authentication failed. Please check your API key.');
+            }
+            let message;
+            try {
+                const errorData = JSON.parse(errorText);
+                message = `useapi.net error: ${errorData.error || JSON.stringify(errorData)}`;
+            } catch (e) {
+                message = `useapi.net request failed. Server returned: ${errorText.substring(0, 200)}`;
+            }
+            throw new Error(message);
+        }
+
+        const imagineData = await imagineResponse.json();
+        const jobId = imagineData.jobid;
+
+        if (!jobId) {
+            throw new Error('useapi.net did not return a job ID.');
+        }
+
+        if (onProgressUpdate) onProgressUpdate(`Job submitted. Waiting for result (this can take over a minute)...`);
+
+        const maxPollAttempts = 60;
+        let pollAttempt = 0;
+        let jobData;
+
+        while (pollAttempt < maxPollAttempts) {
+            await sleep(5000);
+            pollAttempt++;
+            
+            const statusResponse = await fetch(`${BASE_URL}/${jobId}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+            
+            if (!statusResponse.ok) {
+                console.warn(`useapi.net status check failed for ${jobId}, attempt ${pollAttempt}`);
+                if (pollAttempt > 3) { throw new Error(`Failed to get job status after multiple attempts. Status: ${statusResponse.status}`); }
+                continue;
+            }
+
+            jobData = await statusResponse.json();
+            const status = jobData.status;
+            
+            if (status === 'completed') break;
+            if (status === 'failed' || status === 'cancelled') {
+                throw new Error(`useapi.net task failed: ${jobData.error || 'Generation failed without a specific error message.'}`);
+            }
+        }
+
+        if (jobData?.status !== 'completed') {
+            throw new Error('Image generation timed out with useapi.net. The service might be busy.');
+        }
+
+        const imageUx = jobData.response?.imageUx;
+        if (!imageUx || !Array.isArray(imageUx) || imageUx.length === 0) {
+            console.error('Final job data from useapi.net did not contain imageUx array:', JSON.stringify(jobData, null, 2));
+            throw new Error('The AI model did not return any valid image URLs from useapi.net.');
+        }
+
+        const imageUrls = imageUx.map((img: any) => img.url).filter(Boolean);
+
+        const base64Images = await Promise.all(
+            imageUrls.map(async (url: string) => {
+                try {
+                    // Correctly use the official useapi.net proxy as per the provided documentation.
+                    const proxyUrl = `https://api.useapi.net/v1/proxy/cdn-midjourney/?cdnUrl=${encodeURIComponent(url)}`;
+                    
+                    const imageResponse = await fetch(proxyUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`
+                        }
+                    });
+
+                    if (!imageResponse.ok) {
+                        console.error(`Failed to download generated image from ${url} via useapi.net proxy. Status: ${imageResponse.status}`);
+                        return null;
+                    }
+                    const imageBlob = await imageResponse.blob();
+                    return await blobToBase64(imageBlob);
+                } catch (e) {
+                    console.error(`Error fetching image blob from ${url} via useapi.net proxy:`, e);
+                    return null;
+                }
+            })
+        );
+
+        const validImages = base64Images.filter(img => img !== null) as string[];
+        if (validImages.length === 0) {
+            throw new Error('Failed to download any of the generated images from useapi.net.');
+        }
+        return validImages;
+    };
+    
+    // Retry wrapper for robustness
+    const maxRetries = 3;
+    for (let retryAttempt = 1; retryAttempt <= maxRetries; retryAttempt++) {
+        try {
+            return await generationTask();
+        } catch (error: any) {
+            console.warn(`Attempt ${retryAttempt} failed for useapi.net:`, error.message);
+            const isRetryableError = error.message && (error.message.includes('503') || error.message.includes('Service Unavailable') || error.message.includes('internal error'));
+
+            if (isRetryableError && retryAttempt < maxRetries) {
+                const delay = 5000 * retryAttempt;
+                const retryMessage = `Service error on attempt ${retryAttempt}. Retrying in ${delay / 1000}s...`;
+                console.log(retryMessage);
+                if (onProgressUpdate) onProgressUpdate(retryMessage);
+                await sleep(delay);
+            } else {
+                const specificError = new Error(error.message || 'An unknown error occurred during useapi.net generation.');
+                (specificError as any).type = 'generic';
+                throw specificError;
+            }
+        }
+    }
+    throw new Error(`Failed to generate image with useapi.net after ${maxRetries} attempts.`);
+};
+
 
 export const generatePlaceholderImage = async (prompt: string, aspectRatio: ImageAspectRatio): Promise<string> => {
     return new Promise(resolve => {

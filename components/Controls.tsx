@@ -18,6 +18,8 @@ export interface ControlsProps {
   onGenerateImage: (imageNumber: 1 | 2 | 3) => void;
   onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3) => void;
   onGenerateImageWithMidApiAi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
+  onGenerateImageWithImagineApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
+  onGenerateImageWithUseApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
   onGenerateDescription: () => void;
   onGenerateKeywords: () => void;
   onGenerateShortTitle: () => void;
@@ -26,6 +28,8 @@ export interface ControlsProps {
   isGeneratingImage: { [key: number]: boolean };
   isGeneratingMidjourneyImage: { [key: number]: boolean };
   isGeneratingMidjourney2Image: { [key: number]: boolean };
+  isGeneratingImagineImage: { [key: number]: boolean };
+  isGeneratingUseApiImage: { [key: number]: boolean };
   isGeneratingDescription: boolean;
   isGeneratingKeywords: boolean;
   isGeneratingShortTitle: boolean;
@@ -34,7 +38,7 @@ export interface ControlsProps {
   onPrevRow: () => void;
   csvData: CsvRow[];
   currentRowIndex: number | null;
-  onBulkGeneration: (imageGenerator: 'fal' | 'midjourney' | 'midjourney2', resume: boolean) => void;
+  onBulkGeneration: (imageGenerator: 'fal' | 'midjourney' | 'midjourney2' | 'imagine' | 'useapi', resume: boolean) => void;
   isBulkGenerating: boolean;
   bulkMessage: string;
   apiError: { type: string; message: string; helpLink?: string } | null;
@@ -50,7 +54,11 @@ export interface ControlsProps {
   onSetApiframeApiKey: (key: string) => void;
   midapiApiKey: string;
   onSetMidapiApiKey: (key: string) => void;
-  bulkJobType: 'fal' | 'midjourney' | 'midjourney2' | null;
+  imagineApiKey: string;
+  onSetImagineApiKey: (key: string) => void;
+  useapiApiKey: string;
+  onSetUseapiApiKey: (key: string) => void;
+  bulkJobType: 'fal' | 'midjourney' | 'midjourney2' | 'imagine' | 'useapi' | null;
 }
 
 export const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
@@ -121,19 +129,27 @@ const ImageUpload: React.FC<{
     isGeneratingImage: { [key: number]: boolean }; 
     isGeneratingMidjourneyImage: { [key: number]: boolean };
     isGeneratingMidjourney2Image: { [key: number]: boolean };
+    isGeneratingImagineImage: { [key: number]: boolean };
+    isGeneratingUseApiImage: { [key: number]: boolean };
     onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void; 
     onGenerateImage: (imageNumber: 1 | 2 | 3) => void; 
     onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3) => void;
     onGenerateImageWithMidApiAi: (imageNumber: 1 | 2 | 3) => void;
+    onGenerateImageWithImagineApi: (imageNumber: 1 | 2 | 3) => void;
+    onGenerateImageWithUseApi: (imageNumber: 1 | 2 | 3) => void;
     isBulkGenerating: boolean; 
     isConfigured: boolean;
     isMjConfigured: boolean;
     isMj2Configured: boolean;
-}> = ({ id, label, isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isConfigured, isGeneratingMidjourneyImage, onGenerateImageWithMidjourney, isMjConfigured, isGeneratingMidjourney2Image, onGenerateImageWithMidApiAi, isMj2Configured }) => {
+    isImagineConfigured: boolean;
+    isUseApiConfigured: boolean;
+}> = ({ id, label, isGeneratingImage, onImageUpload, onGenerateImage, isBulkGenerating, isConfigured, isGeneratingMidjourneyImage, onGenerateImageWithMidjourney, isMjConfigured, isGeneratingMidjourney2Image, onGenerateImageWithMidApiAi, isMj2Configured, isGeneratingImagineImage, onGenerateImageWithImagineApi, isImagineConfigured, isGeneratingUseApiImage, onGenerateImageWithUseApi, isUseApiConfigured }) => {
     const isGeneratingFal = isGeneratingImage[id];
     const isGeneratingMj = isGeneratingMidjourneyImage[id];
     const isGeneratingMj2 = isGeneratingMidjourney2Image[id];
-    const isAnyGenerating = isGeneratingFal || isGeneratingMj || isGeneratingMj2;
+    const isGeneratingImagine = isGeneratingImagineImage[id];
+    const isGeneratingUseApi = isGeneratingUseApiImage[id];
+    const isAnyGenerating = isGeneratingFal || isGeneratingMj || isGeneratingMj2 || isGeneratingImagine || isGeneratingUseApi;
 
     return (
         <div>
@@ -188,6 +204,34 @@ const ImageUpload: React.FC<{
                     Generating (~60s)...
                     </>
                 ) : '🚀 Generate with midapi.ai'}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onGenerateImageWithImagineApi(id)}
+                    disabled={isAnyGenerating || isBulkGenerating || !isImagineConfigured}
+                    title={isImagineConfigured ? 'Generate a high-quality image with ImagineAPI' : 'Add an ImagineAPI key to use this generator'}
+                    className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                >
+                {isGeneratingImagine ? (
+                    <>
+                    <LoadingSpinner className="mr-2"/>
+                    Generating (~30s)...
+                    </>
+                ) : '🖼️ Generate with ImagineAPI'}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onGenerateImageWithUseApi(id)}
+                    disabled={isAnyGenerating || isBulkGenerating || !isUseApiConfigured}
+                    title={isUseApiConfigured ? 'Generate a high-quality image with useapi.net' : 'Add a useapi.net API key to use this generator'}
+                    className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                >
+                {isGeneratingUseApi ? (
+                    <>
+                    <LoadingSpinner className="mr-2"/>
+                    Generating (~60s)...
+                    </>
+                ) : '🌍 Generate with useapi.net'}
                 </button>
             </div>
         </div>
@@ -255,7 +299,7 @@ export const ApiKeyInput: React.FC<{
     );
 };
 
-export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey }) => {
+export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey, imagineApiKey, onSetImagineApiKey, useapiApiKey, onSetUseapiApiKey }) => {
     const templateCount = 48;
     const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
         id: `${i + 1}`,
@@ -278,11 +322,15 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
     const [apiframeApiKeyInput, setApiframeApiKeyInput] = useState(apiframeApiKey);
     const [midapiApiKeyInput, setMidapiApiKeyInput] = useState(midapiApiKey);
+    const [imagineApiKeyInput, setImagineApiKeyInput] = useState(imagineApiKey);
+    const [useapiApiKeyInput, setUseapiApiKeyInput] = useState(useapiApiKey);
 
     useEffect(() => { setFalApiKeyInput(falAiApiKey); }, [falAiApiKey]);
     useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
     useEffect(() => { setApiframeApiKeyInput(apiframeApiKey); }, [apiframeApiKey]);
     useEffect(() => { setMidapiApiKeyInput(midapiApiKey); }, [midapiApiKey]);
+    useEffect(() => { setImagineApiKeyInput(imagineApiKey); }, [imagineApiKey]);
+    useEffect(() => { setUseapiApiKeyInput(useapiApiKey); }, [useapiApiKey]);
     
     const handleSaveFalKey = () => onSetFalAiApiKey(falApiKeyInput.trim());
     const handleClearFalKey = () => { setFalApiKeyInput(''); onSetFalAiApiKey(''); };
@@ -292,12 +340,18 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     const handleClearApiframeKey = () => { setApiframeApiKeyInput(''); onSetApiframeApiKey(''); };
     const handleSaveMidapiKey = () => onSetMidapiApiKey(midapiApiKeyInput.trim());
     const handleClearMidapiKey = () => { setMidapiApiKeyInput(''); onSetMidapiApiKey(''); };
+    const handleSaveImagineKey = () => onSetImagineApiKey(imagineApiKeyInput.trim());
+    const handleClearImagineKey = () => { setImagineApiKeyInput(''); onSetImagineApiKey(''); };
+    const handleSaveUseapiKey = () => onSetUseapiApiKey(useapiApiKeyInput.trim());
+    const handleClearUseapiKey = () => { setUseapiApiKeyInput(''); onSetUseapiApiKey(''); };
 
 
     const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
     const mjKeyIsConfigured = apiframeApiKey && apiframeApiKey.length > 5;
     const mj2KeyIsConfigured = midapiApiKey && midapiApiKey.length > 5;
+    const imagineKeyIsConfigured = imagineApiKey && imagineApiKey.length > 5;
+    const useapiKeyIsConfigured = useapiApiKey && useapiApiKey.length > 5;
 
     return (
         <>
@@ -390,6 +444,40 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                                 <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your midapi.ai key is saved in this browser.</p>
                             ) : (
                                 <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable midapi.ai image generation.</p>
+                            )
+                        }
+                    />
+                    <ApiKeyInput
+                        label="ImagineAPI API Key"
+                        value={imagineApiKeyInput}
+                        onChange={setImagineApiKeyInput}
+                        onSave={handleSaveImagineKey}
+                        onClear={handleClearImagineKey}
+                        placeholder="Enter your ImagineAPI key"
+                        getLink="https://imagineapi.dev/"
+                        getLinkText="Get an ImagineAPI API Key"
+                        statusMessage={
+                            imagineKeyIsConfigured ? (
+                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your ImagineAPI key is saved in this browser.</p>
+                            ) : (
+                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable ImagineAPI image generation.</p>
+                            )
+                        }
+                    />
+                    <ApiKeyInput
+                        label="useapi.net API Key (Midjourney V3)"
+                        value={useapiApiKeyInput}
+                        onChange={setUseapiApiKeyInput}
+                        onSave={handleSaveUseapiKey}
+                        onClear={handleClearUseapiKey}
+                        placeholder="Enter your useapi.net key"
+                        getLink="https://useapi.net/"
+                        getLinkText="Get a useapi.net API Key"
+                        statusMessage={
+                            useapiKeyIsConfigured ? (
+                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your useapi.net key is saved in this browser.</p>
+                            ) : (
+                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable useapi.net image generation.</p>
                             )
                         }
                     />
@@ -513,11 +601,15 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
         onGenerateImage,
         onGenerateImageWithMidjourney,
         onGenerateImageWithMidApiAi,
+        onGenerateImageWithImagineApi,
+        onGenerateImageWithUseApi,
         onDownload, 
         isLoading, 
         isGeneratingImage,
         isGeneratingMidjourneyImage,
         isGeneratingMidjourney2Image,
+        isGeneratingImagineImage,
+        isGeneratingUseApiImage,
         onCsvUpload,
         onNextRow,
         onPrevRow,
@@ -534,6 +626,8 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
         falAiApiKey,
         apiframeApiKey,
         midapiApiKey,
+        imagineApiKey,
+        useapiApiKey,
         bulkJobType,
     } = props;
 
@@ -551,10 +645,14 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
     const mjKeyIsConfigured = apiframeApiKey && apiframeApiKey.length > 5;
     const mj2KeyIsConfigured = midapiApiKey && midapiApiKey.length > 5;
+    const imagineKeyIsConfigured = imagineApiKey && imagineApiKey.length > 5;
+    const useapiKeyIsConfigured = useapiApiKey && useapiApiKey.length > 5;
 
     const getBulkJobName = () => {
         if (bulkJobType === 'midjourney') return 'Midjourney';
         if (bulkJobType === 'midjourney2') return 'midapi.ai';
+        if (bulkJobType === 'imagine') return 'ImagineAPI';
+        if (bulkJobType === 'useapi') return 'useapi.net';
         return 'Fal.ai';
     };
 
@@ -602,12 +700,12 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
             </ControlCard>
 
              <ControlCard icon={<ImagesIcon />} title="Images">
-                <ImageUpload id={1} label="Background Image 1" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} isGeneratingMidjourney2Image={isGeneratingMidjourney2Image} onGenerateImageWithMidApiAi={onGenerateImageWithMidApiAi} isMj2Configured={mj2KeyIsConfigured} />
+                <ImageUpload id={1} label="Background Image 1" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} isGeneratingMidjourney2Image={isGeneratingMidjourney2Image} onGenerateImageWithMidApiAi={onGenerateImageWithMidApiAi} isMj2Configured={mj2KeyIsConfigured} isGeneratingImagineImage={isGeneratingImagineImage} onGenerateImageWithImagineApi={onGenerateImageWithImagineApi} isImagineConfigured={imagineKeyIsConfigured} isGeneratingUseApiImage={isGeneratingUseApiImage} onGenerateImageWithUseApi={onGenerateImageWithUseApi} isUseApiConfigured={useapiKeyIsConfigured} />
                 {needsImage2 && (
-                    <ImageUpload id={2} label="Background Image 2" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} isGeneratingMidjourney2Image={isGeneratingMidjourney2Image} onGenerateImageWithMidApiAi={onGenerateImageWithMidApiAi} isMj2Configured={mj2KeyIsConfigured} />
+                    <ImageUpload id={2} label="Background Image 2" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} isGeneratingMidjourney2Image={isGeneratingMidjourney2Image} onGenerateImageWithMidApiAi={onGenerateImageWithMidApiAi} isMj2Configured={mj2KeyIsConfigured} isGeneratingImagineImage={isGeneratingImagineImage} onGenerateImageWithImagineApi={onGenerateImageWithImagineApi} isImagineConfigured={imagineKeyIsConfigured} isGeneratingUseApiImage={isGeneratingUseApiImage} onGenerateImageWithUseApi={onGenerateImageWithUseApi} isUseApiConfigured={useapiKeyIsConfigured} />
                 )}
                 {needsImage3 && (
-                    <ImageUpload id={3} label="Background Image 3" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} isGeneratingMidjourney2Image={isGeneratingMidjourney2Image} onGenerateImageWithMidApiAi={onGenerateImageWithMidApiAi} isMj2Configured={mj2KeyIsConfigured} />
+                    <ImageUpload id={3} label="Background Image 3" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} isGeneratingMidjourney2Image={isGeneratingMidjourney2Image} onGenerateImageWithMidApiAi={onGenerateImageWithMidApiAi} isMj2Configured={mj2KeyIsConfigured} isGeneratingImagineImage={isGeneratingImagineImage} onGenerateImageWithImagineApi={onGenerateImageWithImagineApi} isImagineConfigured={imagineKeyIsConfigured} isGeneratingUseApiImage={isGeneratingUseApiImage} onGenerateImageWithUseApi={onGenerateImageWithUseApi} isUseApiConfigured={useapiKeyIsConfigured} />
                 )}
              </ControlCard>
 
@@ -683,6 +781,26 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                                 {isBulkGenerating && bulkJobType === 'midjourney2' ? (
                                     <><LoadingSpinner className="mr-3" /> Generating...</>
                                 ) : '🚀 Generate with midapi.ai & CSV'}
+                            </button>
+                            <button
+                                onClick={() => onBulkGeneration('imagine', false)}
+                                disabled={isBulkGenerating || csvData.length === 0 || isQuotaError || !imagineKeyIsConfigured}
+                                title={!imagineKeyIsConfigured ? 'Add an ImagineAPI key to use this generator' : 'Generate all pins using ImagineAPI for images'}
+                                className="w-full flex items-center justify-center px-4 py-2.5 bg-sky-500 text-white font-semibold rounded-lg shadow-md hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                            >
+                                {isBulkGenerating && bulkJobType === 'imagine' ? (
+                                    <><LoadingSpinner className="mr-3" /> Generating...</>
+                                ) : '🖼️ Generate with ImagineAPI & CSV'}
+                            </button>
+                            <button
+                                onClick={() => onBulkGeneration('useapi', false)}
+                                disabled={isBulkGenerating || csvData.length === 0 || isQuotaError || !useapiKeyIsConfigured}
+                                title={!useapiKeyIsConfigured ? 'Add a useapi.net API key to use this generator' : 'Generate all pins using useapi.net for images'}
+                                className="w-full flex items-center justify-center px-4 py-2.5 bg-teal-500 text-white font-semibold rounded-lg shadow-md hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+                            >
+                                {isBulkGenerating && bulkJobType === 'useapi' ? (
+                                    <><LoadingSpinner className="mr-3" /> Generating...</>
+                                ) : '🌍 Generate with useapi.net & CSV'}
                             </button>
                         </div>
                     )}
