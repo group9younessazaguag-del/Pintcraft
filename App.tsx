@@ -679,7 +679,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex + 1);
+      setCurrentRowIndex(currentRowIndex - 1);
     }
   };
 
