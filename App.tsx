@@ -1,4 +1,5 @@
 
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -679,7 +680,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex - 1);
+      setCurrentRowIndex(currentRowIndex + 1);
     }
   };
 
@@ -864,7 +865,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     } else { // 'fal'
                         await handleGenerateImage(1, true, prompt);
                         
-                        const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '35', '37', '38', '40', '41', '42'].includes(templateData.templateId);
+                        const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '35', '37', '38', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51', '54'].includes(templateData.templateId);
                         if (templateNeeds2Images) await handleGenerateImage(2, true, prompt);
     
                         const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
@@ -920,7 +921,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                             } else { // 'fal'
                                 await handleGenerateImage(1, true, newPrompt);
                                 
-                                const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '35', '37', '38', '40', '41', '42'].includes(templateData.templateId);
+                                const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '35', '37', '38', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51', '54'].includes(templateData.templateId);
                                 if (templateNeeds2Images) await handleGenerateImage(2, true, newPrompt);
             
                                 const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
