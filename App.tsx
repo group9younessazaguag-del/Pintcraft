@@ -1,5 +1,3 @@
-
-
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -20,6 +18,8 @@ import AssistantPage from './components/pages/AssistantPage';
 import HomePage from './components/pages/HomePage';
 import DNRaterPage from './components/pages/DNRaterPage';
 import AuthorPage from './components/pages/AuthorPage';
+import FacebookPostGeneratorPage from './components/pages/FacebookPostGeneratorPage';
+import FacebookPageBuilderPage from './components/pages/FacebookPageBuilderPage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -34,7 +34,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'pin-generator';
+  return hash || 'facebook-post-generator';
 };
 
 
@@ -42,7 +42,6 @@ type PersistedData = Omit<TemplateData, 'backgroundImage' | 'backgroundImage2' |
 
 const initialPersistedData: PersistedData = {
     title: 'GARLIC HERB MOZZARELLA BITES',
-    subtitle: 'QUICK & EASY APPETIZER',
     website: 'YOURWEBSITE.COM',
     templateId: '15',
     pinSize: 'long',
@@ -164,11 +163,10 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (currentRowIndex !== null && csvData[currentRowIndex]) {
-      const { title, subtitle, description, keywords } = csvData[currentRowIndex];
+      const { title, description, keywords } = csvData[currentRowIndex];
       setPersistedData(prev => ({
         ...prev,
         title: title,
-        subtitle: subtitle,
         description: description,
         keywords: keywords,
       }));
@@ -484,9 +482,9 @@ const App: React.FC = () => {
     try {
         let newDescription: string;
         if (userApiKey) {
-            newDescription = await generateDescription(userApiKey, templateData.textModel, title, templateData.subtitle);
+            newDescription = await generateDescription(userApiKey, templateData.textModel, title);
         } else {
-            newDescription = generatePlaceholderDescription(title, templateData.subtitle);
+            newDescription = generatePlaceholderDescription(title);
         }
         handleFieldChange('description', newDescription);
     } catch (error: any) {
@@ -505,7 +503,7 @@ const App: React.FC = () => {
   };
 
   const handleGenerateKeywords = async (throwOnError = false): Promise<void> => {
-    const { title, subtitle, textModel } = templateData;
+    const { title, textModel } = templateData;
     if (!title) {
         const msg = 'Please enter a Title to generate keywords.';
         if (throwOnError) throw new Error(msg);
@@ -519,9 +517,9 @@ const App: React.FC = () => {
     try {
         let newKeywords: string;
         if (userApiKey) {
-            newKeywords = await generateKeywords(userApiKey, textModel, title, subtitle);
+            newKeywords = await generateKeywords(userApiKey, textModel, title);
         } else {
-            newKeywords = generatePlaceholderKeywords(title, subtitle);
+            newKeywords = generatePlaceholderKeywords(title);
         }
         handleFieldChange('keywords', newKeywords);
     } catch (error: any) {
@@ -632,7 +630,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       headers.forEach(h => headerMap[h.toLowerCase().trim()] = h);
 
       const titleHeader = headerMap['title'] || headerMap['title of recipes'];
-      const boardHeader = headerMap['pinterest board'] || headerMap['board'];
       const descriptionHeader = headerMap['description'];
       const keywordsHeader = headerMap['keywords'] || headerMap['interest used'];
       const imagePromptHeader = headerMap['image prompt'];
@@ -657,7 +654,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
           
           return {
               title: title,
-              subtitle: boardHeader ? row[boardHeader] || '' : '',
               website: '',
               description: descriptionHeader ? row[descriptionHeader] || '' : '',
               keywords: keywordsHeader ? row[keywordsHeader] || '' : '',
@@ -793,9 +789,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 try {
                     let description: string;
                     if (googleApiKey) {
-                        description = await generateDescription(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
+                        description = await generateDescription(googleApiKey, templateData.textModel, currentData.title);
                     } else {
-                        description = generatePlaceholderDescription(currentData.title, currentData.subtitle);
+                        description = generatePlaceholderDescription(currentData.title);
                     }
                     currentRunCsvData[i][descriptionHeaderKey] = description;
                 } catch (error: any) {
@@ -811,9 +807,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 try {
                     let keywords: string;
                     if (googleApiKey) {
-                        keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title, currentData.subtitle);
+                        keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title);
                     } else {
-                        keywords = generatePlaceholderKeywords(currentData.title, currentData.subtitle);
+                        keywords = generatePlaceholderKeywords(currentData.title);
                     }
                     currentRunCsvData[i][keywordsHeaderKey] = keywords;
                 } catch (error: any) {
@@ -1198,6 +1194,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         textModel={templateData.textModel}
                         adminSettings={adminSettings}
                     />;
+        case 'pin-generator':
+             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
         case 'assistant':
              return <AssistantPage
                         accounts={pinterestAccounts}
@@ -1209,6 +1207,12 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <DNRaterPage />;
         case 'author':
             return <AuthorPage />;
+        case 'facebook-page-builder':
+            return <FacebookPageBuilderPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
+                        textModel={templateData.textModel}
+                    />;
         case 'admin':
             return <AdminPage 
                         isAdminLoggedIn={isAdminLoggedIn}
@@ -1221,9 +1225,19 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     />;
         case 'welcome':
              return <HomePage />;
-        case 'pin-generator':
+        case 'facebook-post-generator':
         default:
-             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
+             return <FacebookPostGeneratorPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
+                        falAiApiKey={falAiApiKey}
+                        onSetFalAiApiKey={setFalAiApiKey}
+                        useapiApiKey={useapiApiKey}
+                        onSetUseapiApiKey={setUseapiApiKey}
+                        openRouterApiKey={openRouterApiKey}
+                        onSetOpenRouterApiKey={setOpenRouterApiKey}
+                        textModel={templateData.textModel}
+                    />;
     }
   };
 

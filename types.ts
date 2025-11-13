@@ -2,11 +2,10 @@ export type TemplateId = `${number}`;
 
 export type PinSize = 'standard' | 'long';
 
-export type ImageAspectRatio = '1:1' | '3:4' | '9:16';
+export type ImageAspectRatio = '1:1' | '3:4' | '9:16' | '4:5';
 
 export interface TemplateData {
   title: string;
-  subtitle: string;
   website: string;
   backgroundImage: string | null;
   backgroundImage2: string | null;
@@ -25,7 +24,6 @@ export interface TemplateData {
 
 export interface CsvRow {
   title: string;
-  subtitle: string;
   website: string;
   description: string;
   keywords: string;
@@ -83,4 +81,47 @@ export interface BackupData {
   imagineApiKey: string;
   useapiApiKey: string;
   pinterestAccounts: PinterestAccount[];
+}
+
+export interface FacebookPost {
+  postText: string;
+  imagePrompt: string;
+  hashtags: string[];
+  imageText: string;
+}
+
+// New types for Page Builder
+export interface FacebookLogoBrief {
+  style: string;
+  motifs: string[];
+  notes: string;
+}
+
+export interface FacebookCoverBrief {
+  concept: string;
+  layout_notes: string;
+}
+
+export interface FacebookPublicGroup {
+  name: string;
+  description: string;
+  first_pinned_post: string;
+}
+
+export interface FacebookPageLikesAd {
+  image_prompt: string;
+  primary_text: string;
+  headline: string;
+  placements: string[];
+}
+
+export interface FacebookPageStrategy {
+  page_name_ideas: string[];
+  page_bio_90chars: string;
+  categories: string[];
+  logo_brief: FacebookLogoBrief;
+  cover_brief: FacebookCoverBrief;
+  public_group: FacebookPublicGroup;
+  page_likes_ad: FacebookPageLikesAd;
+  first_20_post_themes: string[];
 }

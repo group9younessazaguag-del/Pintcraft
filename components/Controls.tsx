@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -544,7 +542,6 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                 </div>
             </div>
 
-            <InputField data={data} onFieldChange={onFieldChange} id="subtitle" label="Pinterest Board" />
             <InputField data={data} onFieldChange={onFieldChange} id="website" label="Link" />
             <div>
                 <label htmlFor="description" className="block text-sm font-medium text-slate-600 mb-1.5">Description</label>

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { GeneratedContentRow, PinterestAccount, ImageAspectRatio } from '../types';
+import { GeneratedContentRow, PinterestAccount, ImageAspectRatio, FacebookPost, FacebookPageStrategy } from '../types';
 
 // Helper to parse complex API errors
 const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic', message: string, helpLink?: string } => {
@@ -793,7 +793,7 @@ export const generateImageWithUseApi = async (
 export const generatePlaceholderImage = async (prompt: string, aspectRatio: ImageAspectRatio): Promise<string> => {
     return new Promise(resolve => {
         const canvas = document.createElement('canvas');
-        const [width, height] = aspectRatio === '3:4' ? [750, 1000] : aspectRatio === '1:1' ? [1000, 1000] : [720, 1280];
+        const [width, height] = aspectRatio === '3:4' ? [750, 1000] : aspectRatio === '1:1' ? [1000, 1000] : aspectRatio === '4:5' ? [1080, 1350] : [720, 1280];
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
@@ -829,10 +829,10 @@ export const generatePlaceholderImage = async (prompt: string, aspectRatio: Imag
     });
 };
 
-export const generateDescription = async (apiKey: string, model: string, title: string, subtitle: string): Promise<string> => {
+export const generateDescription = async (apiKey: string, model: string, title: string): Promise<string> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Act as a Pinterest SEO expert. Write a Pinterest pin description up to 200 characters, optimized for search and engagement for a pin with this title: "${title}" and for the board: "${subtitle}".
+        const prompt = `Act as a Pinterest SEO expert. Write a Pinterest pin description up to 200 characters, optimized for search and engagement for a pin with this title: "${title}".
 
 - Include 5–8 relevant keywords naturally.
 - Use active, inspiring language.
@@ -853,15 +853,15 @@ Description:`;
         throw getApiErrorDetails(error);
     }
 };
-export const generatePlaceholderDescription = (title: string, subtitle: string): string => {
-    return `Discover our latest on "${title}"! Perfect for your "${subtitle}" board. Get inspired and find more ideas on our website. #YourBrand #${title.split(' ').join('')}`;
+export const generatePlaceholderDescription = (title: string): string => {
+    return `Discover our latest on "${title}"! Get inspired and find more ideas on our website. #YourBrand #${title.split(' ').join('')}`;
 };
 
 
-export const generateKeywords = async (apiKey: string, model: string, title: string, subtitle: string): Promise<string> => {
+export const generateKeywords = async (apiKey: string, model: string, title: string): Promise<string> => {
      try {
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Generate a comma-separated list of 5-10 highly relevant and popular keywords for a Pinterest pin with the title "${title}" and board "${subtitle}". Include a mix of broad and long-tail keywords. Do not include hashtags.
+        const prompt = `Generate a comma-separated list of 5-10 highly relevant and popular keywords for a Pinterest pin with the title "${title}". Include a mix of broad and long-tail keywords. Do not include hashtags.
 
         Keywords:`;
         
@@ -876,10 +876,9 @@ export const generateKeywords = async (apiKey: string, model: string, title: str
     }
 };
 
-export const generatePlaceholderKeywords = (title: string, subtitle: string): string => {
+export const generatePlaceholderKeywords = (title: string): string => {
     const keywords = [
         ...title.toLowerCase().split(' '), 
-        ...subtitle.toLowerCase().split(' ')
     ].filter((v, i, a) => a.indexOf(v) === i && v.length > 3);
     return keywords.join(',');
 };
@@ -1371,4 +1370,302 @@ export const getAiSuggestions = async (
   } catch (error: any) {
     throw getApiErrorDetails(error);
   }
+};
+
+export const generateFacebookPost = async (
+    apiKey: string,
+    model: string,
+    topic: string,
+): Promise<FacebookPost> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `You are a social media marketing expert specializing in Facebook. For the given topic, generate a complete, engaging Facebook post.
+
+Topic: "${topic}"
+
+**RULES FOR EACH COMPONENT:**
+1.  **postText:** Write an engaging and slightly informal post text, between 2-4 sentences. It should be captivating and encourage interaction (likes, comments, shares). Use emojis where appropriate.
+2.  **imagePrompt:** Write a detailed, creative prompt for an AI image generator (like Midjourney or DALL-E) to create a visually stunning and relevant portrait (4:5 aspect ratio, 1080x1350 pixels) image for the post. Describe the style, lighting, colors, and subject matter.
+3.  **hashtags:** Provide an array of 3 to 5 relevant and popular hashtags as strings.
+4.  **imageText:** Write a short, impactful text overlay for the image, between 5 and 15 words. This should be a headline, a question, or a powerful quote related to the topic. It should be different from the main postText and designed to grab attention. ALL CAPS is preferred for maximum impact.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object.
+*   Do NOT include any text, commentary, or markdown like \`\`\`json before or after the JSON object.
+*   Strictly follow the JSON schema provided.`;
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        postText: { type: Type.STRING, description: "Engaging post text, 2-4 sentences, with emojis." },
+                        imagePrompt: { type: Type.STRING, description: "A detailed AI image generator prompt for a portrait 4:5 image." },
+                        hashtags: {
+                            type: Type.ARRAY,
+                            items: { type: Type.STRING },
+                            description: "An array of 3-5 relevant hashtags."
+                        },
+                        imageText: { type: Type.STRING, description: "A short, impactful text overlay (5-15 words, preferably ALL CAPS) for the image." }
+                    },
+                    required: ["postText", "imagePrompt", "hashtags", "imageText"]
+                }
+            }
+        }));
+
+        const jsonText = response.text.trim();
+        let parsedObject;
+
+        try {
+            parsedObject = JSON.parse(jsonText);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting recovery.", jsonText);
+            
+            let recoveredJsonString = null;
+            const markdownMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (markdownMatch && markdownMatch[1]) {
+                recoveredJsonString = markdownMatch[1];
+            } else {
+                const startIndex = jsonText.indexOf('{');
+                const endIndex = jsonText.lastIndexOf('}');
+                if (startIndex !== -1 && endIndex > startIndex) {
+                    recoveredJsonString = jsonText.substring(startIndex, endIndex + 1);
+                }
+            }
+
+            if (recoveredJsonString) {
+                try {
+                    parsedObject = JSON.parse(recoveredJsonString);
+                } catch (finalError) {
+                    console.error("Failed to parse recovered JSON string.", recoveredJsonString);
+                    const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                    (err as any).originalText = jsonText;
+                    throw err;
+                }
+            } else {
+                console.error("The AI response does not appear to contain a JSON object.", jsonText);
+                const err = new Error("The AI response does not appear to contain a JSON object.");
+                (err as any).originalText = jsonText;
+                throw err;
+            }
+        }
+
+        const finalObject: FacebookPost = {
+            postText: String(parsedObject.postText || ''),
+            imagePrompt: String(parsedObject.imagePrompt || ''),
+            hashtags: Array.isArray(parsedObject.hashtags) ? parsedObject.hashtags.map(String) : [],
+            imageText: String(parsedObject.imageText || ''),
+        };
+
+        return finalObject;
+
+    } catch (error: any) {
+        console.error("Error in generateFacebookPost:", error);
+        if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const generateFacebookPostWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    topic: string,
+): Promise<FacebookPost> => {
+    try {
+        const systemPrompt = `You are a social media marketing expert specializing in Facebook. For the given topic, generate a complete, engaging Facebook post.
+
+**RULES FOR EACH COMPONENT:**
+1.  **postText:** Write an engaging and slightly informal post text, between 2-4 sentences. It should be captivating and encourage interaction (likes, comments, shares). Use emojis where appropriate.
+2.  **imagePrompt:** Write a detailed, creative prompt for an AI image generator (like Midjourney or DALL-E) to create a visually stunning and relevant portrait (4:5 aspect ratio, 1080x1350 pixels) image for the post. Describe the style, lighting, colors, and subject matter.
+3.  **hashtags:** Provide an array of 3 to 5 relevant and popular hashtags as strings.
+4.  **imageText:** Write a short, impactful text overlay for the image, between 5 and 15 words. This should be a headline, a question, or a powerful quote related to the topic. It should be different from the main postText and designed to grab attention. ALL CAPS is preferred for maximum impact.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object.
+*   Do NOT include any text, commentary, or markdown.
+*   The JSON object should have keys: "postText", "imagePrompt", "hashtags", and "imageText".`;
+
+        const userPrompt = `Generate the Facebook post for the topic: "${topic}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`,
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+                response_format: { type: "json_object" },
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            const specificError = new Error(message);
+            (specificError as any).type = response.status === 429 ? 'quota' : 'generic';
+            throw specificError;
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+        
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('{');
+            const endIndex = potentialJson.lastIndexOf('}');
+            if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            }
+        }
+        
+        if (!potentialJson.startsWith('{') || !potentialJson.endsWith('}')) {
+             const err = new Error("The AI response does not appear to contain a JSON object.");
+             (err as any).originalText = jsonText;
+             throw err;
+        }
+
+        let parsedObject;
+        try {
+            parsedObject = JSON.parse(potentialJson);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting to repair.", { error: e, json: potentialJson });
+            try {
+                const repairedJson = repairJson(potentialJson);
+                parsedObject = JSON.parse(repairedJson);
+            } catch (repairError) {
+                 console.error("Failed to parse even after repairing JSON.", { error: repairError, original: potentialJson });
+                 const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                 (err as any).originalText = jsonText;
+                 throw err;
+            }
+        }
+
+        const finalObject: FacebookPost = {
+            postText: String(parsedObject.postText || ''),
+            imagePrompt: String(parsedObject.imagePrompt || ''),
+            hashtags: Array.isArray(parsedObject.hashtags) ? parsedObject.hashtags.map(String) : [],
+            imageText: String(parsedObject.imageText || ''),
+        };
+
+        return finalObject;
+
+    } catch (error: any) {
+        console.error("Error in generateFacebookPostWithOpenRouter:", error);
+        if (error.type) {
+            throw error;
+        }
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
+};
+
+
+export const generateFacebookPageStrategy = async (
+    apiKey: string,
+    model: string,
+    niche: string,
+    country: string,
+): Promise<FacebookPageStrategy> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+
+        const systemPrompt = `You are “Facebook Faceless Page Builder,” tasked to create a money-ready Facebook page in the niche "${niche}" for "${country}" audiences (Tier 1 focus). Follow these non-negotiable rules:
+
+STRATEGY (from my SOP):
+- Content types: image+text tiles and text-only posts; image size 1080x1350 pixels. Long, emotional captions (150–200 chars). No clickbait, no engagement bait, no copyrighted media. Link goes in the FIRST COMMENT, not in the caption.
+- Posting times (EST): 08:30, 11:30, 20:30 (priority). Initial volume: 6–8 posts/day; scale to 10–14/day.
+- Growth: invite engagers to like the page, share to relevant groups daily, build a public group and crosspost, run Page Likes ads at $5–$10/day and scale +20% weekly if CPL ≤ $0.05.
+- Compliance: obey Partner/Content Monetization policies; avoid repetitive/low-effort content, politics/misinformation, NSFW.
+
+OUTPUT (JSON ONLY):
+Your entire response MUST be ONLY a single, valid JSON object that strictly follows the provided schema. Do NOT include any text, commentary, or markdown like \`\`\`json before or after the JSON object.`;
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: `Generate the full page strategy now.`,
+            config: {
+                systemInstruction: systemPrompt,
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        page_name_ideas: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 clear, brandable, keyword-friendly page name ideas." },
+                        page_bio_90chars: { type: Type.STRING, description: "A benefit-led page bio, between 80-90 characters." },
+                        categories: { type: Type.ARRAY, items: { type: Type.STRING }, description: "An array of 3 suitable Facebook page categories." },
+                        logo_brief: {
+                            type: Type.OBJECT,
+                            properties: {
+                                style: { type: Type.STRING },
+                                motifs: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                notes: { type: Type.STRING }
+                            },
+                            required: ["style", "motifs", "notes"]
+                        },
+                        cover_brief: {
+                            type: Type.OBJECT,
+                            properties: {
+                                concept: { type: Type.STRING },
+                                layout_notes: { type: Type.STRING }
+                            },
+                            required: ["concept", "layout_notes"]
+                        },
+                        public_group: {
+                            type: Type.OBJECT,
+                            properties: {
+                                name: { type: Type.STRING },
+                                description: { type: Type.STRING },
+                                first_pinned_post: { type: Type.STRING }
+                            },
+                            required: ["name", "description", "first_pinned_post"]
+                        },
+                        page_likes_ad: {
+                            type: Type.OBJECT,
+                            properties: {
+                                image_prompt: { type: Type.STRING, description: "A detailed AI image prompt for a compelling ad image. The image should be visually striking and have an aspect ratio of 1080x1350 pixels (portrait 4:5)." },
+                                primary_text: { type: Type.STRING },
+                                headline: { type: Type.STRING },
+                                placements: { type: Type.ARRAY, items: { type: Type.STRING } }
+                            },
+                            required: ["image_prompt", "primary_text", "headline", "placements"]
+                        },
+                        first_20_post_themes: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of exactly 20 diverse post theme ideas." }
+                    },
+                    required: ["page_name_ideas", "page_bio_90chars", "categories", "logo_brief", "cover_brief", "public_group", "page_likes_ad", "first_20_post_themes"]
+                }
+            }
+        }));
+
+        const jsonText = response.text.trim();
+        const parsedObject = JSON.parse(jsonText);
+        return parsedObject as FacebookPageStrategy;
+
+    } catch (error: any) {
+        console.error("Error in generateFacebookPageStrategy:", error);
+        if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
 };

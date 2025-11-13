@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PinIcon from './icons/PinIcon';
 import MenuIcon from './icons/MenuIcon';
@@ -7,7 +6,7 @@ import AssistantIcon from './icons/AssistantIcon';
 
 const getCurrentPage = () => {
     const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-    return hash || 'pin-generator';
+    return hash || 'facebook-post-generator';
 };
 
 const NavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () => void; isActive: boolean }> = ({ href, children, onClick, isActive }) => (
@@ -53,6 +52,8 @@ const Header: React.FC = () => {
   };
 
   const navItems = [
+    { href: "/#/facebook-post-generator", label: "Facebook Post Generator" },
+    { href: "/#/facebook-page-builder", label: "Facebook Page Builder" },
     { href: "/#/content-generator", label: "AI Content Idea Generator" },
     { href: "/#/pin-generator", label: "Pin Generator" },
     { href: "/#/assistant", label: "Assistant" },
@@ -76,7 +77,7 @@ const Header: React.FC = () => {
         <div className="container mx-auto px-4 md:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo and Brand Name */}
-            <a href="/#/pin-generator" onClick={closeMobileMenu} className="flex items-center gap-3 group">
+            <a href="/#/facebook-post-generator" onClick={closeMobileMenu} className="flex items-center gap-3 group">
               <PinIcon className="w-7 h-7 text-pink-500 transition-colors group-hover:text-pink-600" />
               <h1 className="text-xl font-semibold tracking-tight text-slate-800 transition-colors group-hover:text-slate-900">
                 Pin4You
@@ -89,7 +90,7 @@ const Header: React.FC = () => {
                 <NavLink 
                   key={item.href}
                   href={item.href}
-                  isActive={activePage === (item.href.substring(2) || 'pin-generator')}
+                  isActive={activePage === (item.href.substring(2) || 'facebook-post-generator')}
                 >
                     {item.label}
                 </NavLink>
@@ -142,7 +143,7 @@ const Header: React.FC = () => {
                     key={item.href}
                     href={item.href}
                     onClick={closeMobileMenu}
-                    isActive={activePage === (item.href.substring(2) || 'pin-generator')}
+                    isActive={activePage === (item.href.substring(2) || 'facebook-post-generator')}
                 >
                     {item.label}
                 </MobileNavLink>
