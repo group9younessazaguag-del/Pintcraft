@@ -1379,15 +1379,28 @@ export const generateFacebookPost = async (
 ): Promise<FacebookPost> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `You are a social media marketing expert specializing in Facebook. For the given topic, generate a complete, engaging Facebook post.
+        const prompt = `You are a social media marketing expert specializing in creating viral Facebook content for a broad audience, including Gen Z, millennials, and boomers. Your primary goal is to generate massive engagement (comments, shares, likes).
+
+For the given topic, generate a complete, engaging Facebook post by choosing ONE of the following viral content strategies:
+1.  **Relatable Content:** Connects with everyday experiences or timely events.
+2.  **Funny Content:** Uses humor to entertain and be shareable.
+3.  **Authentic Content:** Feels genuine and personal.
+4.  **Nostalgic Content:** Evokes memories and emotions, which performs very well with Facebook's core audience.
+5.  **Interactive Content:** Asks questions to get people talking and boost comments, which Facebook's algorithm loves.
 
 Topic: "${topic}"
 
 **RULES FOR EACH COMPONENT:**
-1.  **postText:** Write an engaging and slightly informal post text, between 2-4 sentences. It should be captivating and encourage interaction (likes, comments, shares). Use emojis where appropriate.
-2.  **imagePrompt:** Write a detailed, creative prompt for an AI image generator (like Midjourney or DALL-E) to create a visually stunning and relevant portrait (4:5 aspect ratio, 1080x1350 pixels) image for the post. Describe the style, lighting, colors, and subject matter.
+1.  **postText:** Based on your chosen viral strategy, write an engaging and slightly informal post text, between 2-4 sentences. It should be captivating and designed to spark conversation and shares. Use emojis where appropriate.
+2.  **imagePrompt:** Write a detailed, highly realistic, and creative prompt for an AI image generator like Midjourney. The goal is to create a photorealistic image that looks like a professional photograph. The image must be in a portrait aspect ratio (4:5, 1080x1350 pixels). The prompt should specify:
+    - Subject: A clear description of the main subject.
+    - Setting: A detailed background or environment.
+    - Style: Explicitly state "photorealistic, professional photography".
+    - Lighting: Describe the lighting, e.g., "soft natural light", "golden hour", "studio lighting".
+    - Details: Add specifics about colors, textures, and mood.
+    - Camera/Lens: Suggest a camera and lens type, e.g., "shot on a DSLR with a 50mm f/1.8 lens".
 3.  **hashtags:** Provide an array of 3 to 5 relevant and popular hashtags as strings.
-4.  **imageText:** Write a short, impactful text overlay for the image, between 5 and 15 words. This should be a headline, a question, or a powerful quote related to the topic. It should be different from the main postText and designed to grab attention. ALL CAPS is preferred for maximum impact.
+4.  **imageText:** Based on your chosen viral strategy, write a short, impactful text overlay for the image, between 5 and 15 words. This should be a headline, a powerful quote, or an **interactive question** to drive comments. It must grab attention. ALL CAPS is preferred for maximum impact.
 
 **CRITICAL OUTPUT INSTRUCTIONS:**
 *   Your entire response MUST be ONLY a single, valid JSON object.
@@ -1477,13 +1490,26 @@ export const generateFacebookPostWithOpenRouter = async (
     topic: string,
 ): Promise<FacebookPost> => {
     try {
-        const systemPrompt = `You are a social media marketing expert specializing in Facebook. For the given topic, generate a complete, engaging Facebook post.
+        const systemPrompt = `You are a social media marketing expert specializing in creating viral Facebook content for a broad audience, including Gen Z, millennials, and boomers. Your primary goal is to generate massive engagement (comments, shares, likes).
+
+For the given topic, you must generate a complete, engaging Facebook post by choosing ONE of the following viral content strategies:
+1.  **Relatable Content:** Connects with everyday experiences or timely events.
+2.  **Funny Content:** Uses humor to entertain and be shareable.
+3.  **Authentic Content:** Feels genuine and personal.
+4.  **Nostalgic Content:** Evokes memories and emotions, which performs very well with Facebook's core audience.
+5.  **Interactive Content:** Asks questions to get people talking and boost comments, which Facebook's algorithm loves.
 
 **RULES FOR EACH COMPONENT:**
-1.  **postText:** Write an engaging and slightly informal post text, between 2-4 sentences. It should be captivating and encourage interaction (likes, comments, shares). Use emojis where appropriate.
-2.  **imagePrompt:** Write a detailed, creative prompt for an AI image generator (like Midjourney or DALL-E) to create a visually stunning and relevant portrait (4:5 aspect ratio, 1080x1350 pixels) image for the post. Describe the style, lighting, colors, and subject matter.
+1.  **postText:** Based on your chosen viral strategy, write an engaging and slightly informal post text, between 2-4 sentences. It should be captivating and designed to spark conversation and shares. Use emojis where appropriate.
+2.  **imagePrompt:** Write a detailed, highly realistic, and creative prompt for an AI image generator like Midjourney. The goal is to create a photorealistic image that looks like a professional photograph. The image must be in a portrait aspect ratio (4:5, 1080x1350 pixels). The prompt should specify:
+    - Subject: A clear description of the main subject.
+    - Setting: A detailed background or environment.
+    - Style: Explicitly state "photorealistic, professional photography".
+    - Lighting: Describe the lighting, e.g., "soft natural light", "golden hour", "studio lighting".
+    - Details: Add specifics about colors, textures, and mood.
+    - Camera/Lens: Suggest a camera and lens type, e.g., "shot on a DSLR with a 50mm f/1.8 lens".
 3.  **hashtags:** Provide an array of 3 to 5 relevant and popular hashtags as strings.
-4.  **imageText:** Write a short, impactful text overlay for the image, between 5 and 15 words. This should be a headline, a question, or a powerful quote related to the topic. It should be different from the main postText and designed to grab attention. ALL CAPS is preferred for maximum impact.
+4.  **imageText:** Based on your chosen viral strategy, write a short, impactful text overlay for the image, between 5 and 15 words. This should be a headline, a powerful quote, or an **interactive question** to drive comments. It must grab attention. ALL CAPS is preferred for maximum impact.
 
 **CRITICAL OUTPUT INSTRUCTIONS:**
 *   Your entire response MUST be ONLY a single, valid JSON object.
