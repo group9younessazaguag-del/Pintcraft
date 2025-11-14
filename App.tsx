@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -34,7 +35,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'facebook-post-generator';
+  return hash || 'pin-generator';
 };
 
 
@@ -977,7 +978,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             const day = publishDate.getDate().toString().padStart(2, '0');
             const hour = publishDate.getHours().toString().padStart(2, '0');
             const minute = publishDate.getMinutes().toString().padStart(2, '0');
-            const formattedPublishDate = `${year}-${month}-${day}T${hour}:${minute}:00`;
+            const formattedPublishDate = `${year}-${month}-${day} ${hour}:${minute}:00`;
             currentRunCsvData[i][publishDateHeaderKey] = formattedPublishDate;
             
             setInProgressCsvData([...currentRunCsvData]);
@@ -1194,8 +1195,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         textModel={templateData.textModel}
                         adminSettings={adminSettings}
                     />;
-        case 'pin-generator':
-             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
         case 'assistant':
              return <AssistantPage
                         accounts={pinterestAccounts}
@@ -1226,8 +1225,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         case 'welcome':
              return <HomePage />;
         case 'facebook-post-generator':
-        default:
-             return <FacebookPostGeneratorPage
+            return <FacebookPostGeneratorPage
                         userApiKey={userApiKey}
                         onSetUserApiKey={setUserApiKey}
                         falAiApiKey={falAiApiKey}
@@ -1238,6 +1236,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         onSetOpenRouterApiKey={setOpenRouterApiKey}
                         textModel={templateData.textModel}
                     />;
+        case 'pin-generator':
+        default:
+             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
     }
   };
 
