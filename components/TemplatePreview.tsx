@@ -1,5 +1,4 @@
 
-
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
 
@@ -16,8 +15,8 @@ const getDynamicTitleFontSize = (
   mediumThreshold: number = 50
 ): string => {
     if (titleLength > longThreshold) return longClass;
-    if (titleLength > mediumThreshold) return mediumClass;
-    return shortClass;
+    if (titleLength > mediumThreshold) return shortClass;
+    return mediumClass;
 };
 
 const BackgroundImage: React.FC<{ imageUrl: string | null; className?: string }> = ({ imageUrl, className = '' }) => (
@@ -29,7 +28,7 @@ const BackgroundImage: React.FC<{ imageUrl: string | null; className?: string }>
 
 const ClassicTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl md:text-3xl', 'text-3xl md:text-4xl', 'text-4xl md:text-5xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl md:text-3xl', 'text-3xl md:text-4xl', 'text-4xl md:text-5xl');
     return (
         <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins text-white p-8 text-center">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -70,7 +69,7 @@ const ClassicTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const SplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins text-gray-800">
             {/* Backgrounds */}
@@ -107,7 +106,7 @@ const SplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const ModernTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl md:text-3xl', 'text-3xl md:text-4xl', 'text-4xl md:text-5xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl md:text-3xl', 'text-3xl md:text-4xl', 'text-4xl md:text-5xl');
     return (
         <div className="w-full h-full flex flex-col justify-end items-center relative font-poppins text-white p-6">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -146,7 +145,7 @@ const ModernTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const BrushStrokeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl md:text-3xl', 'text-3xl md:text-4xl', 'text-4xl md:text-5xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl md:text-3xl', 'text-3xl md:text-4xl', 'text-4xl md:text-5xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
             {/* Top Background */}
@@ -197,7 +196,7 @@ const BrushStrokeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const BorderTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col bg-[#F8F5F2] p-4 sm:p-6 md:p-8">
             <div className="w-full h-full flex flex-col justify-end relative font-poppins text-gray-800 shadow-inner">
@@ -231,7 +230,7 @@ const BorderTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const EditorialTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full grid grid-rows-3 relative font-poppins bg-white">
             {/* Image section - takes top 2/3 */}
@@ -310,7 +309,7 @@ const CleanGridTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const MinimalistQuoteTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-xl md:text-2xl', 'text-2xl md:text-3xl', 'text-3xl md:text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-xl md:text-2xl', 'text-2xl md:text-3xl', 'text-3xl md:text-4xl');
     return (
         <div className="w-full h-full flex flex-col justify-center items-center relative font-serif p-8 bg-[#FDFCFB]">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -339,7 +338,7 @@ const MinimalistQuoteTemplate: React.FC<{ data: TemplateData }> = ({ data }) => 
 
 const TastyRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col justify-end relative font-serif text-white p-8">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -377,8 +376,8 @@ const TastyRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const DetailedRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const details = subtitle.split(',').map(s => s.trim()).filter(Boolean);
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const details = (subtitle || '').split(',').map(s => s.trim()).filter(Boolean);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-[#F7F2EE] text-[#4E443A]">
@@ -435,7 +434,7 @@ const DetailedRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const TrendyCollageTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins p-6 bg-[#F4EFEA] overflow-hidden">
              {/* Image 1 */}
@@ -476,7 +475,7 @@ const TrendyCollageTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const RetroVibesTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl', 'text-4xl', 'text-5xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
     return (
         <div className="w-full h-full flex flex-col justify-between relative font-poppins p-8 bg-[#F0EAD6] text-[#4E443A] overflow-hidden">
             {/* Film grain effect */}
@@ -546,7 +545,7 @@ const ProductSpotlightTemplate: React.FC<{ data: TemplateData }> = ({ data }) =>
 
 const QuoteOverlayTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col justify-center items-center relative font-serif p-8">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -603,7 +602,7 @@ const ShopTheLookTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const BeforeAfterTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex relative font-poppins text-white">
             {/* Left side (Before) */}
@@ -633,8 +632,8 @@ const BeforeAfterTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const ChecklistTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const listItems = subtitle.split(',').map(item => item.trim()).filter(Boolean);
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const listItems = (subtitle || '').split(',').map(item => item.trim()).filter(Boolean);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
 
     return (
         <div className="w-full h-full flex flex-col items-center relative font-poppins text-[#4E443A] bg-[#F8F5F2] p-8">
@@ -677,7 +676,7 @@ const ChecklistTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const NewArticleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl md:text-4xl', 'text-4xl md:text-5xl', 'text-5xl md:text-6xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl md:text-4xl', 'text-4xl md:text-5xl', 'text-5xl md:text-6xl');
     return (
         <div className="w-full h-full flex flex-col justify-between items-center relative font-poppins text-white p-8 text-center">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -717,7 +716,7 @@ const NewArticleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const MoodBoardTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, website, backgroundImage, backgroundImage2, backgroundImage3 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins p-6 bg-[#EAE6E1] overflow-hidden">
              {/* Image 3 - bottom layer */}
@@ -757,8 +756,8 @@ const MoodBoardTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const RecipeCardTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const details = subtitle.split(',').map(s => s.trim()).filter(Boolean);
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const details = (subtitle || '').split(',').map(s => s.trim()).filter(Boolean);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-[#FDFCFB] text-[#4E443A]">
             <div className="h-[60%] w-full relative">
@@ -793,7 +792,7 @@ const RecipeCardTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const GourmetCloseUpTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full relative font-poppins text-white">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -812,8 +811,8 @@ const GourmetCloseUpTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const StepByStepGuideTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2, backgroundImage3 } = data;
-    const steps = subtitle.split(',').map(s => s.trim()).filter(Boolean);
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl', 'text-4xl', 'text-5xl');
+    const steps = (subtitle || '').split(',').map(s => s.trim()).filter(Boolean);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white text-gray-800">
             {/* Hero Image */}
@@ -851,7 +850,7 @@ const StepByStepGuideTemplate: React.FC<{ data: TemplateData }> = ({ data }) => 
 
 const MinimalistIngredientsTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
             <div className="flex-1 relative">
@@ -895,7 +894,7 @@ const ElegantRecipeCardTemplate: React.FC<{ data: TemplateData }> = ({ data }) =
 
 const BoldTitleOverlayTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl md:text-4xl', 'text-4xl md:text-5xl', 'text-5xl md:text-6xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl md:text-4xl', 'text-4xl md:text-5xl', 'text-5xl md:text-6xl');
     return (
         <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins text-white p-8 text-center">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -912,7 +911,7 @@ const BoldTitleOverlayTemplate: React.FC<{ data: TemplateData }> = ({ data }) =>
 
 const GardeningTipsTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full relative font-poppins text-white">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -929,7 +928,7 @@ const GardeningTipsTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const HomeDecorInspoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl', 'text-4xl', 'text-5xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
     return (
         <div className="w-full h-full relative font-playfair bg-[#F1ECE7] text-[#5C554E] p-6">
             <div className="w-full h-full relative border-2 border-[#DCD3C9]">
@@ -951,7 +950,7 @@ const HomeDecorInspoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const AuthorQuoteTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-xl', 'text-2xl', 'text-3xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-xl', 'text-2xl', 'text-3xl');
     return (
         <div className="w-full h-full flex flex-col justify-center items-center relative font-serif p-8 bg-white text-gray-800">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -1000,7 +999,7 @@ const SimpleProductTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const FoodieSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins text-white">
             <div className="flex-1 relative">
@@ -1024,7 +1023,7 @@ const FoodieSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const MinimalistLivingTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const parts = title.split(' ');
+    const parts = (title || '').split(' ');
     const number = parts.find(p => !isNaN(parseInt(p)));
     const textTitle = parts.filter(p => isNaN(parseInt(p))).join(' ');
     const textTitleFontSize = getDynamicTitleFontSize(textTitle.length, 'text-3xl', 'text-4xl', 'text-5xl', 40, 20);
@@ -1057,8 +1056,8 @@ const MinimalistLivingTemplate: React.FC<{ data: TemplateData }> = ({ data }) =>
 
 const BoldFoodieTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, backgroundImage } = data;
-    const titleWords = title.split(' ');
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl', 'text-4xl', 'text-5xl', 70, 40);
+    const titleWords = (title || '').split(' ');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl', 70, 40);
 
     return (
         <div className="w-full h-full relative font-sans text-white">
@@ -1099,8 +1098,8 @@ const BoldFoodieTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const BoldFoodieSplitTemplate2: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, backgroundImage, backgroundImage2 } = data;
-    const titleWords = title.split(' ');
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl', 'text-4xl', 'text-5xl', 70, 40);
+    const titleWords = (title || '').split(' ');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl', 70, 40);
 
     return (
         <div className="w-full h-full flex flex-col relative font-sans text-white">
@@ -1147,8 +1146,8 @@ const BoldFoodieSplitTemplate2: React.FC<{ data: TemplateData }> = ({ data }) =>
 
 const VibrantFoodieSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, backgroundImage, backgroundImage2 } = data;
-    const subtitleFontSize = getDynamicTitleFontSize(subtitle.length, 'text-2xl', 'text-3xl', 'text-4xl');
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const subtitleFontSize = getDynamicTitleFontSize(subtitle?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins text-white">
             {/* Top Image */}
@@ -1187,7 +1186,7 @@ const VibrantFoodieSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) 
 
 const ElegantFoodieSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins text-white">
             <div className="flex-1 relative">
@@ -1233,7 +1232,7 @@ const ElegantFoodieSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) 
 
 const ElegantFoodieSingleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full relative font-poppins text-white">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -1274,7 +1273,7 @@ const ElegantFoodieSingleTemplate: React.FC<{ data: TemplateData }> = ({ data })
 
 const AntonVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
@@ -1327,7 +1326,7 @@ const AntonVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const MontserratVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-xl', 'text-2xl', 'text-3xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-xl', 'text-2xl', 'text-3xl');
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
@@ -1380,7 +1379,7 @@ const MontserratVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) 
 
 const MontserratVerticalTemplateGreen: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-xl', 'text-2xl', 'text-3xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-xl', 'text-2xl', 'text-3xl');
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
@@ -1433,7 +1432,7 @@ const MontserratVerticalTemplateGreen: React.FC<{ data: TemplateData }> = ({ dat
 
 const MontserratVerticalTemplateBrown: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-xl', 'text-2xl', 'text-3xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-xl', 'text-2xl', 'text-3xl');
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
@@ -1486,7 +1485,7 @@ const MontserratVerticalTemplateBrown: React.FC<{ data: TemplateData }> = ({ dat
 
 const ThreePartVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
@@ -1533,7 +1532,7 @@ const ThreePartVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) =
 
 const ThreePartVerticalTemplateDark: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
@@ -1586,7 +1585,7 @@ const ThreePartVerticalTemplateDark: React.FC<{ data: TemplateData }> = ({ data 
 
 const ComicBookTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl', 'text-4xl', 'text-5xl', 40, 20);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl', 40, 20);
     return (
         <div className="w-full h-full relative font-bangers text-black p-4 bg-yellow-300">
             {/* Background with halftone effect */}
@@ -1659,7 +1658,7 @@ const MinimalistPhotoFocusTemplate: React.FC<{ data: TemplateData }> = ({ data }
 
 const DidYouKnowTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-2xl', 'text-3xl', 'text-4xl', 100, 60);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl', 100, 60);
     return (
         <div className="w-full h-full relative flex flex-col justify-center items-center text-center p-8 text-slate-800">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -1695,7 +1694,7 @@ const DidYouKnowTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
 const ElegantTextBorderTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl', 'text-4xl', 'text-5xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
     return (
         <div className="w-full h-full relative flex flex-col justify-center items-center text-center p-6 text-white">
             <BackgroundImage imageUrl={backgroundImage} />
@@ -1735,7 +1734,7 @@ const ElegantTextBorderTemplate: React.FC<{ data: TemplateData }> = ({ data }) =
 
 const FoodieRecipeSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl', 'text-4xl', 'text-5xl', 40, 25);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl', 40, 25);
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins text-white">
@@ -1774,7 +1773,7 @@ const FoodieRecipeSplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) =
 
 const FoodieRecipeSplitTemplateStyle2: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-3xl', 'text-4xl', 'text-5xl', 30, 20);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl', 30, 20);
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins text-white">
@@ -1826,7 +1825,7 @@ const FoodieRecipeSplitTemplateStyle2: React.FC<{ data: TemplateData }> = ({ dat
 
 const FoodieRecipeSplitTemplateStyle3: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-4xl', 'text-5xl', 'text-6xl', 35, 20);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-4xl', 'text-5xl', 'text-6xl', 35, 20);
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins text-white">
@@ -1877,7 +1876,10 @@ const FoodieRecipeSplitTemplateStyle3: React.FC<{ data: TemplateData }> = ({ dat
 
 const FoodieRecipeSplitTemplateStyle4: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title.length, 'text-4xl', 'text-5xl', 'text-6xl', 35, 20);
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-4xl', 'text-5xl', 'text-6xl', 35, 20);
+    const words = (title || '').split(' ');
+    const firstWord = words[0];
+    const restOfTitle = words.slice(1).join(' ');
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins text-white">
@@ -1894,20 +1896,16 @@ const FoodieRecipeSplitTemplateStyle4: React.FC<{ data: TemplateData }> = ({ dat
 
             {/* Centered Content */}
             <div className="absolute inset-0 flex flex-col justify-center items-center p-4">
-                <div 
-                    className="w-full text-center py-4 px-2 shadow-lg border-4 border-white"
-                    style={{ 
-                        backgroundColor: '#5A2D0C',
-                    }}
-                >
+                <div className="w-full text-center py-3 px-2">
                     {title && (
                         <h2 
-                            className={`${titleFontSize} font-luckiest-guy uppercase leading-none tracking-wide text-white`} 
+                            className={`${titleFontSize} font-anton uppercase leading-none tracking-wide text-white`} 
                             style={{
+                                textShadow: '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 0px 0 #000, -2px 0px 0 #000, 0px 2px 0 #000, 0px -2px 0 #000',
                                 wordBreak: 'break-word'
                             }}
                         >
-                            {title}
+                           <span className="text-[#f9d749]">{firstWord}</span> {restOfTitle}
                         </h2>
                     )}
                 </div>
@@ -1916,87 +1914,85 @@ const FoodieRecipeSplitTemplateStyle4: React.FC<{ data: TemplateData }> = ({ dat
             {/* Website URL */}
             {website && (
                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-auto flex justify-center px-4">
-                    <p 
-                        className="text-sm font-semibold text-white py-1.5 px-4 rounded-full"
-                        style={{ backgroundColor: '#5A2D0C' }}
-                    >
-                        {website}
-                    </p>
+                    <p className="text-sm font-semibold text-white bg-black/60 py-1.5 px-4 rounded">{website}</p>
                 </div>
             )}
         </div>
     );
 };
 
+{/* FIX: Add missing TemplatePreview component and default export */}
+const templateMap: { [key: string]: React.FC<{ data: TemplateData }> } = {
+    '1': ClassicTemplate,
+    '2': SplitTemplate,
+    '3': ModernTemplate,
+    '4': BrushStrokeTemplate,
+    '5': BorderTemplate,
+    '6': EditorialTemplate,
+    '7': CleanGridTemplate,
+    '8': MinimalistQuoteTemplate,
+    '9': TastyRecipeTemplate,
+    '10': DetailedRecipeTemplate,
+    '11': TrendyCollageTemplate,
+    '12': RetroVibesTemplate,
+    '13': ProductSpotlightTemplate,
+    '14': QuoteOverlayTemplate,
+    '15': ShopTheLookTemplate,
+    '16': BeforeAfterTemplate,
+    '17': ChecklistTemplate,
+    '18': NewArticleTemplate,
+    '19': MoodBoardTemplate,
+    '20': RecipeCardTemplate,
+    '21': GourmetCloseUpTemplate,
+    '22': StepByStepGuideTemplate,
+    '23': MinimalistIngredientsTemplate,
+    '24': ElegantRecipeCardTemplate,
+    '25': BoldTitleOverlayTemplate,
+    '26': GardeningTipsTemplate,
+    '27': HomeDecorInspoTemplate,
+    '28': AuthorQuoteTemplate,
+    '29': SplitImageFourBlockTemplate,
+    '30': SimpleProductTemplate,
+    '31': FoodieSplitTemplate,
+    '32': MinimalistLivingTemplate,
+    '33': BoldFoodieTemplate,
+    '34': BoldFoodieSplitTemplate2,
+    '35': VibrantFoodieSplitTemplate,
+    '36': ElegantFoodieSplitTemplate,
+    '37': ElegantFoodieSingleTemplate,
+    '38': AntonVerticalTemplate,
+    '39': MontserratVerticalTemplate,
+    '40': MontserratVerticalTemplateGreen,
+    '41': MontserratVerticalTemplateBrown,
+    '42': ThreePartVerticalTemplate,
+    '43': ThreePartVerticalTemplateDark,
+    '44': ComicBookTemplate,
+    '45': MinimalistPhotoFocusTemplate,
+    '46': DidYouKnowTemplate,
+    '47': ElegantTextBorderTemplate,
+    '48': FoodieRecipeSplitTemplate,
+    '49': FoodieRecipeSplitTemplateStyle2,
+    '50': FoodieRecipeSplitTemplateStyle3,
+    '51': FoodieRecipeSplitTemplateStyle4,
+};
 
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {
-  const pinSizeClass = data.pinSize === 'standard' ? 'aspect-[3/4]' : 'aspect-[9/16]';
+    const { templateId, pinSize } = data;
+    const SelectedTemplate = templateMap[templateId] || ClassicTemplate;
+    
+    const sizeClasses = {
+        standard: 'aspect-[3/4]',
+        long: 'aspect-[9/16]',
+        extraLong: 'aspect-[5/12]'
+    };
 
-  const renderTemplate = () => {
-    switch (data.templateId) {
-      case '1': return <SplitTemplate data={data} />;
-      case '2': return <ClassicTemplate data={data} />;
-      case '3': return <BrushStrokeTemplate data={data} />;
-      case '4': return <ModernTemplate data={data} />;
-      case '5': return <BorderTemplate data={data} />;
-      case '6': return <CleanGridTemplate data={data} />;
-      case '7': return <RecipeCardTemplate data={data} />;
-      case '8': return <EditorialTemplate data={data} />;
-      case '9': return <ModernTemplate data={data} />;
-      case '10': return <DetailedRecipeTemplate data={data} />;
-      case '11': return <BorderTemplate data={data} />;
-      case '12': return <ClassicTemplate data={data} />;
-      case '13': return <ProductSpotlightTemplate data={data} />;
-      case '14': return <MinimalistQuoteTemplate data={data} />;
-      case '15': return <TastyRecipeTemplate data={data} />;
-      case '16': return <ClassicTemplate data={data} />;
-      case '17': return <GourmetCloseUpTemplate data={data} />;
-      case '18': return <EditorialTemplate data={data} />;
-      case '19': return <ShopTheLookTemplate data={data} />;
-      case '20': return <SplitTemplate data={data} />;
-      case '21': return <MoodBoardTemplate data={data} />;
-      case '22': return <BeforeAfterTemplate data={data} />;
-      case '23': return <TrendyCollageTemplate data={data} />;
-      case '24': return <BoldTitleOverlayTemplate data={data} />;
-      case '25': return <QuoteOverlayTemplate data={data} />;
-      case '26': return <ElegantRecipeCardTemplate data={data} />;
-      case '27': return <MinimalistIngredientsTemplate data={data} />;
-      case '28': return <StepByStepGuideTemplate data={data} />;
-      case '29': return <RetroVibesTemplate data={data} />;
-      case '30': return <ChecklistTemplate data={data} />;
-      case '31': return <NewArticleTemplate data={data} />;
-      case '32': return <GardeningTipsTemplate data={data} />;
-      case '33': return <HomeDecorInspoTemplate data={data} />;
-      case '34': return <AuthorQuoteTemplate data={data} />;
-      case '35': return <SplitImageFourBlockTemplate data={data} />;
-      case '36': return <SimpleProductTemplate data={data} />;
-      case '37': return <FoodieSplitTemplate data={data} />;
-      case '38': return <MinimalistLivingTemplate data={data} />;
-      case '39': return <BoldFoodieTemplate data={data} />;
-      case '40': return <BoldFoodieSplitTemplate2 data={data} />;
-      case '41': return <VibrantFoodieSplitTemplate data={data} />;
-      case '42': return <ElegantFoodieSplitTemplate data={data} />;
-      case '43': return <ElegantFoodieSingleTemplate data={data} />;
-      case '44': return <MontserratVerticalTemplate data={data} />;
-      case '45': return <ThreePartVerticalTemplateDark data={data} />;
-      case '46': return <AntonVerticalTemplate data={data} />;
-      case '47': return <MontserratVerticalTemplateGreen data={data} />;
-      case '48': return <MontserratVerticalTemplateBrown data={data} />;
-      case '49': return <FoodieRecipeSplitTemplate data={data} />;
-      case '50': return <FoodieRecipeSplitTemplateStyle2 data={data} />;
-      case '51': return <FoodieRecipeSplitTemplateStyle3 data={data} />;
-      case '52': return <DidYouKnowTemplate data={data} />;
-      case '53': return <ElegantTextBorderTemplate data={data} />;
-      case '54': return <FoodieRecipeSplitTemplateStyle4 data={data} />;
-      default: return <ClassicTemplate data={data} />;
-    }
-  };
-
-  return (
-    <div ref={ref} className={`w-full bg-gray-300 shadow-lg rounded-xl overflow-hidden ${pinSizeClass}`}>
-      {renderTemplate()}
-    </div>
-  );
+    return (
+        <div className={`w-full ${sizeClasses[pinSize] || sizeClasses['long']} overflow-hidden shadow-2xl rounded-2xl bg-slate-200`}>
+            <div ref={ref} className="w-full h-full relative">
+                <SelectedTemplate data={{...data, subtitle: data.board}} />
+            </div>
+        </div>
+    );
 });
 
 export default TemplatePreview;

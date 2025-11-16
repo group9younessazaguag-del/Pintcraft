@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -309,6 +311,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
         sizes: [
           { id: 'standard', name: 'Standard Pin (3:4)' },
           { id: 'long', name: 'Long Pin (9:16)' },
+          { id: 'extraLong', name: 'Tall Pin (5:12)' },
         ],
         aspectRatios: [
             { id: '1:1', name: 'Square (1:1)' },
@@ -367,6 +370,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                     options={options.sizes}
                     selected={data.pinSize}
                     onSelect={(id) => onFieldChange('pinSize', id as PinSize)}
+                    gridCols="grid-cols-3"
                 />
                  <ToggleButtonGrid 
                     label="AI Image Aspect Ratio"
@@ -506,7 +510,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, userApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, onGenerateShortTitle, isGeneratingShortTitle, isBulkGenerating }) => {
     const TITLE_RECOMMENDED_MAX_LENGTH = 35;
     const TITLE_HARD_MAX_LENGTH = 100;
-    const titleLength = data.title.length;
+    const titleLength = data.title?.length || 0;
     const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
 
     const getTitleCounterColor = () => {
@@ -542,6 +546,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                 </div>
             </div>
 
+            <InputField data={data} onFieldChange={onFieldChange} id="board" label="Pinterest Board" />
             <InputField data={data} onFieldChange={onFieldChange} id="website" label="Link" />
             <div>
                 <label htmlFor="description" className="block text-sm font-medium text-slate-600 mb-1.5">Description</label>
@@ -636,7 +641,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
         }
     };
 
-    const needsImage2 = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '35', '37', '38', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51', '54'].includes(data.templateId);
+    const needsImage2 = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51', '54'].includes(data.templateId);
     const needsImage3 = ['6', '19', '21', '28'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;

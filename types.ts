@@ -1,12 +1,14 @@
 export type TemplateId = `${number}`;
 
-export type PinSize = 'standard' | 'long';
+export type PinSize = 'standard' | 'long' | 'extraLong';
 
 export type ImageAspectRatio = '1:1' | '3:4' | '9:16' | '4:5';
 
 export interface TemplateData {
   title: string;
   website: string;
+  board?: string;
+  subtitle?: string;
   backgroundImage: string | null;
   backgroundImage2: string | null;
   backgroundImage3: string | null;
@@ -25,6 +27,7 @@ export interface TemplateData {
 export interface CsvRow {
   title: string;
   website: string;
+  board?: string;
   description: string;
   keywords: string;
   imagePrompt?: string;
