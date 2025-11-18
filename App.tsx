@@ -1,5 +1,3 @@
-
-
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -22,6 +20,7 @@ import DNRaterPage from './components/pages/DNRaterPage';
 import AuthorPage from './components/pages/AuthorPage';
 import FacebookPostGeneratorPage from './components/pages/FacebookPostGeneratorPage';
 import FacebookPageBuilderPage from './components/pages/FacebookPageBuilderPage';
+import QuoteGeneratorPage from './components/pages/QuoteGeneratorPage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -36,7 +35,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'pin-generator';
+  return hash || 'quote-generator';
 };
 
 
@@ -867,7 +866,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     } else { // 'fal'
                         await handleGenerateImage(1, true, prompt);
                         
-                        const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51', '54'].includes(templateData.templateId);
+                        const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
                         if (templateNeeds2Images) await handleGenerateImage(2, true, prompt);
     
                         const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
@@ -923,7 +922,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                             } else { // 'fal'
                                 await handleGenerateImage(1, true, newPrompt);
                                 
-                                const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51', '54'].includes(templateData.templateId);
+                                const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
                                 if (templateNeeds2Images) await handleGenerateImage(2, true, newPrompt);
             
                                 const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
@@ -1215,6 +1214,16 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <FacebookPageBuilderPage
                         userApiKey={userApiKey}
                         onSetUserApiKey={setUserApiKey}
+                        textModel={templateData.textModel}
+                    />;
+        case 'quote-generator':
+            return <QuoteGeneratorPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
+                        useapiApiKey={useapiApiKey}
+                        onSetUseapiApiKey={setUseapiApiKey}
+                        openRouterApiKey={openRouterApiKey}
+                        onSetOpenRouterApiKey={setOpenRouterApiKey}
                         textModel={templateData.textModel}
                     />;
         case 'admin':

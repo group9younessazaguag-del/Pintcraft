@@ -301,7 +301,7 @@ export const ApiKeyInput: React.FC<{
 };
 
 export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey, imagineApiKey, onSetImagineApiKey, useapiApiKey, onSetUseapiApiKey }) => {
-    const templateCount = 54;
+    const templateCount = 51;
     const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
         id: `${i + 1}`,
         name: `${i + 1}`
@@ -320,22 +320,22 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
         ],
       };
       
-    const [falApiKeyInput, setFalApiKeyInput] = useState(falAiApiKey);
+    const [falAiApiKeyInput, setFalAiApiKeyInput] = useState(falAiApiKey);
     const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
     const [apiframeApiKeyInput, setApiframeApiKeyInput] = useState(apiframeApiKey);
     const [midapiApiKeyInput, setMidapiApiKeyInput] = useState(midapiApiKey);
     const [imagineApiKeyInput, setImagineApiKeyInput] = useState(imagineApiKey);
     const [useapiApiKeyInput, setUseapiApiKeyInput] = useState(useapiApiKey);
 
-    useEffect(() => { setFalApiKeyInput(falAiApiKey); }, [falAiApiKey]);
+    useEffect(() => { setFalAiApiKeyInput(falAiApiKey); }, [falAiApiKey]);
     useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
     useEffect(() => { setApiframeApiKeyInput(apiframeApiKey); }, [apiframeApiKey]);
     useEffect(() => { setMidapiApiKeyInput(midapiApiKey); }, [midapiApiKey]);
     useEffect(() => { setImagineApiKeyInput(imagineApiKey); }, [imagineApiKey]);
     useEffect(() => { setUseapiApiKeyInput(useapiApiKey); }, [useapiApiKey]);
     
-    const handleSaveFalKey = () => onSetFalAiApiKey(falApiKeyInput.trim());
-    const handleClearFalKey = () => { setFalApiKeyInput(''); onSetFalAiApiKey(''); };
+    const handleSaveFalKey = () => onSetFalAiApiKey(falAiApiKeyInput.trim());
+    const handleClearFalKey = () => { setFalAiApiKeyInput(''); onSetFalAiApiKey(''); };
     const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
     const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
     const handleSaveApiframeKey = () => onSetApiframeApiKey(apiframeApiKeyInput.trim());
@@ -401,8 +401,8 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                     />
                     <ApiKeyInput
                         label="Fal.ai API Key (for Images)"
-                        value={falApiKeyInput}
-                        onChange={setFalApiKeyInput}
+                        value={falAiApiKeyInput}
+                        onChange={setFalAiApiKeyInput}
                         onSave={handleSaveFalKey}
                         onClear={handleClearFalKey}
                         placeholder="Enter your Fal.ai key"
@@ -641,7 +641,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
         }
     };
 
-    const needsImage2 = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51', '54'].includes(data.templateId);
+    const needsImage2 = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(data.templateId);
     const needsImage3 = ['6', '19', '21', '28'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;

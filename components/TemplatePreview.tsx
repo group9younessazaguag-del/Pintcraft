@@ -1921,7 +1921,7 @@ const FoodieRecipeSplitTemplateStyle4: React.FC<{ data: TemplateData }> = ({ dat
     );
 };
 
-{/* FIX: Add missing TemplatePreview component and default export */}
+// Fixed: Corrected syntax for the comment and ensured template map is defined
 const templateMap: { [key: string]: React.FC<{ data: TemplateData }> } = {
     '1': ClassicTemplate,
     '2': SplitTemplate,

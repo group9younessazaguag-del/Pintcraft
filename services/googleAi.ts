@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow, PinterestAccount, ImageAspectRatio, FacebookPost, FacebookPageStrategy } from '../types';
 
@@ -1401,6 +1402,7 @@ Topic: "${topic}"
     - Camera/Lens: Suggest a camera and lens type, e.g., "shot on a DSLR with a 50mm f/1.8 lens".
 3.  **hashtags:** Provide an array of 3 to 5 relevant and popular hashtags as strings.
 4.  **imageText:** Based on your chosen viral strategy, write a short, impactful text overlay for the image, between 5 and 15 words. This should be a headline, a powerful quote, or an **interactive question** to drive comments. It must grab attention. ALL CAPS is preferred for maximum impact.
+5. **Quote Generation:** If the topic is explicitly about a "quote" or "motivation", make sure the text reflects a deep, minimalist self-growth style.
 
 **CRITICAL OUTPUT INSTRUCTIONS:**
 *   Your entire response MUST be ONLY a single, valid JSON object.
@@ -1693,5 +1695,170 @@ Your entire response MUST be ONLY a single, valid JSON object that strictly foll
             throw error;
         }
         throw getApiErrorDetails(error);
+    }
+};
+
+export const generateViralQuotes = async (
+    apiKey: string,
+    model: string,
+    category: string,
+): Promise<string[]> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Generate 10 short viral quotes about "${category}".
+
+Style: Modern, viral social media quotes (TikTok/Instagram/Pinterest).
+Tone: aesthetic, minimal, soft, thoughtful, emotional, relatable.
+
+Rules:
+- Max 8–14 words each
+- Must feel emotional, relatable, and shareable
+- Should fit TikTok, Instagram, Pinterest, Facebook
+- Avoid clichés like "follow your dreams", "never give up", etc.
+- Make them fresh, unique, and a little deeper
+- ABSOLUTELY NO EMOJIS
+
+CRITICAL OUTPUT INSTRUCTIONS:
+- Your response must be a single valid JSON array of strings.
+- Do not number them in the JSON.
+- Do not add any markdown formatting outside the JSON structure.`;
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                }
+            }
+        }));
+
+        const jsonText = response.text.trim();
+        const parsedArray = JSON.parse(jsonText);
+        
+        if (Array.isArray(parsedArray)) {
+            return parsedArray.map(String);
+        }
+        
+        throw new Error("AI response was not a valid array.");
+
+    } catch (error: any) {
+        console.error("Error in generateViralQuotes:", error);
+         if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const generateViralQuotesWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    category: string,
+): Promise<string[]> => {
+    try {
+        const systemPrompt = `Generate 10 short viral quotes about "${category}".
+
+Style: Modern, viral social media quotes (TikTok/Instagram/Pinterest).
+Tone: aesthetic, minimal, soft, thoughtful, emotional, relatable.
+
+Rules:
+- Max 8–14 words each
+- Must feel emotional, relatable, and shareable
+- Should fit TikTok, Instagram, Pinterest, Facebook
+- Avoid clichés like "follow your dreams", "never give up", etc.
+- Make them fresh, unique, and a little deeper
+- ABSOLUTELY NO EMOJIS
+
+CRITICAL OUTPUT INSTRUCTIONS:
+- Your response must be a single valid JSON array of strings, e.g. ["Quote 1", "Quote 2"].
+- Do not number them in the JSON.
+- Do not add any text or markdown formatting outside the JSON structure.`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "user", content: systemPrompt },
+                ],
+                response_format: { type: "json_object" },
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            throw new Error(message);
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+        
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+
+         // 1. Extract potential JSON string from response
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('[');
+            const endIndex = potentialJson.lastIndexOf(']');
+            if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            } else {
+                 // Try object format if array format failed
+                const startObj = potentialJson.indexOf('{');
+                const endObj = potentialJson.lastIndexOf('}');
+                if (startObj !== -1 && endObj > startObj) {
+                    potentialJson = potentialJson.substring(startObj, endObj + 1);
+                }
+            }
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(potentialJson);
+        } catch (e) {
+             // Try repair
+             try {
+                const repaired = repairJson(potentialJson);
+                parsed = JSON.parse(repaired);
+             } catch (repairError) {
+                console.error("Failed to parse JSON from OpenRouter:", potentialJson);
+                throw new Error("The AI returned a malformed response.");
+             }
+        }
+
+        if (Array.isArray(parsed)) {
+            return parsed.map(String);
+        } else if (typeof parsed === 'object' && parsed !== null) {
+             // Sometimes models return { "quotes": [...] }
+             const values = Object.values(parsed);
+             if (values.length > 0 && Array.isArray(values[0])) {
+                 return values[0].map(String);
+             }
+        }
+        
+        throw new Error("AI response was not a valid array of quotes.");
+
+    } catch (error: any) {
+        console.error("Error in generateViralQuotesWithOpenRouter:", error);
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
     }
 };

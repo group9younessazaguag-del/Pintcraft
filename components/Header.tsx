@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PinIcon from './icons/PinIcon';
 import MenuIcon from './icons/MenuIcon';
@@ -6,7 +7,7 @@ import AssistantIcon from './icons/AssistantIcon';
 
 const getCurrentPage = () => {
     const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-    return hash || 'pin-generator';
+    return hash || 'quote-generator';
 };
 
 const NavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () => void; isActive: boolean }> = ({ href, children, onClick, isActive }) => (
@@ -54,6 +55,7 @@ const Header: React.FC = () => {
   const navItems = [
     { href: "/#/facebook-post-generator", label: "Facebook Post Generator" },
     { href: "/#/facebook-page-builder", label: "Facebook Page Builder" },
+    { href: "/#/quote-generator", label: "Quote Generator" },
     { href: "/#/content-generator", label: "AI Content Idea Generator" },
     { href: "/#/pin-generator", label: "Pin Generator" },
     { href: "/#/assistant", label: "Assistant" },
@@ -65,9 +67,9 @@ const Header: React.FC = () => {
   ];
 
   const mobileNavItems = [
-      ...navItems.slice(0, 7),
+      ...navItems.slice(0, 8),
       { href: "/#/privacy", label: "Privacy Policy" },
-      ...navItems.slice(7),
+      ...navItems.slice(8),
   ];
 
 
@@ -77,7 +79,7 @@ const Header: React.FC = () => {
         <div className="container mx-auto px-4 md:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo and Brand Name */}
-            <a href="/#/pin-generator" onClick={closeMobileMenu} className="flex items-center gap-3 group">
+            <a href="/#/quote-generator" onClick={closeMobileMenu} className="flex items-center gap-3 group">
               <PinIcon className="w-7 h-7 text-pink-500 transition-colors group-hover:text-pink-600" />
               <h1 className="text-xl font-semibold tracking-tight text-slate-800 transition-colors group-hover:text-slate-900">
                 Pin4You
@@ -85,12 +87,12 @@ const Header: React.FC = () => {
             </a>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-6 overflow-x-auto">
               {navItems.map(item => (
                 <NavLink 
                   key={item.href}
                   href={item.href}
-                  isActive={activePage === (item.href.substring(2) || 'pin-generator')}
+                  isActive={activePage === (item.href.substring(2) || 'quote-generator')}
                 >
                     {item.label}
                 </NavLink>
@@ -137,13 +139,13 @@ const Header: React.FC = () => {
                 <CloseIcon className="w-6 h-6" />
              </button>
         </div>
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2 overflow-y-auto h-full pb-20">
             {mobileNavItems.map(item => (
                 <MobileNavLink
                     key={item.href}
                     href={item.href}
                     onClick={closeMobileMenu}
-                    isActive={activePage === (item.href.substring(2) || 'pin-generator')}
+                    isActive={activePage === (item.href.substring(2) || 'quote-generator')}
                 >
                     {item.label}
                 </MobileNavLink>
