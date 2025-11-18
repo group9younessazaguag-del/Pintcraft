@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import PinIcon from './icons/PinIcon';
 import MenuIcon from './icons/MenuIcon';
 import CloseIcon from './icons/CloseIcon';
-import AssistantIcon from './icons/AssistantIcon';
 
 const getCurrentPage = () => {
     const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
@@ -14,7 +13,7 @@ const NavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () 
     <a 
       href={href} 
       onClick={onClick}
-      className={`flex items-center h-16 transition-all duration-200 text-sm font-medium border-b-2 ${isActive ? 'text-pink-500 font-semibold border-pink-500' : 'text-slate-600 hover:text-pink-500 border-transparent'}`}
+      className={`flex items-center h-16 px-3 transition-all duration-200 text-sm font-medium border-b-2 whitespace-nowrap flex-shrink-0 ${isActive ? 'text-pink-500 font-semibold border-pink-500' : 'text-slate-600 hover:text-pink-500 border-transparent'}`}
     >
         {children}
     </a>
@@ -53,23 +52,22 @@ const Header: React.FC = () => {
   };
 
   const navItems = [
-    { href: "/#/facebook-post-generator", label: "Facebook Post Generator" },
-    { href: "/#/facebook-page-builder", label: "Facebook Page Builder" },
-    { href: "/#/quote-generator", label: "Quote Generator" },
-    { href: "/#/content-generator", label: "AI Content Idea Generator" },
-    { href: "/#/pin-generator", label: "Pin Generator" },
+    { href: "/#/facebook-post-generator", label: "FB Post Gen" },
+    { href: "/#/facebook-page-builder", label: "FB Page Builder" },
+    { href: "/#/quote-generator", label: "Quote Gen" },
+    { href: "/#/content-generator", label: "Content Ideas" },
+    { href: "/#/pin-generator", label: "Pin Gen" },
     { href: "/#/assistant", label: "Assistant" },
     { href: "/#/domain-suggestor", label: "Domain Rater" },
     { href: "/#/author", label: "Author" },
-    { href: "/#/how-to-use", label: "How to Use" },
+    { href: "/#/how-to-use", label: "Guide" },
     { href: "/#/about", label: "About" },
-    { href: "/#/contact", label: "Contact Us" },
+    { href: "/#/contact", label: "Contact" },
   ];
 
   const mobileNavItems = [
-      ...navItems.slice(0, 8),
+      ...navItems,
       { href: "/#/privacy", label: "Privacy Policy" },
-      ...navItems.slice(8),
   ];
 
 
@@ -77,30 +75,42 @@ const Header: React.FC = () => {
     <>
       <header className="bg-white/70 backdrop-blur-lg sticky top-0 z-50 border-b border-slate-200">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo and Brand Name */}
-            <a href="/#/quote-generator" onClick={closeMobileMenu} className="flex items-center gap-3 group">
-              <PinIcon className="w-7 h-7 text-pink-500 transition-colors group-hover:text-pink-600" />
-              <h1 className="text-xl font-semibold tracking-tight text-slate-800 transition-colors group-hover:text-slate-900">
-                Pin4You
-              </h1>
-            </a>
+          <div className="flex items-center h-16">
+            {/* Logo and Brand Name - Fixed Layout */}
+            <div className="flex-shrink-0 mr-6">
+                <a href="/#/quote-generator" onClick={closeMobileMenu} className="flex items-center gap-2 group">
+                <PinIcon className="w-7 h-7 text-pink-500 transition-colors group-hover:text-pink-600" />
+                <h1 className="text-xl font-semibold tracking-tight text-slate-800 transition-colors group-hover:text-slate-900 whitespace-nowrap">
+                    Pin4You
+                </h1>
+                </a>
+            </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6 overflow-x-auto">
-              {navItems.map(item => (
-                <NavLink 
-                  key={item.href}
-                  href={item.href}
-                  isActive={activePage === (item.href.substring(2) || 'quote-generator')}
+            {/* Desktop Navigation - Flexible & Scrollable */}
+            <div className="hidden md:flex flex-1 min-w-0 overflow-hidden justify-end">
+                <nav 
+                    className="flex items-center gap-1 overflow-x-auto no-scrollbar"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                    {item.label}
-                </NavLink>
-              ))}
-            </nav>
+                    <style>{`
+                        nav::-webkit-scrollbar {
+                            display: none;
+                        }
+                    `}</style>
+                    {navItems.map(item => (
+                        <NavLink 
+                        key={item.href}
+                        href={item.href}
+                        isActive={activePage === (item.href.substring(2) || 'quote-generator')}
+                        >
+                            {item.label}
+                        </NavLink>
+                    ))}
+                </nav>
+            </div>
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden">
+            <div className="md:hidden ml-auto flex-shrink-0">
               <button 
                 onClick={toggleMobileMenu} 
                 className="p-2 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors"
