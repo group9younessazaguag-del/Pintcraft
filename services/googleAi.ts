@@ -1715,7 +1715,7 @@ Style: Vulnerable, poetic, narrative, touching.
 Tone: Healing, realization, growth, inner peace.
 
 Rules:
-- Length: 2–3 sentences per quote (Approx 25–45 words).
+- Length: Maximum 150 characters per quote.
 - They should read like a mini-story or a profound realization.
 - No clichés. Deep and raw emotion.
 - ABSOLUTELY NO EMOJIS.
@@ -1790,7 +1790,7 @@ Style: Vulnerable, poetic, narrative, touching.
 Tone: Healing, realization, growth, inner peace.
 
 Rules:
-- Length: 2–3 sentences per quote (Approx 25–45 words).
+- Length: Maximum 150 characters per quote.
 - They should read like a mini-story or a profound realization.
 - No clichés. Deep and raw emotion.
 - ABSOLUTELY NO EMOJIS.
@@ -1922,7 +1922,7 @@ export const enhanceViralQuote = async (
             Generate 5-10 variations that are storytelling-style, vulnerable, and poetic.
             
             Rules: 
-            - 2-3 sentences per variation. (Approx 25-45 words).
+            - Maximum 150 characters per variation.
             - No Emojis. No Clichés. Deep emotional impact.
     
             CRITICAL OUTPUT INSTRUCTIONS:
@@ -1989,7 +1989,7 @@ export const enhanceViralQuoteWithOpenRouter = async (
             Generate 5-10 variations that are storytelling-style, vulnerable, and poetic.
             
             Rules: 
-            - 2-3 sentences per variation. (Approx 25-45 words).
+            - Maximum 150 characters per variation.
             - No Emojis. No Clichés. Deep emotional impact.
     
             CRITICAL OUTPUT INSTRUCTIONS:
