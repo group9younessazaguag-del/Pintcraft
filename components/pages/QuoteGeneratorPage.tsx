@@ -45,13 +45,14 @@ const CATEGORIES = [
     "Self Love", "Love", "Sad", "Life", "Motivation", "Success", "Friendship", "Funny", "Healing", "Glow Up"
 ];
 
+// Updated to "Cinematic high-angle drone shot of person walking" style
 const IMAGE_STYLES = [
-    "Abstract Aura Gradient, vibrant colors, grainy texture, spiritual vibe",
-    "Moody Dark Forest, cinematic lighting, fog, mystery",
-    "Dreamy Pastel Clouds, soft focus, ethereal, heaven-like",
-    "Midnight Ocean Waves, deep blue, bioluminescence, calm",
-    "Urban City Rain, neon lights reflection, night time, cyberpunk vibe",
-    "Minimalist Beige Plaster Texture, soft shadows, organic shapes"
+    "Cinematic high-angle drone shot from the sky looking down at a solitary person walking alone on a vast empty beach at sunset",
+    "Cinematic high-angle drone shot from the sky looking down at a solitary person walking alone in a misty forest path",
+    "Cinematic high-angle drone shot from the sky looking down at a solitary person walking alone in endless desert dunes",
+    "Cinematic high-angle drone shot from the sky looking down at a solitary person walking alone on a quiet city street at night with rain reflections",
+    "Cinematic high-angle drone shot from the sky looking down at a solitary person walking alone in a vast white snowy field",
+    "Cinematic high-angle drone shot from the sky looking down at a solitary person walking alone on a winding mountain road"
 ];
 
 const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
@@ -171,7 +172,8 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
              // Randomly select a style from the list to vary the output
             const randomStyle = IMAGE_STYLES[Math.floor(Math.random() * IMAGE_STYLES.length)];
             
-            const prompt = `${randomStyle}. High quality, photorealistic, vertical 9:16 aspect ratio. --no text`;
+            // Updated prompt construction for cinematic look
+            const prompt = `${randomStyle}. Minimalist composition, vast landscape, emotional atmosphere, tiny figure. High quality, photorealistic 8k, vertical 9:16 aspect ratio. --no text`;
             
             const onProgress = (msg: string) => setImageGenerationMessage(msg);
             
