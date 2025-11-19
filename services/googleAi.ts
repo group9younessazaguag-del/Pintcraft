@@ -2098,10 +2098,11 @@ export const generateSoraVideoPrompt = async (
 ): Promise<string> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Create a high-fidelity text-to-video prompt suitable for Sora v2 based on this quote: "${quote}".
+        const prompt = `Create a breathtaking, high-fidelity text-to-video prompt suitable for Sora v2 based on this quote: "${quote}".
 
-Visuals: A cinematic, high-angle drone shot looking down at a solitary figure walking slowly through a vast, moody, or aesthetic landscape (e.g., a lonely beach at dusk, a misty forest path, a quiet city street at night, or a vast desert) that matches the deep emotion of the quote. Smooth, steady camera movement following them from above or behind. 8k resolution, photorealistic.
-Audio: The video MUST include a clear, professional voiceover narrating exactly this text: "${quote}". No background music, just natural ambient sounds (e.g., soft wind, distant waves, footsteps, rain) and the voice.
+Visuals: A cinematic masterpiece. High-angle drone shot looking down at a solitary figure walking slowly through a stunningly beautiful, vast landscape that matches the deep emotion of the quote. The scene should be bathed in the soft, golden glow of magic hour or ethereal twilight. Rich, vivid colors, soft cinematic lighting, and a dreamy atmosphere. 8k resolution, photorealistic, award-winning cinematography.
+Examples of landscapes (choose one that fits best): A pristine beach with turquoise waves at sunset, a field of glowing flowers under a starry sky, a majestic snowy mountain ridge, or a misty ancient forest with sunbeams filtering through.
+Audio: The video MUST include a clear, professional voiceover narrating exactly this text: "${quote}". No background music, just immersive natural ambient sounds (e.g., waves crashing, wind in trees, crunching snow, birds chirping) and the voice.
 
 Output ONLY the prompt text. Do not add quotes or intro text.`;
 
@@ -2127,11 +2128,13 @@ export const generateSoraVideoPromptWithOpenRouter = async (
     quote: string,
 ): Promise<string> => {
     try {
-        const systemPrompt = `Create a high-fidelity text-to-video prompt suitable for Sora v2 based on the user's quote.
-        Visuals: Cinematic wide shot, high angle or drone view. A lone person walking in a setting that matches the quote's mood.
-        Audio: High-quality voiceover of a narrator saying the quote. Ambient nature sounds. No music.
-        Style: Photorealistic, 8k, highly detailed, moody lighting.
-        Output ONLY the prompt text.`;
+        const systemPrompt = `Create a breathtaking, high-fidelity text-to-video prompt suitable for Sora v2 based on this quote: "${quote}".
+
+Visuals: A cinematic masterpiece. High-angle drone shot looking down at a solitary figure walking slowly through a stunningly beautiful, vast landscape that matches the deep emotion of the quote. The scene should be bathed in the soft, golden glow of magic hour or ethereal twilight. Rich, vivid colors, soft cinematic lighting, and a dreamy atmosphere. 8k resolution, photorealistic, award-winning cinematography.
+Examples of landscapes (choose one that fits best): A pristine beach with turquoise waves at sunset, a field of glowing flowers under a starry sky, a majestic snowy mountain ridge, or a misty ancient forest with sunbeams filtering through.
+Audio: The video MUST include a clear, professional voiceover narrating exactly this text: "${quote}". No background music, just immersive natural ambient sounds (e.g., waves crashing, wind in trees, crunching snow, birds chirping) and the voice.
+
+Output ONLY the prompt text. Do not add quotes or intro text.`;
         
         const userPrompt = `Quote: "${quote}"`;
 
