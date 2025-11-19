@@ -1702,10 +1702,30 @@ export const generateViralQuotes = async (
     apiKey: string,
     model: string,
     category: string,
+    length: 'short' | 'long' = 'short',
 ): Promise<string[]> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
-        const prompt = `Generate 10 short viral quotes about "${category}".
+        let prompt = '';
+        
+        if (length === 'long') {
+             prompt = `Generate 10 deep, emotional, and storytelling-style quotes about "${category}".
+
+Style: Vulnerable, poetic, narrative, touching.
+Tone: Healing, realization, growth, inner peace.
+
+Rules:
+- Length: 2–3 sentences per quote (Approx 25–45 words).
+- They should read like a mini-story or a profound realization.
+- No clichés. Deep and raw emotion.
+- ABSOLUTELY NO EMOJIS.
+
+CRITICAL OUTPUT INSTRUCTIONS:
+- Your response must be a single valid JSON array of strings.
+- Do not number them in the JSON.
+- Do not add any markdown formatting outside the JSON structure.`;
+        } else {
+             prompt = `Generate 10 short viral quotes about "${category}".
 
 Style: Modern, viral social media quotes (TikTok/Instagram/Pinterest).
 Tone: aesthetic, minimal, soft, thoughtful, emotional, relatable.
@@ -1722,6 +1742,7 @@ CRITICAL OUTPUT INSTRUCTIONS:
 - Your response must be a single valid JSON array of strings.
 - Do not number them in the JSON.
 - Do not add any markdown formatting outside the JSON structure.`;
+        }
 
         const response = await generateWithRetry(() => ai.models.generateContent({
             model: model,
@@ -1757,9 +1778,29 @@ export const generateViralQuotesWithOpenRouter = async (
     apiKey: string,
     model: string,
     category: string,
+    length: 'short' | 'long' = 'short',
 ): Promise<string[]> => {
     try {
-        const systemPrompt = `Generate 10 short viral quotes about "${category}".
+        let systemPrompt = '';
+        
+        if (length === 'long') {
+            systemPrompt = `Generate 10 deep, emotional, and storytelling-style quotes about "${category}".
+
+Style: Vulnerable, poetic, narrative, touching.
+Tone: Healing, realization, growth, inner peace.
+
+Rules:
+- Length: 2–3 sentences per quote (Approx 25–45 words).
+- They should read like a mini-story or a profound realization.
+- No clichés. Deep and raw emotion.
+- ABSOLUTELY NO EMOJIS.
+
+CRITICAL OUTPUT INSTRUCTIONS:
+- Your response must be a single valid JSON array of strings.
+- Do not number them in the JSON.
+- Do not add any text or markdown formatting outside the JSON structure.`;
+        } else {
+            systemPrompt = `Generate 10 short viral quotes about "${category}".
 
 Style: Modern, viral social media quotes (TikTok/Instagram/Pinterest).
 Tone: aesthetic, minimal, soft, thoughtful, emotional, relatable.
@@ -1776,6 +1817,7 @@ CRITICAL OUTPUT INSTRUCTIONS:
 - Your response must be a single valid JSON array of strings, e.g. ["Quote 1", "Quote 2"].
 - Do not number them in the JSON.
 - Do not add any text or markdown formatting outside the JSON structure.`;
+        }
 
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
@@ -1857,6 +1899,270 @@ CRITICAL OUTPUT INSTRUCTIONS:
 
     } catch (error: any) {
         console.error("Error in generateViralQuotesWithOpenRouter:", error);
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
+};
+
+export const enhanceViralQuote = async (
+    apiKey: string,
+    model: string,
+    quote: string,
+    length: 'short' | 'long' = 'short',
+): Promise<string[]> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        let prompt = '';
+        
+        if (length === 'long') {
+            prompt = `Here is a quote: "${quote}".
+            
+            Your task: Rewrite this quote into a deeper, more emotional mini-story or realization.
+            Generate 5-10 variations that are storytelling-style, vulnerable, and poetic.
+            
+            Rules: 
+            - 2-3 sentences per variation. (Approx 25-45 words).
+            - No Emojis. No Clichés. Deep emotional impact.
+    
+            CRITICAL OUTPUT INSTRUCTIONS:
+            - Your response must be a single valid JSON array of strings.
+            - Do not number them.
+            - Do not add any markdown formatting.`;
+        } else {
+            prompt = `Here is a quote: "${quote}".
+            
+            Your task: Rewrite this quote to make it more attractive, sentimental, viral, and deep.
+            Generate 5-10 variations that are aesthetic, emotional, and "Instagram-ready".
+            
+            Tone: aesthetic, minimal, soft, thoughtful, emotional.
+            Rules: Max 14 words per variation. No Emojis. No Clichés.
+    
+            CRITICAL OUTPUT INSTRUCTIONS:
+            - Your response must be a single valid JSON array of strings.
+            - Do not number them.
+            - Do not add any markdown formatting.`;
+        }
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                }
+            }
+        }));
+
+        const jsonText = response.text.trim();
+        const parsedArray = JSON.parse(jsonText);
+        
+        if (Array.isArray(parsedArray)) {
+            return parsedArray.map(String);
+        }
+        throw new Error("AI response was not a valid array.");
+
+    } catch (error: any) {
+        console.error("Error in enhanceViralQuote:", error);
+         if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const enhanceViralQuoteWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    quote: string,
+    length: 'short' | 'long' = 'short',
+): Promise<string[]> => {
+    try {
+        let systemPrompt = '';
+        
+        if (length === 'long') {
+            systemPrompt = `Here is a quote provided by the user: "${quote}".
+            
+            Your task: Rewrite this quote into a deeper, more emotional mini-story or realization.
+            Generate 5-10 variations that are storytelling-style, vulnerable, and poetic.
+            
+            Rules: 
+            - 2-3 sentences per variation. (Approx 25-45 words).
+            - No Emojis. No Clichés. Deep emotional impact.
+    
+            CRITICAL OUTPUT INSTRUCTIONS:
+            - Your response must be a single valid JSON array of strings.
+            - Do not number them.
+            - Do not add any markdown formatting.`;
+        } else {
+            systemPrompt = `Here is a quote provided by the user: "${quote}".
+            
+            Your task: Rewrite this quote to make it more attractive, sentimental, viral, and deep.
+            Generate 5-10 variations that are aesthetic, emotional, and "Instagram-ready".
+            
+            Tone: aesthetic, minimal, soft, thoughtful, emotional.
+            Rules: Max 14 words per variation. No Emojis. No Clichés.
+    
+            CRITICAL OUTPUT INSTRUCTIONS:
+            - Your response must be a single valid JSON array of strings.
+            - Do not number them.
+            - Do not add any markdown formatting.`;
+        }
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "user", content: systemPrompt },
+                ],
+                response_format: { type: "json_object" },
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            throw new Error(message);
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+        
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('[');
+            const endIndex = potentialJson.lastIndexOf(']');
+             if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            } else {
+                 const startObj = potentialJson.indexOf('{');
+                const endObj = potentialJson.lastIndexOf('}');
+                if (startObj !== -1 && endObj > startObj) {
+                    potentialJson = potentialJson.substring(startObj, endObj + 1);
+                }
+            }
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(potentialJson);
+        } catch (e) {
+             try {
+                const repaired = repairJson(potentialJson);
+                parsed = JSON.parse(repaired);
+             } catch (repairError) {
+                console.error("Failed to parse JSON from OpenRouter:", potentialJson);
+                throw new Error("The AI returned a malformed response.");
+             }
+        }
+
+        if (Array.isArray(parsed)) {
+            return parsed.map(String);
+        } else if (typeof parsed === 'object' && parsed !== null) {
+             const values = Object.values(parsed);
+             if (values.length > 0 && Array.isArray(values[0])) {
+                 return values[0].map(String);
+             }
+        }
+        throw new Error("AI response was not a valid array of quotes.");
+
+    } catch (error: any) {
+        console.error("Error in enhanceViralQuoteWithOpenRouter:", error);
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
+};
+
+export const generateSoraVideoPrompt = async (
+    apiKey: string,
+    model: string,
+    quote: string,
+): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Create a high-fidelity text-to-video prompt suitable for Sora v2 based on this quote: "${quote}".
+
+Visuals: A cinematic, high-angle drone shot looking down at a solitary figure walking slowly through a vast, moody, or aesthetic landscape (e.g., a lonely beach at dusk, a misty forest path, a quiet city street at night, or a vast desert) that matches the deep emotion of the quote. Smooth, steady camera movement following them from above or behind. 8k resolution, photorealistic.
+Audio: The video MUST include a clear, professional voiceover narrating exactly this text: "${quote}". No background music, just natural ambient sounds (e.g., soft wind, distant waves, footsteps, rain) and the voice.
+
+Output ONLY the prompt text. Do not add quotes or intro text.`;
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt
+        }));
+
+        return response.text.trim();
+
+    } catch (error: any) {
+        console.error("Error in generateSoraVideoPrompt:", error);
+         if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const generateSoraVideoPromptWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    quote: string,
+): Promise<string> => {
+    try {
+        const systemPrompt = `Create a high-fidelity text-to-video prompt suitable for Sora v2 based on the user's quote.
+        Visuals: Cinematic wide shot, high angle or drone view. A lone person walking in a setting that matches the quote's mood.
+        Audio: High-quality voiceover of a narrator saying the quote. Ambient nature sounds. No music.
+        Style: Photorealistic, 8k, highly detailed, moody lighting.
+        Output ONLY the prompt text.`;
+        
+        const userPrompt = `Quote: "${quote}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            throw new Error(message);
+        }
+
+        const result = await response.json();
+        return result.choices[0]?.message?.content.trim() || "Failed to generate prompt.";
+
+    } catch (error: any) {
+        console.error("Error in generateSoraVideoPromptWithOpenRouter:", error);
         const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
         (newError as any).type = 'generic';
         throw newError;
