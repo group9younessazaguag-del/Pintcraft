@@ -3,10 +3,12 @@ import React, { useState, useEffect } from 'react';
 import PinIcon from './icons/PinIcon';
 import MenuIcon from './icons/MenuIcon';
 import CloseIcon from './icons/CloseIcon';
+import DescriptionRewritePage from './pages/DescriptionRewritePage';
+import RewriteIcon from './icons/RewriteIcon';
 
 const getCurrentPage = () => {
     const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-    return hash || 'quote-generator';
+    return hash || 'pin-generator';
 };
 
 const NavLink: React.FC<{ href: string; children: React.ReactNode; onClick?: () => void; isActive: boolean }> = ({ href, children, onClick, isActive }) => (
@@ -52,6 +54,7 @@ const Header: React.FC = () => {
   };
 
   const navItems = [
+    { href: "/#/rewrite-title-description", label: "Desc Rewrite" },
     { href: "/#/facebook-post-generator", label: "FB Post Gen" },
     { href: "/#/facebook-page-builder", label: "FB Page Builder" },
     { href: "/#/quote-generator", label: "Quote Gen" },
@@ -78,7 +81,7 @@ const Header: React.FC = () => {
           <div className="flex items-center h-16">
             {/* Logo and Brand Name - Fixed Layout */}
             <div className="flex-shrink-0 mr-6">
-                <a href="/#/quote-generator" onClick={closeMobileMenu} className="flex items-center gap-2 group">
+                <a href="/#/pin-generator" onClick={closeMobileMenu} className="flex items-center gap-2 group">
                 <PinIcon className="w-7 h-7 text-pink-500 transition-colors group-hover:text-pink-600" />
                 <h1 className="text-xl font-semibold tracking-tight text-slate-800 transition-colors group-hover:text-slate-900 whitespace-nowrap">
                     Pin4You
@@ -101,7 +104,7 @@ const Header: React.FC = () => {
                         <NavLink 
                         key={item.href}
                         href={item.href}
-                        isActive={activePage === (item.href.substring(2) || 'quote-generator')}
+                        isActive={activePage === (item.href.substring(2) || 'pin-generator')}
                         >
                             {item.label}
                         </NavLink>
@@ -155,7 +158,7 @@ const Header: React.FC = () => {
                     key={item.href}
                     href={item.href}
                     onClick={closeMobileMenu}
-                    isActive={activePage === (item.href.substring(2) || 'quote-generator')}
+                    isActive={activePage === (item.href.substring(2) || 'pin-generator')}
                 >
                     {item.label}
                 </MobileNavLink>

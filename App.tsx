@@ -21,6 +21,7 @@ import AuthorPage from './components/pages/AuthorPage';
 import FacebookPostGeneratorPage from './components/pages/FacebookPostGeneratorPage';
 import FacebookPageBuilderPage from './components/pages/FacebookPageBuilderPage';
 import QuoteGeneratorPage from './components/pages/QuoteGeneratorPage';
+import DescriptionRewritePage from './components/pages/DescriptionRewritePage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {
@@ -35,7 +36,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'quote-generator';
+  return hash || 'pin-generator';
 };
 
 
@@ -681,7 +682,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex + 1);
+      setCurrentRowIndex(currentRowIndex - 1);
     }
   };
 
