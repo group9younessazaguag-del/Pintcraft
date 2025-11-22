@@ -36,7 +36,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'pin-generator';
+  return hash || 'rewrite-title-description';
 };
 
 
@@ -630,18 +630,20 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       const headers = parseCsvLine(lines[0]).map(h => h.trim());
       setOriginalCsvHeaders(headers);
       
-      const headerMap: { [key: string]: string } = {};
-      headers.forEach(h => headerMap[h.toLowerCase().trim()] = h);
+      const headerMap: { [key: string]: { original: string; index: number } } = {};
+      headers.forEach((h, i) => {
+        const lowerH = h.toLowerCase().trim();
+        // More robust matching
+        if (lowerH.includes('title')) headerMap['title'] = { original: h, index: i };
+        if (lowerH.includes('description')) headerMap['description'] = { original: h, index: i };
+        if (lowerH.includes('keywords') || lowerH.includes('interest')) headerMap['keywords'] = { original: h, index: i };
+        if (lowerH.includes('prompt')) headerMap['imagePrompt'] = { original: h, index: i };
+        if (lowerH.includes('board')) headerMap['board'] = { original: h, index: i };
+      });
 
-      const titleHeader = headerMap['title'] || headerMap['title of recipes'];
-      const descriptionHeader = headerMap['description'];
-      const keywordsHeader = headerMap['keywords'] || headerMap['interest used'];
-      const imagePromptHeader = headerMap['image prompt'];
-      const boardHeader = headerMap['pinterest board'] || headerMap['board'];
 
-
-      if (!titleHeader) {
-        setApiError({ type: 'generic', message: "CSV must contain a 'Title' or 'Title of recipes' column."});
+      if (!headerMap['title']) {
+        setApiError({ type: 'generic', message: "CSV must contain a column with 'Title' in its header."});
         return;
       }
 
@@ -655,15 +657,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       });
 
       const simpleData: CsvRow[] = fullData.map(row => {
-          const title = row[titleHeader] || '';
+          const title = row[headerMap['title'].original] || '';
           
           return {
               title: title,
               website: '',
-              board: boardHeader ? row[boardHeader] || '' : '',
-              description: descriptionHeader ? row[descriptionHeader] || '' : '',
-              keywords: keywordsHeader ? row[keywordsHeader] || '' : '',
-              imagePrompt: imagePromptHeader ? row[imagePromptHeader] || '' : '',
+              board: headerMap['board'] ? row[headerMap['board'].original] || '' : '',
+              description: headerMap['description'] ? row[headerMap['description'].original] || '' : '',
+              keywords: headerMap['keywords'] ? row[headerMap['keywords'].original] || '' : '',
+              imagePrompt: headerMap['imagePrompt'] ? row[headerMap['imagePrompt'].original] || '' : '',
           };
       });
       
@@ -837,43 +839,40 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
             if (prompt) {
                 try {
-                    if (imageGenerator === 'midjourney') {
-                        if (mjApiKey) {
-                            await handleGenerateImageWithMidjourney(1, true, prompt);
-                            await sleep(500);
-                            imageGenerated = true;
+                    const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
+                    const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
+                    const imagesNeeded = 1 + (templateNeeds2Images ? 1 : 0) + (templateNeeds3Images ? 1 : 0);
+                    
+                    for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
+                         if (imageGenerator === 'midjourney') {
+                            if (mjApiKey) {
+                                await handleGenerateImageWithMidjourney(imgIdx as 1 | 2 | 3, true, prompt);
+                                await sleep(500);
+                            }
+                        } else if (imageGenerator === 'midjourney2') {
+                            if (mj2ApiKey) {
+                                const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
+                                await handleGenerateImageWithMidApiAi(imgIdx as 1 | 2 | 3, true, prompt, onProgress);
+                                await sleep(500);
+                            }
+                        } else if (imageGenerator === 'imagine') {
+                            if (imgApiKey) {
+                                const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
+                                await handleGenerateImageWithImagineApi(imgIdx as 1 | 2 | 3, true, prompt, onProgress);
+                                await sleep(500);
+                            }
+                        } else if (imageGenerator === 'useapi') {
+                            if (useApiKey) {
+                                const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
+                                await handleGenerateImageWithUseApi(imgIdx as 1 | 2 | 3, true, prompt, onProgress);
+                                await sleep(500);
+                            }
+                        } else { // 'fal'
+                            await handleGenerateImage(imgIdx as 1 | 2 | 3, true, prompt);
                         }
-                    } else if (imageGenerator === 'midjourney2') {
-                        if (mj2ApiKey) {
-                            const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            await handleGenerateImageWithMidApiAi(1, true, prompt, onProgress);
-                            await sleep(500);
-                            imageGenerated = true;
-                        }
-                    } else if (imageGenerator === 'imagine') {
-                        if (imgApiKey) {
-                            const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            await handleGenerateImageWithImagineApi(1, true, prompt, onProgress);
-                            await sleep(500);
-                            imageGenerated = true;
-                        }
-                    } else if (imageGenerator === 'useapi') {
-                        if (useApiKey) {
-                            const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            await handleGenerateImageWithUseApi(1, true, prompt, onProgress);
-                            await sleep(500);
-                            imageGenerated = true;
-                        }
-                    } else { // 'fal'
-                        await handleGenerateImage(1, true, prompt);
-                        
-                        const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
-                        if (templateNeeds2Images) await handleGenerateImage(2, true, prompt);
-    
-                        const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
-                        if (templateNeeds3Images) await handleGenerateImage(3, true, prompt);
-                        imageGenerated = true;
                     }
+                    imageGenerated = true;
+
                 } catch (error: any) {
                     console.warn(`Original image generation failed for row ${i + 1}:`, error);
                     if (error.type === 'quota') {
@@ -892,44 +891,24 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                             const newPrompt = await generateSafeImagePrompt(googleApiKey, templateData.textModel, currentData.title);
                             setBulkMessage(`Row ${i + 1}: Retrying with new prompt...`);
                             
-                            // --- RETRY IMAGE GENERATION LOGIC ---
-                            if (imageGenerator === 'midjourney') {
-                                if (mjApiKey) {
-                                    await handleGenerateImageWithMidjourney(1, true, newPrompt);
-                                    await sleep(500);
-                                    imageGenerated = true;
+                            const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
+                            const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
+                            const imagesNeeded = 1 + (templateNeeds2Images ? 1 : 0) + (templateNeeds3Images ? 1 : 0);
+
+                            for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
+                                 if (imageGenerator === 'midjourney') {
+                                    if (mjApiKey) { await handleGenerateImageWithMidjourney(imgIdx as 1 | 2 | 3, true, newPrompt); await sleep(500); }
+                                } else if (imageGenerator === 'midjourney2') {
+                                    if (mj2ApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithMidApiAi(imgIdx as 1 | 2 | 3, true, newPrompt, onProgress); await sleep(500); }
+                                } else if (imageGenerator === 'imagine') {
+                                    if (imgApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithImagineApi(imgIdx as 1 | 2 | 3, true, newPrompt, onProgress); await sleep(500); }
+                                } else if (imageGenerator === 'useapi') {
+                                    if (useApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithUseApi(imgIdx as 1 | 2 | 3, true, newPrompt, onProgress); await sleep(500); }
+                                } else { // 'fal'
+                                    await handleGenerateImage(imgIdx as 1 | 2 | 3, true, newPrompt);
                                 }
-                            } else if (imageGenerator === 'midjourney2') {
-                                if (mj2ApiKey) {
-                                    const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                                    await handleGenerateImageWithMidApiAi(1, true, newPrompt, onProgress);
-                                    await sleep(500);
-                                    imageGenerated = true;
-                                }
-                            } else if (imageGenerator === 'imagine') {
-                                if (imgApiKey) {
-                                    const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                                    await handleGenerateImageWithImagineApi(1, true, newPrompt, onProgress);
-                                    await sleep(500);
-                                    imageGenerated = true;
-                                }
-                            } else if (imageGenerator === 'useapi') {
-                                if (useApiKey) {
-                                    const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                                    await handleGenerateImageWithUseApi(1, true, newPrompt, onProgress);
-                                    await sleep(500);
-                                    imageGenerated = true;
-                                }
-                            } else { // 'fal'
-                                await handleGenerateImage(1, true, newPrompt);
-                                
-                                const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
-                                if (templateNeeds2Images) await handleGenerateImage(2, true, newPrompt);
-            
-                                const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
-                                if (templateNeeds3Images) await handleGenerateImage(3, true, newPrompt);
-                                imageGenerated = true;
                             }
+                            imageGenerated = true;
                             console.log(`Row ${i + 1}: Image generation succeeded on retry.`);
 
                         } catch (retryError: any) {
@@ -1250,6 +1229,11 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         openRouterApiKey={openRouterApiKey}
                         onSetOpenRouterApiKey={setOpenRouterApiKey}
                         textModel={templateData.textModel}
+                    />;
+        case 'rewrite-title-description':
+            return <DescriptionRewritePage 
+                        openRouterApiKey={openRouterApiKey}
+                        onSetOpenRouterApiKey={setOpenRouterApiKey}
                     />;
         case 'pin-generator':
         default:

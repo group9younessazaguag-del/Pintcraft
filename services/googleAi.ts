@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow, PinterestAccount, ImageAspectRatio, FacebookPost, FacebookPageStrategy } from '../types';
 
@@ -1600,6 +1601,123 @@ For the given topic, you must generate a complete, engaging Facebook post by cho
 
     } catch (error: any) {
         console.error("Error in generateFacebookPostWithOpenRouter:", error);
+        if (error.type) {
+            throw error;
+        }
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
+};
+
+// FIX: Add missing rewriteDescriptionWithOpenRouter function
+export const rewriteDescriptionWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    title: string,
+    description: string,
+): Promise<{ title: string; description: string }> => {
+    try {
+        const systemPrompt = `You are an expert Pinterest SEO marketer for bloggers. Your task is to rewrite a given pin title and description to be more engaging, clickable, and optimized for Pinterest search, while staying true to the original topic.
+
+**RULES:**
+1.  **Title:**
+    *   Make it catchy and keyword-rich.
+    *   Aim for a length between 50-70 characters.
+    *   Capitalize it in a natural, title-case way.
+    *   **NO EMOJIS.**
+2.  **Description:**
+    *   Rewrite it to be engaging and conversational.
+    *   Naturally include 3-5 relevant keywords.
+    *   Keep it under 200 characters.
+    *   Include a soft call-to-action (e.g., "Discover more...", "Find the full recipe...").
+    *   **NO HASHTAGS.**
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object.
+*   The JSON object must have two keys: "title" and "description".
+*   Do NOT include any text, commentary, or markdown.`;
+
+        const userPrompt = `Rewrite the following content:
+Original Title: "${title}"
+Original Description: "${description}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+                response_format: { type: "json_object" },
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            const specificError = new Error(message);
+            (specificError as any).type = response.status === 429 ? 'quota' : 'generic';
+            throw specificError;
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('{');
+            const endIndex = potentialJson.lastIndexOf('}');
+            if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            }
+        }
+        
+        if (!potentialJson.startsWith('{') || !potentialJson.endsWith('}')) {
+             const err = new Error("The AI response does not appear to contain a JSON object.");
+             (err as any).originalText = jsonText;
+             throw err;
+        }
+
+        let parsedObject;
+        try {
+            parsedObject = JSON.parse(potentialJson);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting to repair.", { error: e, json: potentialJson });
+            try {
+                const repairedJson = repairJson(potentialJson);
+                parsedObject = JSON.parse(repairedJson);
+            } catch (repairError) {
+                 console.error("Failed to parse even after repairing JSON.", { error: repairError, original: potentialJson });
+                 const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                 (err as any).originalText = jsonText;
+                 throw err;
+            }
+        }
+
+        return {
+            title: String(parsedObject.title || ''),
+            description: String(parsedObject.description || ''),
+        };
+
+    } catch (error: any) {
+        console.error("Error in rewriteDescriptionWithOpenRouter:", error);
         if (error.type) {
             throw error;
         }
