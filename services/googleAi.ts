@@ -25,6 +25,15 @@ export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, 
 
 const getGeminiClient = (apiKey: string) => new GoogleGenAI({ apiKey });
 
+const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+};
+
 // --- Text Generation ---
 
 export const generateDescription = async (apiKey: string, model: string, title: string, keywords: string = ''): Promise<string> => {
@@ -123,31 +132,136 @@ export const generateImage = async (apiKey: string, model: string, prompt: strin
     return data.images?.[0]?.url || '';
 };
 
-export const generateImageWithMidjourney = async (apiKey: string, prompt: string, aspectRatio: string): Promise<string> => {
-    // Placeholder for APIFrame implementation
-    await sleep(1000); // Simulate network
-    return generatePlaceholderImage(prompt, aspectRatio as ImageAspectRatio);
+export const generateImageWithMidjourney = async (apiKey: string, prompt: string, aspectRatio: string): Promise<string[]> => {
+    const BASE_URL = 'https://api.apiframe.pro';
+    const imagineResponse = await fetch(`${BASE_URL}/imagine`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, aspect_ratio: aspectRatio, mode: 'fast' })
+    });
+
+    if (!imagineResponse.ok) throw new Error(`APIFrame error: ${imagineResponse.status}`);
+    const imagineData = await imagineResponse.json();
+    const taskId = imagineData.task_id || imagineData.job_id;
+
+    let jobStatus = '';
+    let jobData;
+    let attempt = 0;
+    while (jobStatus !== 'finished' && attempt < 30) {
+        await sleep(5000);
+        attempt++;
+        const jobResponse = await fetch(`${BASE_URL}/fetch`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: taskId })
+        });
+        if(jobResponse.ok) {
+            jobData = await jobResponse.json();
+            jobStatus = jobData.status;
+            if (jobStatus === 'failed') throw new Error('Generation failed.');
+        }
+    }
+
+    if (jobStatus !== 'finished') throw new Error('Timeout.');
+    
+    const imageUrls = jobData?.image_urls || [];
+    const base64Images = await Promise.all(imageUrls.map(async (url: string) => {
+        try {
+            const res = await fetch(url);
+            if(res.ok) {
+                const blob = await res.blob();
+                return await blobToBase64(blob);
+            }
+            return null;
+        } catch(e) { return null; }
+    }));
+    return base64Images.filter(Boolean) as string[];
 };
 
-export const generateImageWithMidApiAi = async (apiKey: string, prompt: string, aspectRatio: string): Promise<string> => {
-    // Placeholder for Midapi.ai implementation
-    await sleep(1000);
-    return generatePlaceholderImage(prompt, aspectRatio as ImageAspectRatio);
-};
-
-export const generateImageWithImagineApi = async (apiKey: string, prompt: string, aspectRatio: string): Promise<string> => {
-    // Placeholder for ImagineAPI implementation
-    await sleep(1000);
-    return generatePlaceholderImage(prompt, aspectRatio as ImageAspectRatio);
-};
-
-export const generateImageWithUseApi = async (apiKey: string, prompt: string, aspectRatio: string, onProgress?: (msg: string) => void): Promise<string[]> => {
-    // Placeholder for useapi.net implementation
-    if (onProgress) onProgress("Initializing...");
-    await sleep(1000);
-    if (onProgress) onProgress("Generating...");
-    await sleep(1000);
+export const generateImageWithMidApiAi = async (apiKey: string, prompt: string, aspectRatio: string): Promise<string[]> => {
+    await sleep(1000); // Placeholder
     return [await generatePlaceholderImage(prompt, aspectRatio as ImageAspectRatio)];
+};
+
+export const generateImageWithImagineApi = async (apiKey: string, prompt: string, aspectRatio: string): Promise<string[]> => {
+    await sleep(1000); // Placeholder
+    return [await generatePlaceholderImage(prompt, aspectRatio as ImageAspectRatio)];
+};
+
+export const generateImageWithUseApi = async (
+    apiKey: string,
+    prompt: string,
+    aspectRatio: string,
+    onProgressUpdate?: (message: string) => void
+): Promise<string[]> => {
+    const BASE_URL = 'https://api.useapi.net/v3/midjourney/jobs';
+    
+    let ar = '1:1';
+    if (aspectRatio === '9:16') ar = '9:16';
+    if (aspectRatio === '3:4') ar = '3:4';
+    if (aspectRatio === '4:5') ar = '4:5';
+
+    const fullPrompt = `${prompt} --ar ${ar} --v 6.0`;
+
+    if (onProgressUpdate) onProgressUpdate("Sending request to useapi.net...");
+
+    const response = await fetch(`${BASE_URL}/imagine`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prompt: fullPrompt, stream: false })
+    });
+
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`useapi.net error: ${err}`);
+    }
+
+    const data = await response.json();
+    const jobId = data.jobid;
+
+    if (!jobId) throw new Error("No job ID returned from useapi.net");
+
+    if (onProgressUpdate) onProgressUpdate("Waiting for generation...");
+
+    let status = '';
+    let resultData;
+    let attempts = 0;
+    
+    while (status !== 'completed' && status !== 'failed' && attempts < 40) {
+        await sleep(3000);
+        attempts++;
+        
+        const statusRes = await fetch(`${BASE_URL}/${jobId}`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        
+        if (statusRes.ok) {
+            resultData = await statusRes.json();
+            status = resultData.status;
+            if (onProgressUpdate && resultData.progress) onProgressUpdate(`Generating: ${resultData.progress}%`);
+        }
+    }
+
+    if (status !== 'completed') throw new Error("Generation failed or timed out.");
+
+    const attachments = resultData.response?.imageUx || [];
+    if (attachments.length === 0) throw new Error("No images found in result.");
+
+    const imageUrls = attachments.map((a: any) => a.url);
+    
+    const base64Images = await Promise.all(imageUrls.map(async (url: string) => {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            const blob = await res.blob();
+            return await blobToBase64(blob);
+        } catch (e) { return null; }
+    }));
+
+    return base64Images.filter((img): img is string => !!img);
 };
 
 // --- Advanced Content Generation (JSON Output) ---

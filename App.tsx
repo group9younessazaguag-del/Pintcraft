@@ -29,18 +29,16 @@ declare global {
   interface Window {
     htmlToImage: {
       toPng: (element: HTMLElement, options?: object) => Promise<string>;
+      toBlob: (element: HTMLElement, options?: object) => Promise<Blob | null>;
     };
     JSZip: any;
   }
 }
 
 const getCurrentPage = () => {
-  // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  // Set default to the pin generator
   return hash || 'pin-generator';
 };
-
 
 type PersistedData = Omit<TemplateData, 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3'>;
 
@@ -78,29 +76,24 @@ const initialAdminSettings: AdminSettings = {
     contentPrompt: DEFAULT_CONTENT_PROMPT,
 };
 
-
 const App: React.FC = () => {
   const [persistedData, setPersistedData] = useLocalStorage<PersistedData>('templateData', initialPersistedData);
   const [imageData, setImageData] = useState(initialImageData);
   const templateData: TemplateData = { ...persistedData, ...imageData };
 
-  const [userApiKey, setUserApiKey] = useLocalStorage('googleAiApiKey', ''); // For Google AI (text)
-  const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
-  const [apiframeApiKey, setApiframeApiKey] = useLocalStorage('apiframeApiKey', ''); // For APIFrame.ai (Midjourney)
-  const [midapiApiKey, setMidapiApiKey] = useLocalStorage('midapiApiKey', ''); // For midapi.ai (Midjourney 2)
-  const [openRouterApiKey, setOpenRouterApiKey] = useLocalStorage('openRouterApiKey', ''); // For OpenRouter.ai (text)
-  const [imagineApiKey, setImagineApiKey] = useLocalStorage('imagineApiKey', ''); // For ImagineAPI
-  const [useapiApiKey, setUseapiApiKey] = useLocalStorage('useapiApiKey', ''); // For useapi.net
+  const [userApiKey, setUserApiKey] = useLocalStorage('googleAiApiKey', '');
+  const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', '');
+  const [apiframeApiKey, setApiframeApiKey] = useLocalStorage('apiframeApiKey', '');
+  const [midapiApiKey, setMidapiApiKey] = useLocalStorage('midapiApiKey', '');
+  const [openRouterApiKey, setOpenRouterApiKey] = useLocalStorage('openRouterApiKey', '');
+  const [imagineApiKey, setImagineApiKey] = useLocalStorage('imagineApiKey', '');
+  const [useapiApiKey, setUseapiApiKey] = useLocalStorage('useapiApiKey', '');
 
-
-  // Admin and Analytics State
   const [adminSettings, setAdminSettings] = useLocalStorage<AdminSettings>('adminSettings', initialAdminSettings);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useLocalStorage<boolean>('isAdminLoggedIn', false);
   useAnalytics(adminSettings.analyticsId);
 
-  // Assistant Page State
   const [pinterestAccounts, setPinterestAccounts] = useLocalStorage<PinterestAccount[]>('pinterestAccounts', []);
-
 
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState<{ [key: number]: boolean }>({});
@@ -115,7 +108,6 @@ const App: React.FC = () => {
   const [currentRowIndex, setCurrentRowIndex] = useState<number | null>(null);
   const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
   
-  // State for bulk generation
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
   const [bulkMessage, setBulkMessage] = useState('');
   const [originalCsvHeaders, setOriginalCsvHeaders] = useState<string[]>([]);
@@ -146,21 +138,15 @@ const App: React.FC = () => {
       handleResetBulkGeneration();
       setBulkMessage("Settings changed. Please start a new bulk generation.");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateData.templateId, templateData.pinSize, templateData.website, templateData.mediaUrlPrefix, csvData]);
-
+  }, [templateData.templateId, templateData.pinSize, templateData.website, templateData.mediaUrlPrefix, csvData, handleResetBulkGeneration]);
 
   useEffect(() => {
-    // This handles navigation via browser back/forward buttons and direct hash links
     const handleHashChange = () => {
         setPage(getCurrentPage());
         window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', handleHashChange);
-    
-    // Set the initial page based on the hash
     handleHashChange();
-
     return () => {
         window.removeEventListener('hashchange', handleHashChange);
     };
@@ -182,8 +168,7 @@ const App: React.FC = () => {
         backgroundImage3: null,
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentRowIndex]);
+  }, [currentRowIndex, csvData, setPersistedData]);
 
   const handleFieldChange = (field: keyof TemplateData, value: any) => {
     if (apiError) setApiError(null);
@@ -210,100 +195,360 @@ const App: React.FC = () => {
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
-    const csvImagePrompt = currentRowIndex !== null && csvData[currentRowIndex]?.imagePrompt ? csvData[currentRowIndex].imagePrompt : null;
-    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : null) || templateData.title;
+  // --- Generic Image Generator Wrapper ---
+  const handleGenerateImageGeneric = async (
+      imageNumber: 1 | 2 | 3,
+      generatorType: 'fal' | 'apiframe' | 'midapi' | 'imagine' | 'useapi',
+      throwOnError: boolean = false,
+      overridePrompt?: string
+  ) => {
+        const csvImagePrompt = currentRowIndex !== null && csvData[currentRowIndex]?.imagePrompt ? csvData[currentRowIndex].imagePrompt : null;
+        const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : null) || templateData.title;
 
-    if (!userPrompt) {
-        const msg = 'Please enter a Title or have an Image Prompt in your CSV to generate an image.';
-        if (throwOnError) throw new Error(msg);
-        setApiError({ type: 'generic', message: msg });
-        return;
-    }
-
-    setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: true }));
-    setApiError(null);
-
-    const apiKey = falAiApiKey; // Use Fal.ai key for image generation
-    const aspectRatio = templateData.imageAspectRatio;
-
-    try {
-        let imageUrl: string;
-        if (apiKey && apiKey.length > 5) {
-            // Use Fal.ai generation if key is available
-            imageUrl = await generateImage(
-                apiKey,
-                templateData.imageModel,
-                userPrompt,
-                aspectRatio
-            );
-        } else {
-            // Fallback to placeholder generation
-            imageUrl = await generatePlaceholderImage(
-                userPrompt,
-                aspectRatio
-            );
+        if (!userPrompt) {
+            const msg = 'Please enter a Title or have an Image Prompt in your CSV.';
+            if (throwOnError) throw new Error(msg);
+            setApiError({ type: 'generic', message: msg });
+            return;
         }
+
+        // Set specific loading state
+        if (generatorType === 'fal') setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: true }));
+        if (generatorType === 'apiframe') setIsGeneratingMidjourneyImage(prev => ({ ...prev, [imageNumber]: true }));
+        if (generatorType === 'midapi') setIsGeneratingMidjourney2Image(prev => ({ ...prev, [imageNumber]: true }));
+        if (generatorType === 'imagine') setIsGeneratingImagineImage(prev => ({ ...prev, [imageNumber]: true }));
+        if (generatorType === 'useapi') setIsGeneratingUseApiImage(prev => ({ ...prev, [imageNumber]: true }));
         
-        const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
-        setImageData(prev => ({ ...prev, [field]: imageUrl }));
-    } catch (error: any) {
-        console.error(`Error generating image:`, error);
-        if (throwOnError) {
-            throw error; // Re-throw for bulk processor
+        setApiError(null);
+
+        try {
+            let imageUrl: string | string[] = '';
+            const aspectRatio = templateData.imageAspectRatio;
+
+            if (generatorType === 'fal' && falAiApiKey) {
+                imageUrl = await generateImage(falAiApiKey, templateData.imageModel, userPrompt, aspectRatio);
+            } else if (generatorType === 'apiframe' && apiframeApiKey) {
+                const results = await generateImageWithMidjourney(apiframeApiKey, userPrompt, aspectRatio);
+                imageUrl = results[0] || '';
+            } else if (generatorType === 'midapi' && midapiApiKey) {
+                const results = await generateImageWithMidApiAi(midapiApiKey, userPrompt, aspectRatio);
+                imageUrl = results[0] || '';
+            } else if (generatorType === 'imagine' && imagineApiKey) {
+                const results = await generateImageWithImagineApi(imagineApiKey, userPrompt, aspectRatio);
+                imageUrl = results[0] || '';
+            } else if (generatorType === 'useapi' && useapiApiKey) {
+                const results = await generateImageWithUseApi(useapiApiKey, userPrompt, aspectRatio);
+                imageUrl = results[0] || '';
+            } else {
+                // Fallback
+                imageUrl = await generatePlaceholderImage(userPrompt, aspectRatio);
+            }
+
+            const finalUrl = Array.isArray(imageUrl) ? imageUrl[0] : imageUrl;
+            if (finalUrl) {
+                const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as any;
+                setImageData(prev => ({ ...prev, [field]: finalUrl }));
+            } else {
+                throw new Error("No image returned.");
+            }
+
+        } catch (error: any) {
+            console.error(`Error generating image (${generatorType}):`, error);
+            if (throwOnError) throw error;
+            setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate image.' });
+        } finally {
+            if (generatorType === 'fal') setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
+            if (generatorType === 'apiframe') setIsGeneratingMidjourneyImage(prev => ({ ...prev, [imageNumber]: false }));
+            if (generatorType === 'midapi') setIsGeneratingMidjourney2Image(prev => ({ ...prev, [imageNumber]: false }));
+            if (generatorType === 'imagine') setIsGeneratingImagineImage(prev => ({ ...prev, [imageNumber]: false }));
+            if (generatorType === 'useapi') setIsGeneratingUseApiImage(prev => ({ ...prev, [imageNumber]: false }));
         }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image.',
-            helpLink: error.helpLink
-        });
-    } finally {
-        setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
-    }
   };
 
-  const handleGenerateImageWithMidjourney = async (imageNumber: 1 | 2 | 3) => {
-      // Implementation details omitted for brevity in this response
-  };
-  const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3) => {
-      // Implementation details omitted for brevity in this response
-  };
-  const handleGenerateImageWithImagineApi = async (imageNumber: 1 | 2 | 3) => {
-      // Implementation details omitted for brevity in this response
-  };
-  const handleGenerateImageWithUseApi = async (imageNumber: 1 | 2 | 3) => {
-      // Implementation details omitted for brevity in this response
-  };
+  const handleGenerateImage = (n: 1|2|3) => handleGenerateImageGeneric(n, 'fal');
+  const handleGenerateImageWithMidjourney = (n: 1|2|3) => handleGenerateImageGeneric(n, 'apiframe');
+  const handleGenerateImageWithMidApiAi = (n: 1|2|3) => handleGenerateImageGeneric(n, 'midapi');
+  const handleGenerateImageWithImagineApi = (n: 1|2|3) => handleGenerateImageGeneric(n, 'imagine');
+  const handleGenerateImageWithUseApi = (n: 1|2|3) => handleGenerateImageGeneric(n, 'useapi');
 
   const handleGenerateDescription = async () => {
-      // Implementation details omitted
+        if (!templateData.title) { setApiError({type: 'generic', message: "Please enter a title first."}); return; }
+        setIsGeneratingDescription(true);
+        try {
+            const desc = await generateDescription(userApiKey, templateData.textModel, templateData.title, templateData.keywords);
+            setPersistedData(prev => ({ ...prev, description: desc }));
+        } catch (e) { console.error(e); } finally { setIsGeneratingDescription(false); }
   };
+
   const handleGenerateKeywords = async () => {
-      // Implementation details omitted
+        if (!templateData.title) { setApiError({type: 'generic', message: "Please enter a title first."}); return; }
+        setIsGeneratingKeywords(true);
+        try {
+            const keys = await generateKeywords(userApiKey, templateData.textModel, templateData.title);
+            setPersistedData(prev => ({ ...prev, keywords: keys }));
+        } catch (e) { console.error(e); } finally { setIsGeneratingKeywords(false); }
   };
+
   const handleGenerateShortTitle = async () => {
-      // Implementation details omitted
+        if (!templateData.title) { setApiError({type: 'generic', message: "Please enter a title first."}); return; }
+        setIsGeneratingShortTitle(true);
+        try {
+            const short = await generateShortTitle(userApiKey, templateData.textModel, templateData.title);
+            setPersistedData(prev => ({ ...prev, title: short }));
+        } catch (e) { console.error(e); } finally { setIsGeneratingShortTitle(false); }
   };
-  const handleDownload = () => {
-      // Implementation details omitted
-  };
+
+  const handleDownload = useCallback(async () => {
+    if (!previewRef.current) return;
+    setIsLoading(true);
+    try {
+      const dataUrl = await window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2 });
+      const link = document.createElement('a');
+      link.download = `pin-${templateData.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Download error', err);
+      setApiError({ type: 'generic', message: "Failed to download image. Try again." });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [templateData.title]);
+
   const handleCsvUpload = (file: File) => {
-      // Implementation details omitted
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const text = e.target?.result as string;
+        const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+        if (lines.length < 2) return;
+
+        const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+        setOriginalCsvHeaders(lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '')));
+        
+        const dataStartIndex = 1;
+        const parsedFullData: {[key: string]: string}[] = [];
+
+        const rows = lines.slice(dataStartIndex).map(line => {
+            // Simple CSV parser handling quoted fields
+            const values: string[] = [];
+            let current = '';
+            let inQuotes = false;
+            for(let i=0; i<line.length; i++){
+                if(line[i] === '"' && line[i+1] === '"') { current += '"'; i++; }
+                else if(line[i] === '"') { inQuotes = !inQuotes; }
+                else if(line[i] === ',' && !inQuotes) { values.push(current); current = ''; }
+                else { current += line[i]; }
+            }
+            values.push(current);
+
+            const rowData: {[key: string]: string} = {};
+            headers.forEach((h, i) => {
+                rowData[h] = values[i]?.trim() || ''; 
+            });
+            
+            const rawRowData: {[key: string]: string} = {};
+            lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '')).forEach((h, i) => {
+                rawRowData[h] = values[i]?.trim() || '';
+            });
+            parsedFullData.push(rawRowData);
+
+            return {
+                title: rowData['title'] || rowData['headline'] || '',
+                website: rowData['website'] || rowData['link'] || rowData['url'] || '',
+                board: rowData['board'] || rowData['pinterest board'] || '',
+                description: rowData['description'] || rowData['pin description'] || '',
+                keywords: rowData['keywords'] || rowData['tags'] || '',
+                imagePrompt: rowData['image prompt'] || rowData['image_prompt'] || rowData['prompt'] || '',
+            };
+        });
+
+        setFullCsvData(parsedFullData);
+        setCsvData(rows);
+        setCurrentRowIndex(0);
+        setLastCompletedRowIndex(null);
+        setGeneratedAssets(null);
+    };
+    reader.readAsText(file);
   };
+
   const handleNextRow = () => {
-      // Implementation details omitted
+    if (currentRowIndex !== null && currentRowIndex < csvData.length - 1) {
+      setCurrentRowIndex(currentRowIndex + 1);
+    }
   };
+
   const handlePrevRow = () => {
-      // Implementation details omitted
+    if (currentRowIndex !== null && currentRowIndex > 0) {
+      setCurrentRowIndex(currentRowIndex - 1);
+    }
   };
-  const handleBulkGeneration = async () => {
-      // Implementation details omitted
+
+  // --- BULK GENERATION LOGIC ---
+  const handleBulkGeneration = async (imageGeneratorType: 'fal' | 'midjourney' | 'midjourney2' | 'imagine' | 'useapi', resume: boolean = false) => {
+    if (csvData.length === 0) return;
+    
+    setIsBulkGenerating(true);
+    setBulkJobType(imageGeneratorType);
+    setApiError(null);
+    
+    if (!zipRef.current) {
+        zipRef.current = new window.JSZip();
+    }
+    
+    const zip = zipRef.current;
+    const pinsFolder = zip.folder("pins");
+    
+    let startIndex = 0;
+    if (resume && lastCompletedRowIndex !== null) {
+        startIndex = lastCompletedRowIndex + 1;
+    } else {
+        setInProgressCsvData([]); 
+    }
+
+    const updatedCsvData = resume ? [...inProgressCsvData] : [];
+
+    try {
+        for (let i = startIndex; i < csvData.length; i++) {
+            setCurrentRowIndex(i);
+            setBulkMessage(`Processing row ${i + 1} of ${csvData.length}...`);
+            await sleep(300); // Wait for state to update UI
+
+            const row = csvData[i];
+            let description = row.description;
+            let keywords = row.keywords;
+            
+            // Auto-generate text if missing
+            if (!description && userApiKey) {
+                try { description = await generateDescription(userApiKey, templateData.textModel, row.title, row.keywords); } catch(e) {}
+                setPersistedData(prev => ({ ...prev, description })); 
+            }
+            if (!keywords && userApiKey) {
+                try { keywords = await generateKeywords(userApiKey, templateData.textModel, row.title); } catch(e) {}
+                setPersistedData(prev => ({ ...prev, keywords }));
+            }
+
+            await sleep(200);
+
+            const imagePrompt = row.imagePrompt || row.title;
+            
+            // Determine how many images are needed based on template
+            const needsImage2 = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
+            const needsImage3 = ['6', '19', '21', '28'].includes(templateData.templateId);
+            const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
+
+            try {
+                const safePrompt = await generateSafeImagePrompt(userApiKey, templateData.textModel, imagePrompt);
+                
+                for(let imgIdx=1; imgIdx<=imagesNeeded; imgIdx++) {
+                    let url = '';
+                    if (imageGeneratorType === 'fal' && falAiApiKey) {
+                        url = await generateImage(falAiApiKey, templateData.imageModel, safePrompt, templateData.imageAspectRatio);
+                    } else if (imageGeneratorType === 'useapi' && useapiApiKey) {
+                        const res = await generateImageWithUseApi(useapiApiKey, safePrompt, templateData.imageAspectRatio);
+                        url = res[0] || '';
+                    } else if (imageGeneratorType === 'midjourney' && apiframeApiKey) {
+                        const res = await generateImageWithMidjourney(apiframeApiKey, safePrompt, templateData.imageAspectRatio);
+                        url = res[0] || '';
+                    } else if (imageGeneratorType === 'midjourney2' && midapiApiKey) {
+                        const res = await generateImageWithMidApiAi(midapiApiKey, safePrompt, templateData.imageAspectRatio);
+                        url = res[0] || '';
+                    } else if (imageGeneratorType === 'imagine' && imagineApiKey) {
+                        const res = await generateImageWithImagineApi(imagineApiKey, safePrompt, templateData.imageAspectRatio);
+                        url = res[0] || '';
+                    } else {
+                        url = await generatePlaceholderImage(safePrompt, templateData.imageAspectRatio);
+                    }
+                    
+                    if(url) {
+                        const field = `backgroundImage${imgIdx === 1 ? '' : imgIdx}` as any;
+                        setImageData(prev => ({ ...prev, [field]: url }));
+                    }
+                }
+            } catch (err: any) {
+                console.error("Bulk image gen error:", err);
+                if (err.message && err.message.includes('quota')) throw err;
+            }
+
+            await sleep(3000); // Wait for images to render
+
+            if (previewRef.current) {
+                const blob = await window.htmlToImage.toBlob(previewRef.current, { cacheBust: true, pixelRatio: 2 });
+                if (blob) {
+                    const fileName = `pin-${i+1}-${row.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.png`;
+                    pinsFolder.file(fileName, blob);
+                    
+                    const currentRowFull = fullCsvData[i] || {};
+                    const csvRowOutput = { ...currentRowFull };
+                    const startDate = new Date(templateData.startDate);
+                    const publishDate = new Date(startDate);
+                    publishDate.setDate(startDate.getDate() + Math.floor(i / templateData.pinsPerDay));
+                    
+                    csvRowOutput['Description'] = description;
+                    csvRowOutput['Keywords'] = keywords;
+                    csvRowOutput['Image URL'] = `${templateData.mediaUrlPrefix.replace(/\/$/, '')}/${fileName}`;
+                    csvRowOutput['Publish Date'] = publishDate.toISOString().split('T')[0];
+                    
+                    updatedCsvData.push(csvRowOutput);
+                    setInProgressCsvData([...updatedCsvData]);
+                    setLastCompletedRowIndex(i);
+                }
+            }
+        }
+
+        const zipContent = await zip.generateAsync({ type: "blob" });
+        const allHeaders = new Set<string>();
+        updatedCsvData.forEach(r => Object.keys(r).forEach(k => allHeaders.add(k)));
+        const csvHeaderArr = Array.from(allHeaders);
+        const csvString = [
+            csvHeaderArr.join(','),
+            ...updatedCsvData.map(r => csvHeaderArr.map(h => {
+                const val = r[h] || '';
+                return `"${val.replace(/"/g, '""')}"`;
+            }).join(','))
+        ].join('\r\n');
+        const csvBlob = new Blob([csvString], { type: 'text/csv' });
+
+        setGeneratedAssets({ zip: zipContent, csv: csvBlob });
+        setBulkMessage('Generation Complete! Download your files below.');
+        setLastCompletedRowIndex(null);
+
+    } catch (error: any) {
+        console.error("Bulk generation stopped:", error);
+        setBulkMessage(`Stopped at row ${currentRowIndex ? currentRowIndex + 1 : 0} due to error: ${error.message}`);
+        if (error.message && (error.message.includes('429') || error.message.includes('quota'))) {
+            setApiError({ type: 'quota', message: "API Limit Reached. Wait and click 'Resume' below.", helpLink: error.helpLink });
+        } else {
+            setApiError({ type: 'generic', message: error.message });
+        }
+    } finally {
+        setIsBulkGenerating(false);
+    }
   };
+
   const handleDownloadGeneratedAssets = () => {
-      // Implementation details omitted
+    if (!generatedAssets) return;
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(generatedAssets.zip);
+    link.download = `pins-batch-${new Date().toISOString().split('T')[0]}.zip`;
+    link.click();
+    
+    const csvLink = document.createElement('a');
+    csvLink.href = URL.createObjectURL(generatedAssets.csv);
+    csvLink.download = `pins-schedule-${new Date().toISOString().split('T')[0]}.csv`;
+    csvLink.click();
   };
+
   const handleImportSettings = (data: BackupData) => {
-    // ... implementation ...
+    if (data.adminSettings) setAdminSettings(data.adminSettings);
+    if (data.googleAiApiKey) setUserApiKey(data.googleAiApiKey);
+    if (data.falAiApiKey) setFalAiApiKey(data.falAiApiKey);
+    if (data.apiframeApiKey) setApiframeApiKey(data.apiframeApiKey);
+    if (data.midapiApiKey) setMidapiApiKey(data.midapiApiKey);
+    if (data.openRouterApiKey) setOpenRouterApiKey(data.openRouterApiKey);
+    if (data.imagineApiKey) setImagineApiKey(data.imagineApiKey);
+    if (data.useapiApiKey) setUseapiApiKey(data.useapiApiKey);
+    if (data.pinterestAccounts) setPinterestAccounts(data.pinterestAccounts);
+    alert('Settings imported successfully!');
   };
 
   const allData: BackupData = {
@@ -449,7 +694,6 @@ const App: React.FC = () => {
              return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
     }
   };
-
 
   return (
     <div className="min-h-screen flex flex-col">
