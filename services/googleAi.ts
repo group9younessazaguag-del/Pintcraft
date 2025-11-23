@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow, PinterestAccount, ImageAspectRatio, FacebookPost, FacebookPageStrategy } from '../types';
 
@@ -70,7 +69,6 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
         }
     }
     
-    // Add this to provide a more helpful message for the specific error reported by the user
     if (message.includes('An internal error has occurred')) {
         message = 'The AI model experienced an internal error. This is often temporary. Please try again in a few moments.';
     }
@@ -79,11 +77,6 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
     return { type: 'generic', message, helpLink: helpLink || undefined };
 };
 
-/**
- * Wraps an API call with a retry mechanism to handle transient server errors.
- * @param apiCall The function that makes the API call.
- * @returns The result of the API call.
- */
 async function generateWithRetry(apiCall: () => Promise<any>) {
     const MAX_RETRIES = 3;
     let lastError: any = null;
@@ -95,24 +88,21 @@ async function generateWithRetry(apiCall: () => Promise<any>) {
             lastError = error;
             const errorString = JSON.stringify(error).toLowerCase();
             
-            // These are signs of transient issues that might be resolved by retrying.
             const isRetryable = 
-                errorString.includes('500') ||       // Internal Server Error
-                errorString.includes('503') ||       // Service Unavailable
-                errorString.includes('xhr error') || // Network issue
-                errorString.includes('rpc failed') || // another form of network issue
-                errorString.includes('unavailable'); // Service unavailable status
+                errorString.includes('500') ||       
+                errorString.includes('503') ||       
+                errorString.includes('xhr error') || 
+                errorString.includes('rpc failed') || 
+                errorString.includes('unavailable'); 
 
             if (isRetryable && attempt < MAX_RETRIES) {
                 console.warn(`Attempt ${attempt}/${MAX_RETRIES} failed with a transient error. Retrying...`, error);
-                await new Promise(resolve => setTimeout(resolve, 1500 * attempt)); // Increasing delay
+                await new Promise(resolve => setTimeout(resolve, 1500 * attempt)); 
             } else {
-                // Not a retryable error, or it's the last attempt. Re-throw the error.
                 throw error;
             }
         }
     }
-    // This code path should be unreachable, but for type safety, we throw the last known error.
     throw lastError;
 }
 
@@ -126,7 +116,7 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 };
 
 export const generateImage = async (
-    apiKey: string, // Fal.ai API key
+    apiKey: string,
     model: string,
     prompt: string,
     aspectRatio: ImageAspectRatio
@@ -196,13 +186,12 @@ export const generateImage = async (
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const generateImageWithMidjourney = async (
-    apiKey: string, // APIFrame.pro API key
+    apiKey: string,
     prompt: string,
     aspectRatio: ImageAspectRatio
 ): Promise<string[]> => {
     const BASE_URL = 'https://api.apiframe.pro';
 
-    // Step 1: Start the image generation job
     const imagineResponse = await fetch(`${BASE_URL}/imagine`, {
         method: 'POST',
         headers: {
@@ -253,10 +242,9 @@ export const generateImageWithMidjourney = async (
         throw new Error('APIFrame.pro did not return a task ID.');
     }
 
-    // Step 2: Poll for the job result using the /fetch endpoint
     let jobStatus = '';
     let jobData;
-    const maxAttempts = 30; // ~150 seconds timeout
+    const maxAttempts = 30; 
     let attempt = 0;
 
     while (jobStatus !== 'finished' && attempt < maxAttempts) {
@@ -305,7 +293,6 @@ export const generateImageWithMidjourney = async (
         throw new Error('The AI model did not return any valid image URLs. See browser console for the full API response.');
     }
 
-    // Step 3: Fetch all images and convert to base64 in parallel
     const base64Images = await Promise.all(
         imageUrls.map(async (url: string) => {
             try {
@@ -333,7 +320,7 @@ export const generateImageWithMidjourney = async (
 };
 
 export const generateImageWithMidApiAi = async (
-    apiKey: string, // midapi.ai API key
+    apiKey: string,
     prompt: string,
     aspectRatio: ImageAspectRatio,
     onProgressUpdate?: (message: string) => void
@@ -500,21 +487,19 @@ export const generateImageWithMidApiAi = async (
 };
 
 export const generateImageWithImagineApi = async (
-    apiKey: string, // ImagineAPI key
+    apiKey: string,
     prompt: string,
     aspectRatio: ImageAspectRatio,
     onProgressUpdate?: (message: string) => void
 ): Promise<string[]> => {
     
     const generationTask = async (): Promise<string[]> => {
-        const BASE_URL = 'https://api.imagineapi.dev/v1'; // Made up URL
+        const BASE_URL = 'https://api.imagineapi.dev/v1';
 
-        // Map local aspect ratio to API's expected value
         let apiAspectRatio = '1:1';
         if (aspectRatio === '9:16') apiAspectRatio = '9:16';
         if (aspectRatio === '3:4') apiAspectRatio = '3:4';
 
-        // 1. Start generation
         if (onProgressUpdate) onProgressUpdate('Submitting image generation task...');
         const generateResponse = await fetch(`${BASE_URL}/generations`, {
             method: 'POST',
@@ -553,8 +538,7 @@ export const generateImageWithImagineApi = async (
         
         if (onProgressUpdate) onProgressUpdate('Task submitted. Waiting for result (~30s)...');
 
-        // 2. Poll for result
-        const maxPollAttempts = 20; // ~100 seconds
+        const maxPollAttempts = 20;
         let pollAttempt = 0;
         let taskData;
 
@@ -592,7 +576,6 @@ export const generateImageWithImagineApi = async (
             throw new Error('ImagineAPI did not return any valid image URLs.');
         }
 
-        // 3. Fetch images and convert to base64
         const base64Images = await Promise.all(
             imageUrls.map(async (url: string) => {
                 try {
@@ -617,7 +600,6 @@ export const generateImageWithImagineApi = async (
         return validImages;
     };
     
-    // Using a retry wrapper for robustness, similar to MidApiAi
     const maxRetries = 3;
     for (let retryAttempt = 1; retryAttempt <= maxRetries; retryAttempt++) {
         try {
@@ -644,7 +626,7 @@ export const generateImageWithImagineApi = async (
 };
 
 export const generateImageWithUseApi = async (
-    apiKey: string, // useapi.net API key
+    apiKey: string,
     prompt: string,
     aspectRatio: ImageAspectRatio,
     onProgressUpdate?: (message: string) => void
@@ -737,7 +719,6 @@ export const generateImageWithUseApi = async (
         const base64Images = await Promise.all(
             imageUrls.map(async (url: string) => {
                 try {
-                    // Correctly use the official useapi.net proxy as per the provided documentation.
                     const proxyUrl = `https://api.useapi.net/v1/proxy/cdn-midjourney/?cdnUrl=${encodeURIComponent(url)}`;
                     
                     const imageResponse = await fetch(proxyUrl, {
@@ -766,7 +747,6 @@ export const generateImageWithUseApi = async (
         return validImages;
     };
     
-    // Retry wrapper for robustness
     const maxRetries = 3;
     for (let retryAttempt = 1; retryAttempt <= maxRetries; retryAttempt++) {
         try {
@@ -898,7 +878,7 @@ export const generateShortTitle = async (apiKey: string, model: string, title: s
             contents: prompt
         }));
         
-        return response.text.trim().replace(/"/g, ''); // Remove quotes from the response
+        return response.text.trim().replace(/"/g, ''); 
     } catch (error: any) {
         throw getApiErrorDetails(error);
     }
@@ -907,7 +887,6 @@ export const generateShortTitle = async (apiKey: string, model: string, title: s
 export const generateSafeImagePrompt = async (apiKey: string, model: string, title: string): Promise<string> => {
     try {
         if (!apiKey) {
-            // Fallback if no Google AI key is available
             return `A high-quality, visually appealing image related to: ${title}`;
         }
         const ai = new GoogleGenAI({ apiKey });
@@ -925,7 +904,6 @@ export const generateSafeImagePrompt = async (apiKey: string, model: string, tit
 
         return response.text.trim().replace(/"/g, '');
     } catch (error: any) {
-        // If this itself fails, we can't do much. Re-throw the error.
         throw getApiErrorDetails(error);
     }
 };
@@ -1011,20 +989,16 @@ export const generatePinContentFromKeyword = async (
         let parsedObject;
 
         try {
-            // First, try to parse directly, which is most efficient.
             parsedObject = JSON.parse(jsonText);
         } catch (e) {
-            // If direct parsing fails, attempt recovery.
             console.warn("Direct JSON parsing failed, attempting recovery.", jsonText);
             
             let recoveredJsonString = null;
 
-            // Recovery Attempt 1: Extract from markdown block
             const markdownMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
             if (markdownMatch && markdownMatch[1]) {
                 recoveredJsonString = markdownMatch[1];
             } else {
-                // Recovery Attempt 2: Find first '{' and last '}'
                 const startIndex = jsonText.indexOf('{');
                 const endIndex = jsonText.lastIndexOf('}');
                 if (startIndex !== -1 && endIndex > startIndex) {
@@ -1042,7 +1016,6 @@ export const generatePinContentFromKeyword = async (
                     throw err;
                 }
             } else {
-                // All recovery methods failed
                 console.error("The AI response does not appear to contain a JSON object.", jsonText);
                 const err = new Error("The AI response does not appear to contain a JSON object.");
                 (err as any).originalText = jsonText;
@@ -1050,7 +1023,6 @@ export const generatePinContentFromKeyword = async (
             }
         }
 
-        // Ensure all fields are correctly typed
         const finalObject: GeneratedContentRow = {
             keyword: keyword,
             title: String(parsedObject.title || ''),
@@ -1073,23 +1045,14 @@ export const generatePinContentFromKeyword = async (
     }
 };
 
-/**
- * Attempts to repair a malformed JSON string commonly produced by LLMs.
- * It removes comments and trailing commas.
- * @param jsonString The potentially malformed JSON string.
- * @returns A cleaned JSON string.
- */
 const repairJson = (jsonString: string): string => {
     if (!jsonString) return '';
     let repaired = jsonString.trim();
 
-    // Remove JS-style comments
     repaired = repaired.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
     
-    // Remove trailing commas from objects
     repaired = repaired.replace(/,(\s*})/g, '$1');
     
-    // Remove trailing commas from arrays
     repaired = repaired.replace(/,(\s*])/g, '$1');
 
     return repaired;
@@ -1103,7 +1066,7 @@ export const generatePinContentFromKeywordWithOpenRouter = async (
     categoryOptions?: string
 ): Promise<GeneratedContentRow> => {
     try {
-        let systemPrompt = DEFAULT_CONTENT_PROMPT; // Reusing the same detailed prompt
+        let systemPrompt = DEFAULT_CONTENT_PROMPT; 
 
         if (boardOptions && boardOptions.trim()) {
             systemPrompt += `\n\n**Constraint for 'board':** You MUST choose one board from this list: [${boardOptions}]. Do not invent a new one.`;
@@ -1129,6 +1092,7 @@ export const generatePinContentFromKeywordWithOpenRouter = async (
                     { role: "user", content: userPrompt },
                 ],
                 response_format: { type: "json_object" },
+                max_tokens: 2048,
             }),
         });
 
@@ -1148,7 +1112,6 @@ export const generatePinContentFromKeywordWithOpenRouter = async (
             throw new Error("OpenRouter response did not contain valid content.");
         }
         
-        // 1. Extract potential JSON string from response
         let potentialJson = jsonText.trim();
         const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
         
@@ -1162,14 +1125,12 @@ export const generatePinContentFromKeywordWithOpenRouter = async (
             }
         }
         
-        // If we couldn't find a JSON object, throw an error.
         if (!potentialJson.startsWith('{') || !potentialJson.endsWith('}')) {
              const err = new Error("The AI response does not appear to contain a JSON object.");
              (err as any).originalText = jsonText;
              throw err;
         }
         
-        // 2. Try to parse it; if it fails, try to repair it and parse again.
         let parsedObject;
         try {
             parsedObject = JSON.parse(potentialJson);
@@ -1252,13 +1213,14 @@ export const rewriteKeywordWithOpenRouter = async (apiKey: string, model: string
                 messages: [
                     { role: "user", content: prompt },
                 ],
+                max_tokens: 1024,
             }),
         });
         
         if (!response.ok) {
             const errorData = await response.json();
             console.error('OpenRouter rewrite API error:', errorData);
-            return keyword; // return original on error
+            return keyword; 
         }
 
         const result = await response.json();
@@ -1536,6 +1498,7 @@ For the given topic, you must generate a complete, engaging Facebook post by cho
                     { role: "user", content: userPrompt },
                 ],
                 response_format: { type: "json_object" },
+                max_tokens: 2048,
             }),
         });
 
@@ -1610,35 +1573,37 @@ For the given topic, you must generate a complete, engaging Facebook post by cho
     }
 };
 
-// FIX: Add missing rewriteDescriptionWithOpenRouter function
-export const rewriteDescriptionWithOpenRouter = async (
+export const rewriteTitleAndDescription = async (
     apiKey: string,
     model: string,
     title: string,
-    description: string,
+    description: string
 ): Promise<{ title: string; description: string }> => {
     try {
-        const systemPrompt = `You are an expert Pinterest SEO marketer for bloggers. Your task is to rewrite a given pin title and description to be more engaging, clickable, and optimized for Pinterest search, while staying true to the original topic.
 
-**RULES:**
+        const systemPrompt = `You are a Pinterest SEO expert for bloggers, not e-commerce. Your task is to rewrite a given pin title and description to be more engaging, clickable, and optimized for Pinterest search, while staying true to the original topic. The goal is to drive traffic to a blog post.
+
+**CRITICAL RULES:**
 1.  **Title:**
     *   Make it catchy and keyword-rich.
-    *   Aim for a length between 50-70 characters.
     *   Capitalize it in a natural, title-case way.
     *   **NO EMOJIS.**
 2.  **Description:**
-    *   Rewrite it to be engaging and conversational.
+    *   Rewrite it to be engaging and conversational, as if for a blog post.
     *   Naturally include 3-5 relevant keywords.
-    *   Keep it under 200 characters.
-    *   Include a soft call-to-action (e.g., "Discover more...", "Find the full recipe...").
+    *   Include a soft call-to-action (e.g., "Discover more...", "Find the full recipe on the blog...").
     *   **NO HASHTAGS.**
+3.  **ABSOLUTELY FORBIDDEN TERMS:**
+    *   Your response must **NEVER** include commercial or e-commerce terms.
+    *   Do NOT use: "Etsy", "eBay", "Amazon", "shop", "buy now", "purchase", "digital download", "printable", "product", "listing", "store".
+    *   The content should feel like it's from a blog, not a store.
 
 **CRITICAL OUTPUT INSTRUCTIONS:**
 *   Your entire response MUST be ONLY a single, valid JSON object.
 *   The JSON object must have two keys: "title" and "description".
 *   Do NOT include any text, commentary, or markdown.`;
 
-        const userPrompt = `Rewrite the following content:
+        const userPrompt = `Rewrite the following content for a blog post:
 Original Title: "${title}"
 Original Description: "${description}"`;
 
@@ -1657,6 +1622,142 @@ Original Description: "${description}"`;
                     { role: "user", content: userPrompt },
                 ],
                 response_format: { type: "json_object" },
+                max_tokens: 2048,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            const specificError = new Error(message);
+            (specificError as any).type = response.status === 429 ? 'quota' : 'generic';
+            throw specificError;
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('{');
+            const endIndex = potentialJson.lastIndexOf('}');
+            if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            }
+        }
+        
+        if (!potentialJson.startsWith('{') || !potentialJson.endsWith('}')) {
+             const err = new Error("The AI response does not appear to contain a JSON object.");
+             (err as any).originalText = jsonText;
+             throw err;
+        }
+
+        let parsedObject;
+        try {
+            parsedObject = JSON.parse(potentialJson);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting to repair.", { error: e, json: potentialJson });
+            try {
+                const repairedJson = repairJson(potentialJson);
+                parsedObject = JSON.parse(repairedJson);
+            } catch (repairError) {
+                 console.error("Failed to parse even after repairing JSON.", { error: repairError, original: potentialJson });
+                 const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                 (err as any).originalText = jsonText;
+                 throw err;
+            }
+        }
+
+        return {
+            title: String(parsedObject.title || ''),
+            description: String(parsedObject.description || ''),
+        };
+
+    } catch (error: any) {
+        console.error("Error in rewriteTitleAndDescription:", error);
+        if (error.type) {
+            throw error;
+        }
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
+};
+
+export const rewriteDescriptionWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    title: string,
+    description: string,
+    titleLength: number,
+    descriptionLength: number,
+): Promise<{ title: string; description: string }> => {
+    try {
+        let descriptionRule;
+
+        if (descriptionLength > 420) {
+            descriptionRule = `The original description is too long (${descriptionLength} characters). **You MUST shorten it to a maximum of 420 characters.** While shortening, keep the most important keywords and the core message.`;
+        } else if (descriptionLength < 50 && descriptionLength > 0) {
+            descriptionRule = `The original description is very short (${descriptionLength} characters). Expand it slightly to be more engaging, aiming for a length between 80-120 characters.`;
+        } else if (descriptionLength === 0) {
+            descriptionRule = `The original description is empty. Create a new one that is engaging and between 150-200 characters long, based on the title.`;
+        } else {
+            descriptionRule = `The rewritten description's character count MUST be almost exactly the same as the original description's length of **${descriptionLength} characters**. A variation of only +/- 5 characters is allowed.`;
+        }
+
+        const systemPrompt = `You are an expert Pinterest SEO copy editor for bloggers, not e-commerce. 
+Your #1 primary goal is to **REPHRASE AND REFINE** the existing text provided by the user. 
+Your secondary goal is to improve its SEO and engagement for Pinterest.
+
+**PRIMARY DIRECTIVE: DO NOT ADD NEW INFORMATION**
+- You must work **ONLY** with the ideas, concepts, facts, and keywords already present in the original title and description.
+- **DO NOT** add new ideas "from your brain".
+- The rewritten content should be a better, more polished version of the original, not a new piece of content.
+
+**CRITICAL RULES:**
+1.  **LENGTH PRESERVATION:**
+    *   **Title:** The rewritten title's character count MUST be extremely close to the original's length of **${titleLength} characters**. A variation of only **+/- 3 characters** is allowed.
+    *   **Description:** Follow this specific rule: ${descriptionRule}
+2.  **REFINEMENT:**
+    *   **Title:** Make it catchy and keyword-rich using words from the original content. Capitalize naturally. **NO EMOJIS.**
+    *   **Description:** Make it more conversational. Naturally weave in keywords that are **already present** in the original text. Include a soft call-to-action (e.g., "Discover more..."). **NO HASHTAGS.**
+3.  **ABSOLUTELY FORBIDDEN TERMS:**
+    *   Your response must **NEVER** include commercial terms. Do NOT use: "Etsy", "eBay", "Amazon", "shop", "buy now", "purchase", "digital download", "printable", "product", "listing", "store".
+4.  **SELF-CORRECTION:** Before returning your answer, double-check the character counts of your rewritten text against the strict length rules. Revise it if it doesn't match.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object with keys "title" and "description".
+*   Do NOT include any text, commentary, or markdown.`;
+
+        const userPrompt = `Rewrite the following content for a blog post, following all rules:
+Original Title: "${title}"
+Original Description: "${description}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 2048,
             }),
         });
 
@@ -1726,7 +1827,6 @@ Original Description: "${description}"`;
         throw newError;
     }
 };
-
 
 export const generateFacebookPageStrategy = async (
     apiKey: string,
@@ -1951,6 +2051,7 @@ CRITICAL OUTPUT INSTRUCTIONS:
                     { role: "user", content: systemPrompt },
                 ],
                 response_format: { type: "json_object" },
+                max_tokens: 2048,
             }),
         });
 
@@ -1968,7 +2069,6 @@ CRITICAL OUTPUT INSTRUCTIONS:
             throw new Error("OpenRouter response did not contain valid content.");
         }
 
-         // 1. Extract potential JSON string from response
         let potentialJson = jsonText.trim();
         const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
         
@@ -1980,7 +2080,6 @@ CRITICAL OUTPUT INSTRUCTIONS:
             if (startIndex !== -1 && endIndex > startIndex) {
                 potentialJson = potentialJson.substring(startIndex, endIndex + 1);
             } else {
-                 // Try object format if array format failed
                 const startObj = potentialJson.indexOf('{');
                 const endObj = potentialJson.lastIndexOf('}');
                 if (startObj !== -1 && endObj > startObj) {
@@ -1993,7 +2092,6 @@ CRITICAL OUTPUT INSTRUCTIONS:
         try {
             parsed = JSON.parse(potentialJson);
         } catch (e) {
-             // Try repair
              try {
                 const repaired = repairJson(potentialJson);
                 parsed = JSON.parse(repaired);
@@ -2006,7 +2104,6 @@ CRITICAL OUTPUT INSTRUCTIONS:
         if (Array.isArray(parsed)) {
             return parsed.map(String);
         } else if (typeof parsed === 'object' && parsed !== null) {
-             // Sometimes models return { "quotes": [...] }
              const values = Object.values(parsed);
              if (values.length > 0 && Array.isArray(values[0])) {
                  return values[0].map(String);
@@ -2143,6 +2240,7 @@ export const enhanceViralQuoteWithOpenRouter = async (
                     { role: "user", content: systemPrompt },
                 ],
                 response_format: { type: "json_object" },
+                max_tokens: 2048,
             }),
         });
 
@@ -2213,14 +2311,20 @@ export const generateSoraVideoPrompt = async (
     apiKey: string,
     model: string,
     quote: string,
+    includeOverlay: boolean = false
 ): Promise<string> => {
     try {
         const ai = new GoogleGenAI({ apiKey });
+        const overlayInstruction = includeOverlay 
+            ? 'Text Overlay: The quote MUST be visually displayed on the screen as text, in an elegant, readable font (approx 40px size), perfectly timed with the voiceover.'
+            : 'Text Overlay: None. The video should be clean with no text on screen.';
+
         const prompt = `Create a breathtaking, high-fidelity text-to-video prompt suitable for Sora v2 based on this quote: "${quote}".
 
 Visuals: A cinematic masterpiece. High-angle drone shot looking down at a solitary figure walking slowly through a stunningly beautiful, vast landscape that matches the deep emotion of the quote. The scene should be bathed in the soft, golden glow of magic hour or ethereal twilight. Rich, vivid colors, soft cinematic lighting, and a dreamy atmosphere. 8k resolution, photorealistic, award-winning cinematography.
 Examples of landscapes (choose one that fits best): A pristine beach with turquoise waves at sunset, a field of glowing flowers under a starry sky, a majestic snowy mountain ridge, or a misty ancient forest with sunbeams filtering through.
 Audio: The video MUST include a clear, professional voiceover narrating exactly this text: "${quote}". No background music, just immersive natural ambient sounds (e.g., waves crashing, wind in trees, crunching snow, birds chirping) and the voice.
+${overlayInstruction}
 
 Output ONLY the prompt text. Do not add quotes or intro text.`;
 
@@ -2244,13 +2348,19 @@ export const generateSoraVideoPromptWithOpenRouter = async (
     apiKey: string,
     model: string,
     quote: string,
+    includeOverlay: boolean = false
 ): Promise<string> => {
     try {
-        const systemPrompt = `Create a breathtaking, high-fidelity text-to-video prompt suitable for Sora v2 based on this quote: "${quote}".
+        const overlayInstruction = includeOverlay 
+            ? 'Text Overlay: The quote MUST be visually displayed on the screen as text, in an elegant, readable font (approx 40px size), perfectly timed with the voiceover.'
+            : 'Text Overlay: None. The video should be clean with no text on screen.';
+
+        const systemPrompt = `Create a breathtaking, high-fidelity text-to-video prompt suitable for Sora v2 based on the user's quote.
 
 Visuals: A cinematic masterpiece. High-angle drone shot looking down at a solitary figure walking slowly through a stunningly beautiful, vast landscape that matches the deep emotion of the quote. The scene should be bathed in the soft, golden glow of magic hour or ethereal twilight. Rich, vivid colors, soft cinematic lighting, and a dreamy atmosphere. 8k resolution, photorealistic, award-winning cinematography.
 Examples of landscapes (choose one that fits best): A pristine beach with turquoise waves at sunset, a field of glowing flowers under a starry sky, a majestic snowy mountain ridge, or a misty ancient forest with sunbeams filtering through.
-Audio: The video MUST include a clear, professional voiceover narrating exactly this text: "${quote}". No background music, just immersive natural ambient sounds (e.g., waves crashing, wind in trees, crunching snow, birds chirping) and the voice.
+Audio: The video MUST include a clear, professional voiceover narrating the provided quote exactly. No background music, just immersive natural ambient sounds (e.g., waves crashing, wind in trees, crunching snow, birds chirping) and the voice.
+${overlayInstruction}
 
 Output ONLY the prompt text. Do not add quotes or intro text.`;
         
@@ -2270,6 +2380,7 @@ Output ONLY the prompt text. Do not add quotes or intro text.`;
                     { role: "system", content: systemPrompt },
                     { role: "user", content: userPrompt },
                 ],
+                max_tokens: 2048,
             }),
         });
 

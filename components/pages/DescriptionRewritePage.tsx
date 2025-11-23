@@ -81,7 +81,6 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
             }
 
             const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().trim());
-            // Flexible header matching
             const findHeaderIndex = (keys: string[]): number => {
                 for (const key of keys) {
                     const index = headers.findIndex(h => h.includes(key));
@@ -142,7 +141,9 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                     openRouterApiKey,
                     openRouterModel,
                     workingData[i].originalTitle,
-                    workingData[i].originalDescription
+                    workingData[i].originalDescription,
+                    workingData[i].originalTitle.length,
+                    workingData[i].originalDescription.length
                 );
                 
                 workingData[i].rewrittenTitle = result.title;
@@ -181,7 +182,6 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
             return value;
         };
 
-        // Updated headers to include rewritten title
         const headers = ['Original Title', 'Rewritten Title', 'Original Description', 'Rewritten Description'];
         const headerString = headers.join(',');
 
