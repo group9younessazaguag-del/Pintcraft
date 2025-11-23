@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -36,7 +37,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'rewrite-title-description';
+  return hash || 'pin-generator';
 };
 
 
@@ -180,8 +181,7 @@ const App: React.FC = () => {
         backgroundImage3: null,
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentRowIndex]);
+  }, [currentRowIndex, csvData, setPersistedData]);
 
   const handleFieldChange = (field: keyof TemplateData, value: any) => {
     if (apiError) setApiError(null);
@@ -210,7 +210,9 @@ const App: React.FC = () => {
 
   const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
     const csvImagePrompt = currentRowIndex !== null && csvData[currentRowIndex]?.imagePrompt ? csvData[currentRowIndex].imagePrompt : null;
-    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : null) || templateData.title;
+    const csvTitle = currentRowIndex !== null && csvData[currentRowIndex]?.title ? csvData[currentRowIndex].title : null;
+    
+    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : csvTitle) || templateData.title;
 
     if (!userPrompt) {
         const msg = 'Please enter a Title or have an Image Prompt in your CSV to generate an image.';
@@ -262,7 +264,9 @@ const App: React.FC = () => {
 
   const handleGenerateImageWithMidjourney = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
     const csvImagePrompt = currentRowIndex !== null && csvData[currentRowIndex]?.imagePrompt ? csvData[currentRowIndex].imagePrompt : null;
-    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : null) || templateData.title;
+    const csvTitle = currentRowIndex !== null && csvData[currentRowIndex]?.title ? csvData[currentRowIndex].title : null;
+    
+    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : csvTitle) || templateData.title;
 
     if (!userPrompt) {
         const msg = 'Please enter a Title or have an Image Prompt in your CSV to generate an image.';
@@ -314,7 +318,9 @@ const App: React.FC = () => {
 
   const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
     const csvImagePrompt = currentRowIndex !== null && csvData[currentRowIndex]?.imagePrompt ? csvData[currentRowIndex].imagePrompt : null;
-    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : null) || templateData.title;
+    const csvTitle = currentRowIndex !== null && csvData[currentRowIndex]?.title ? csvData[currentRowIndex].title : null;
+    
+    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : csvTitle) || templateData.title;
 
     if (!userPrompt) {
         const msg = 'Please enter a Title or have an Image Prompt in your CSV to generate an image.';
@@ -367,7 +373,9 @@ const App: React.FC = () => {
 
   const handleGenerateImageWithImagineApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
     const csvImagePrompt = currentRowIndex !== null && csvData[currentRowIndex]?.imagePrompt ? csvData[currentRowIndex].imagePrompt : null;
-    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : null) || templateData.title;
+    const csvTitle = currentRowIndex !== null && csvData[currentRowIndex]?.title ? csvData[currentRowIndex].title : null;
+    
+    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : csvTitle) || templateData.title;
 
     if (!userPrompt) {
         const msg = 'Please enter a Title or have an Image Prompt in your CSV to generate an image.';
@@ -420,7 +428,9 @@ const App: React.FC = () => {
 
   const handleGenerateImageWithUseApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
     const csvImagePrompt = currentRowIndex !== null && csvData[currentRowIndex]?.imagePrompt ? csvData[currentRowIndex].imagePrompt : null;
-    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : null) || templateData.title;
+    const csvTitle = currentRowIndex !== null && csvData[currentRowIndex]?.title ? csvData[currentRowIndex].title : null;
+    
+    const userPrompt = overridePrompt || (csvImagePrompt && csvImagePrompt.trim() ? csvImagePrompt : csvTitle) || templateData.title;
 
     if (!userPrompt) {
         const msg = 'Please enter a Title or have an Image Prompt in your CSV to generate an image.';
@@ -829,97 +839,72 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
             const generatorName = imageGenerator === 'midjourney' ? 'Midjourney' : imageGenerator === 'midjourney2' ? 'midapi.ai' : imageGenerator === 'imagine' ? 'ImagineAPI' : imageGenerator === 'useapi' ? 'useapi.net' : 'Fal.ai';
             setBulkMessage(`Row ${i + 1}: Generating images with ${generatorName}...`);
-
-            const originalRowData = currentRunCsvData[i];
-            const imagePromptHeader = Object.keys(originalRowData).find(h => h.toLowerCase().trim() === 'image prompt');
-            const imagePromptValue = imagePromptHeader ? originalRowData[imagePromptHeader] : null;
             
-            const prompt = imagePromptValue || currentData.title;
+            const originalPrompt = currentData.title; // ALWAYS use the title from the CSV data for the prompt
             let imageGenerated = false;
 
-            if (prompt) {
-                try {
-                    const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
-                    const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
-                    const imagesNeeded = 1 + (templateNeeds2Images ? 1 : 0) + (templateNeeds3Images ? 1 : 0);
-                    
-                    for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
-                         if (imageGenerator === 'midjourney') {
-                            if (mjApiKey) {
-                                await handleGenerateImageWithMidjourney(imgIdx as 1 | 2 | 3, true, prompt);
-                                await sleep(500);
-                            }
-                        } else if (imageGenerator === 'midjourney2') {
-                            if (mj2ApiKey) {
-                                const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                                await handleGenerateImageWithMidApiAi(imgIdx as 1 | 2 | 3, true, prompt, onProgress);
-                                await sleep(500);
-                            }
-                        } else if (imageGenerator === 'imagine') {
-                            if (imgApiKey) {
-                                const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                                await handleGenerateImageWithImagineApi(imgIdx as 1 | 2 | 3, true, prompt, onProgress);
-                                await sleep(500);
-                            }
-                        } else if (imageGenerator === 'useapi') {
-                            if (useApiKey) {
-                                const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                                await handleGenerateImageWithUseApi(imgIdx as 1 | 2 | 3, true, prompt, onProgress);
-                                await sleep(500);
-                            }
-                        } else { // 'fal'
-                            await handleGenerateImage(imgIdx as 1 | 2 | 3, true, prompt);
+            if (originalPrompt) {
+                // This function performs the generation logic, making it reusable for retries.
+                const attemptGeneration = async (promptToUse: string) => {
+                    const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
+                    const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
+
+                    if (isMultiImageGenerator) {
+                        // These handlers return multiple images, so they should be called only once per row.
+                        if (imageGenerator === 'midjourney' && mjApiKey) {
+                            await handleGenerateImageWithMidjourney(1, true, promptToUse);
+                        } else if (imageGenerator === 'midjourney2' && mj2ApiKey) {
+                            await handleGenerateImageWithMidApiAi(1, true, promptToUse, onProgress);
+                        } else if (imageGenerator === 'imagine' && imgApiKey) {
+                            await handleGenerateImageWithImagineApi(1, true, promptToUse, onProgress);
+                        } else if (imageGenerator === 'useapi' && useApiKey) {
+                            await handleGenerateImageWithUseApi(1, true, promptToUse, onProgress);
+                        }
+                    } else { // 'fal' is a single-image generator, so we loop if needed.
+                        const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
+                        const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
+                        const imagesNeeded = 1 + (templateNeeds2Images ? 1 : 0) + (templateNeeds3Images ? 1 : 0);
+                        
+                        for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
+                            await handleGenerateImage(imgIdx as 1 | 2 | 3, true, promptToUse);
                         }
                     }
-                    imageGenerated = true;
+                    await sleep(500); // Give a moment for state to update
+                };
 
+                try {
+                    await attemptGeneration(originalPrompt);
+                    imageGenerated = true;
                 } catch (error: any) {
                     console.warn(`Original image generation failed for row ${i + 1}:`, error);
                     if (error.type === 'quota') {
-                        throw error; // Re-throw critical quota errors
+                        throw error; // Re-throw critical quota errors to stop the process
                     }
                     
                     const isBannedWordsError = error.message && error.message.toLowerCase().includes('banned words');
 
-                    // Attempt to recover from "banned words" error if we have a Google API key for text generation
+                    // Attempt to recover from "banned words" error if we have a Google AI key
                     if (isBannedWordsError && googleApiKey) {
                         setBulkMessage(`Row ${i + 1}: Banned words detected. Regenerating prompt...`);
                         await sleep(100);
 
                         try {
-                            // Use AI to generate a safer prompt from the title
                             const newPrompt = await generateSafeImagePrompt(googleApiKey, templateData.textModel, currentData.title);
                             setBulkMessage(`Row ${i + 1}: Retrying with new prompt...`);
                             
-                            const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
-                            const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
-                            const imagesNeeded = 1 + (templateNeeds2Images ? 1 : 0) + (templateNeeds3Images ? 1 : 0);
-
-                            for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
-                                 if (imageGenerator === 'midjourney') {
-                                    if (mjApiKey) { await handleGenerateImageWithMidjourney(imgIdx as 1 | 2 | 3, true, newPrompt); await sleep(500); }
-                                } else if (imageGenerator === 'midjourney2') {
-                                    if (mj2ApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithMidApiAi(imgIdx as 1 | 2 | 3, true, newPrompt, onProgress); await sleep(500); }
-                                } else if (imageGenerator === 'imagine') {
-                                    if (imgApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithImagineApi(imgIdx as 1 | 2 | 3, true, newPrompt, onProgress); await sleep(500); }
-                                } else if (imageGenerator === 'useapi') {
-                                    if (useApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithUseApi(imgIdx as 1 | 2 | 3, true, newPrompt, onProgress); await sleep(500); }
-                                } else { // 'fal'
-                                    await handleGenerateImage(imgIdx as 1 | 2 | 3, true, newPrompt);
-                                }
-                            }
+                            await attemptGeneration(newPrompt); // Retry with the new, safer prompt
+                            
                             imageGenerated = true;
                             console.log(`Row ${i + 1}: Image generation succeeded on retry.`);
 
                         } catch (retryError: any) {
                              console.warn(`Retry failed for row ${i + 1}:`, retryError);
                              const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
-                             // Add a more specific error message to the user summary
                              generationErrors.push(`Row ${i + 1} (${shortTitle}): Banned words, retry failed: ${retryError.message}`);
                              imageGenerated = false;
                         }
                     } else {
-                        // Original behavior for other errors or if no google key is available to retry
+                        // Handle other errors or if no google key is available to retry
                         const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
                         generationErrors.push(`Row ${i + 1} (${shortTitle}): ${error.message}`);
                         imageGenerated = false;
