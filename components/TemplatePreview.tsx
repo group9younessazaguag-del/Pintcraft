@@ -1485,7 +1485,7 @@ const MontserratVerticalTemplateBrown: React.FC<{ data: TemplateData }> = ({ dat
 
 const ThreePartVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-xl', 'text-2xl', 'text-3xl');
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
