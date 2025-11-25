@@ -1,4 +1,5 @@
 
+
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
 
@@ -1485,7 +1486,7 @@ const MontserratVerticalTemplateBrown: React.FC<{ data: TemplateData }> = ({ dat
 
 const ThreePartVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-xl', 'text-2xl', 'text-3xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-xl', 'text-3xl', 'text-2xl', 80, 50);
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
@@ -1921,7 +1922,74 @@ const FoodieRecipeSplitTemplateStyle4: React.FC<{ data: TemplateData }> = ({ dat
     );
 };
 
-// Fixed: Corrected syntax for the comment and ensured template map is defined
+const SimpleTitleBottomTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, website, backgroundImage } = data;
+
+    return (
+        <div className="w-full h-full relative font-poppins text-white">
+            <BackgroundImage imageUrl={backgroundImage} />
+            {!backgroundImage && <div className="absolute inset-0 bg-slate-700"></div>}
+            
+            <div className="absolute inset-x-0 bottom-0 p-4 bg-black/50 backdrop-blur-sm text-center">
+                {title && (
+                    <h2 
+                        className={`font-lobster text-3xl sm:text-4xl leading-tight text-yellow-300`}
+                        style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.7)', wordBreak: 'break-word' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+                {website && (
+                    <p 
+                        className="text-xs font-bold tracking-widest uppercase mt-1.5 opacity-80"
+                        style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}
+                    >
+                        {website}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const TwoImageSimpleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, website, backgroundImage, backgroundImage2 } = data;
+
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins text-white">
+            {/* Background Images */}
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-slate-300"></div>}
+            </div>
+            <div className="flex-1 relative">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-slate-300"></div>}
+            </div>
+
+            {/* Text Banner Overlay at the bottom */}
+            <div className="absolute inset-x-0 bottom-0 p-4 bg-black/50 backdrop-blur-sm text-center">
+                {title && (
+                    <h2 
+                        className={`font-lobster text-3xl sm:text-4xl leading-tight text-yellow-300`}
+                        style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.7)', wordBreak: 'break-word' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+                {website && (
+                    <p 
+                        className="text-xs font-bold tracking-widest uppercase mt-1.5 opacity-80"
+                        style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}
+                    >
+                        {website}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const templateMap: { [key: string]: React.FC<{ data: TemplateData }> } = {
     '1': ClassicTemplate,
     '2': SplitTemplate,
@@ -1974,6 +2042,8 @@ const templateMap: { [key: string]: React.FC<{ data: TemplateData }> } = {
     '49': FoodieRecipeSplitTemplateStyle2,
     '50': FoodieRecipeSplitTemplateStyle3,
     '51': FoodieRecipeSplitTemplateStyle4,
+    '52': SimpleTitleBottomTemplate,
+    '53': TwoImageSimpleTemplate,
 };
 
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {

@@ -830,15 +830,14 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             const generatorName = imageGenerator === 'midjourney' ? 'Midjourney' : imageGenerator === 'midjourney2' ? 'midapi.ai' : imageGenerator === 'imagine' ? 'ImagineAPI' : imageGenerator === 'useapi' ? 'useapi.net' : 'Fal.ai';
             setBulkMessage(`Row ${i + 1}: Generating images with ${generatorName}...`);
 
-            // This is the corrected logic: Always use the title from the current CSV row.
             const prompt = currentData.title;
             let imageGenerated = false;
 
             if (prompt) {
                 try {
-                    const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
-                    const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
-                    const imagesNeeded = 1 + (templateNeeds2Images ? 1 : 0) + (templateNeeds3Images ? 1 : 0);
+                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId);
+                    const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
+                    const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
                     
                     for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
                          if (imageGenerator === 'midjourney') {
@@ -878,19 +877,17 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     
                     const isBannedWordsError = error.message && error.message.toLowerCase().includes('banned words');
 
-                    // Attempt to recover from "banned words" error if we have a Google API key for text generation
                     if (isBannedWordsError && googleApiKey) {
                         setBulkMessage(`Row ${i + 1}: Banned words detected. Regenerating prompt...`);
                         await sleep(100);
 
                         try {
-                            // Use AI to generate a safer prompt from the title
                             const newPrompt = await generateSafeImagePrompt(googleApiKey, templateData.textModel, currentData.title);
                             setBulkMessage(`Row ${i + 1}: Retrying with new prompt...`);
                             
-                            const templateNeeds2Images = ['1', '3', '6', '13', '19', '20', '21', '22', '23', '27', '28', '34', '35', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50', '51'].includes(templateData.templateId);
-                            const templateNeeds3Images = ['6', '19', '21', '28'].includes(templateData.templateId);
-                            const imagesNeeded = 1 + (templateNeeds2Images ? 1 : 0) + (templateNeeds3Images ? 1 : 0);
+                            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId);
+                            const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
+                            const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
 
                             for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
                                  if (imageGenerator === 'midjourney') {
@@ -911,12 +908,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         } catch (retryError: any) {
                              console.warn(`Retry failed for row ${i + 1}:`, retryError);
                              const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
-                             // Add a more specific error message to the user summary
                              generationErrors.push(`Row ${i + 1} (${shortTitle}): Banned words, retry failed: ${retryError.message}`);
                              imageGenerated = false;
                         }
                     } else {
-                        // Original behavior for other errors or if no google key is available to retry
                         const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
                         generationErrors.push(`Row ${i + 1} (${shortTitle}): ${error.message}`);
                         imageGenerated = false;
