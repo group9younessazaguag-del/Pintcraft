@@ -830,7 +830,7 @@ Description:`;
             contents: prompt
         }));
 
-        return response.text.trim();
+        return response.text?.trim() || "";
     } catch (error: any) {
         throw getApiErrorDetails(error);
     }
@@ -852,7 +852,7 @@ export const generateKeywords = async (apiKey: string, model: string, title: str
             contents: prompt
         }));
 
-        return response.text.trim().replace(/, /g, ',').replace(/\n/g, '');
+        return response.text?.trim().replace(/, /g, ',').replace(/\n/g, '') || "";
     } catch (error: any) {
         throw getApiErrorDetails(error);
     }
@@ -878,7 +878,7 @@ export const generateShortTitle = async (apiKey: string, model: string, title: s
             contents: prompt
         }));
         
-        return response.text.trim().replace(/"/g, ''); 
+        return response.text?.trim().replace(/"/g, '') || title; 
     } catch (error: any) {
         throw getApiErrorDetails(error);
     }
@@ -902,7 +902,7 @@ export const generateSafeImagePrompt = async (apiKey: string, model: string, tit
             contents: prompt
         }));
 
-        return response.text.trim().replace(/"/g, '');
+        return response.text?.trim().replace(/"/g, '') || title;
     } catch (error: any) {
         throw getApiErrorDetails(error);
     }
@@ -985,7 +985,7 @@ export const generatePinContentFromKeyword = async (
             }
         }));
         
-        const jsonText = response.text.trim();
+        const jsonText = response.text?.trim() || "{}";
         let parsedObject;
 
         try {
@@ -1185,7 +1185,7 @@ export const rewriteKeyword = async (apiKey: string, model: string, keyword: str
             contents: prompt
         }));
         
-        const rewritten = response.text.trim().replace(/"/g, '');
+        const rewritten = response.text?.trim().replace(/"/g, '');
         return rewritten || keyword;
     } catch (error: any) {
         console.error("Failed to rewrite keyword:", error);
@@ -1283,7 +1283,7 @@ export const generatePinIdeas = async (
       },
     }));
 
-    return JSON.parse(response.text.trim());
+    return JSON.parse(response.text?.trim() || "[]");
   } catch (error: any) {
     throw getApiErrorDetails(error);
   }
@@ -1330,7 +1330,7 @@ export const getAiSuggestions = async (
       },
     }));
 
-    return JSON.parse(response.text.trim());
+    return JSON.parse(response.text?.trim() || "{}");
   } catch (error: any) {
     throw getApiErrorDetails(error);
   }
@@ -1394,7 +1394,7 @@ Topic: "${topic}"
             }
         }));
 
-        const jsonText = response.text.trim();
+        const jsonText = response.text?.trim() || "{}";
         let parsedObject;
 
         try {
@@ -1903,7 +1903,7 @@ Your entire response MUST be ONLY a single, valid JSON object that strictly foll
             }
         }));
 
-        const jsonText = response.text.trim();
+        const jsonText = response.text?.trim() || "{}";
         const parsedObject = JSON.parse(jsonText);
         return parsedObject as FacebookPageStrategy;
 
@@ -1974,7 +1974,7 @@ CRITICAL OUTPUT INSTRUCTIONS:
             }
         }));
 
-        const jsonText = response.text.trim();
+        const jsonText = response.text?.trim() || "[]";
         const parsedArray = JSON.parse(jsonText);
         
         if (Array.isArray(parsedArray)) {
@@ -2171,7 +2171,7 @@ export const enhanceViralQuote = async (
             }
         }));
 
-        const jsonText = response.text.trim();
+        const jsonText = response.text?.trim() || "[]";
         const parsedArray = JSON.parse(jsonText);
         
         if (Array.isArray(parsedArray)) {
@@ -2333,7 +2333,7 @@ Output ONLY the prompt text. Do not add quotes or intro text.`;
             contents: prompt
         }));
 
-        return response.text.trim();
+        return response.text?.trim() || "";
 
     } catch (error: any) {
         console.error("Error in generateSoraVideoPrompt:", error);
