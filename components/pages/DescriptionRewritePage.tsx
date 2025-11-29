@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { rewriteDescriptionWithOpenRouter } from '../../services/googleAi';
+import type { AdminSettings } from '../../types';
 import CsvIcon from '../icons/CsvIcon';
 import LoadingSpinner from '../icons/LoadingSpinner';
 import DownloadIcon from '../icons/DownloadIcon';
@@ -8,10 +9,13 @@ import ErrorIcon from '../icons/ErrorIcon';
 import SettingsIcon from '../icons/SettingsIcon';
 import RewriteIcon from '../icons/RewriteIcon';
 import { ApiKeyInput, ControlCard } from '../Controls';
+import ProfileIcon from '../icons/ProfileIcon';
+
 
 interface DescriptionRewritePageProps {
     openRouterApiKey: string;
     onSetOpenRouterApiKey: (key: string) => void;
+    adminSettings: AdminSettings;
 }
 
 interface RewriteDataRow {
@@ -19,6 +23,7 @@ interface RewriteDataRow {
     originalDescription: string;
     rewrittenTitle: string;
     rewrittenDescription: string;
+    rewrittenCategory: string;
     status: 'pending' | 'processing' | 'completed' | 'failed';
     error?: string;
 }
@@ -47,16 +52,27 @@ const parseCsvLine = (line: string): string[] => {
     return result;
 };
 
-const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRouterApiKey, onSetOpenRouterApiKey }) => {
+const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRouterApiKey, onSetOpenRouterApiKey, adminSettings }) => {
     const [csvData, setCsvData] = useState<RewriteDataRow[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [progressMessage, setProgressMessage] = useState('');
     const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
     
     const [openRouterModel, setOpenRouterModel] = useState('google/gemini-2.5-flash');
+    const [selectedProfileId, setSelectedProfileId] = useState<string>('');
     
     const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
     useEffect(() => { setOpenRouterApiKeyInput(openRouterApiKey); }, [openRouterApiKey]);
+
+    // Set the default profile when the component loads or profiles change
+    useEffect(() => {
+        const defaultProfile = adminSettings.websiteProfiles.find(p => p.isDefault);
+        if (defaultProfile) {
+            setSelectedProfileId(defaultProfile.id);
+        } else if (adminSettings.websiteProfiles.length > 0) {
+            setSelectedProfileId(adminSettings.websiteProfiles[0].id);
+        }
+    }, [adminSettings.websiteProfiles]);
 
     const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
     const handleClearOpenRouterKey = () => {
@@ -104,6 +120,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                     originalDescription: values[descIndex] || '',
                     rewrittenTitle: '',
                     rewrittenDescription: '',
+                    rewrittenCategory: '',
                     status: 'pending'
                 };
             });
@@ -129,6 +146,9 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
         const workingData = [...csvData];
         let errorCount = 0;
 
+        const selectedProfile = adminSettings.websiteProfiles.find(p => p.id === selectedProfileId);
+        const categoryOptions = selectedProfile?.categoryList.split('\n').filter(Boolean).join(', ');
+
         for (let i = 0; i < workingData.length; i++) {
             if (workingData[i].status === 'completed') continue;
 
@@ -142,12 +162,12 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                     openRouterModel,
                     workingData[i].originalTitle,
                     workingData[i].originalDescription,
-                    workingData[i].originalTitle.length,
-                    workingData[i].originalDescription.length
+                    categoryOptions
                 );
                 
                 workingData[i].rewrittenTitle = result.title;
                 workingData[i].rewrittenDescription = result.description;
+                workingData[i].rewrittenCategory = result.category;
                 workingData[i].status = 'completed';
             } catch (error: any) {
                 console.error(`Failed to rewrite row ${i + 1}:`, error);
@@ -182,7 +202,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
             return value;
         };
 
-        const headers = ['Original Title', 'Rewritten Title', 'Original Description', 'Rewritten Description'];
+        const headers = ['Original Title', 'Rewritten Title', 'Original Description', 'Rewritten Description', 'Category'];
         const headerString = headers.join(',');
 
         const rows = csvData.map(row => {
@@ -190,7 +210,8 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                 escapeCsvCell(row.originalTitle),
                 escapeCsvCell(row.rewrittenTitle || row.originalTitle),
                 escapeCsvCell(row.originalDescription),
-                escapeCsvCell(row.rewrittenDescription || row.originalDescription)
+                escapeCsvCell(row.rewrittenDescription || row.originalDescription),
+                escapeCsvCell(row.rewrittenCategory || '')
             ].join(',');
         });
 
@@ -199,7 +220,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', 'rewritten_content.csv');
+        link.setAttribute('download', 'rewritten_content_with_categories.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -211,7 +232,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
             <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold tracking-tight text-slate-800">Rewrite Title & Description</h1>
                 <p className="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">
-                    Batch optimize your Pinterest Titles and Descriptions for blogging using AI.
+                    Batch optimize your Pinterest Titles, Descriptions, and Categories for blogging using AI.
                 </p>
             </div>
 
@@ -251,7 +272,35 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                         </div>
                     </ControlCard>
 
-                     <ControlCard icon={<CsvIcon/>} title="2. Upload CSV">
+                    <ControlCard icon={<ProfileIcon />} title="2. Website Profile">
+                        <div>
+                           <label htmlFor="profile-select" className="block text-sm font-medium text-slate-600 mb-1.5">Select Profile (for Categories)</label>
+                            <select
+                                id="profile-select"
+                                value={selectedProfileId}
+                                onChange={(e) => setSelectedProfileId(e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                                disabled={adminSettings.websiteProfiles.length === 0}
+                            >
+                                {adminSettings.websiteProfiles.length > 0 ? (
+                                    adminSettings.websiteProfiles.map(profile => (
+                                        <option key={profile.id} value={profile.id}>
+                                            {profile.name} {profile.isDefault && '(Default)'}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option>No profiles configured</option>
+                                )}
+                            </select>
+                            {adminSettings.websiteProfiles.length === 0 && (
+                                <p className="text-xs text-slate-500 mt-1.5">
+                                    Create profiles in the <a href="/#/admin" className="underline text-pink-600">Admin Panel</a> to provide category lists.
+                                </p>
+                            )}
+                        </div>
+                    </ControlCard>
+
+                     <ControlCard icon={<CsvIcon/>} title="3. Upload CSV">
                         <div className="space-y-4">
                             <input
                                 id="csv-upload"
@@ -266,7 +315,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                         </div>
                     </ControlCard>
 
-                     <ControlCard icon={<RewriteIcon className="w-6 h-6" />} title="3. Rewrite">
+                     <ControlCard icon={<RewriteIcon className="w-6 h-6" />} title="4. Rewrite">
                         <div className="space-y-3">
                              <button
                                 onClick={handleRewriteDescriptions}
@@ -275,7 +324,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                             >
                                 {isLoading ? (
                                     <><LoadingSpinner className="mr-3" /> Processing...</>
-                                ) : '✨ Rewrite Titles & Descriptions'}
+                                ) : '✨ Rewrite All'}
                             </button>
                              {progressMessage && (
                                 <p className="text-sm text-center text-slate-600 bg-slate-100 p-3 rounded-lg border border-slate-200">{progressMessage}</p>
@@ -290,7 +339,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                     </ControlCard>
                     
                     {csvData.some(r => r.status === 'completed') && !isLoading && (
-                        <ControlCard icon={<DownloadIcon />} title="4. Download Results">
+                        <ControlCard icon={<DownloadIcon />} title="5. Download Results">
                             <button
                                 onClick={handleDownloadCsv}
                                 className="w-full flex items-center justify-center px-4 py-2.5 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105"
@@ -313,10 +362,11 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                <thead className="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0">
                                    <tr>
                                        <th scope="col" className="px-4 py-3 w-10">#</th>
-                                       <th scope="col" className="px-4 py-3 w-1/4">Original Title</th>
-                                       <th scope="col" className="px-4 py-3 w-1/4 bg-green-50">New Title</th>
-                                       <th scope="col" className="px-4 py-3 w-1/4">Original Desc</th>
-                                       <th scope="col" className="px-4 py-3 w-1/4 bg-green-50">New Desc</th>
+                                       <th scope="col" className="px-4 py-3">Original Title</th>
+                                       <th scope="col" className="px-4 py-3 bg-green-50">New Title</th>
+                                       <th scope="col" className="px-4 py-3">Original Desc</th>
+                                       <th scope="col" className="px-4 py-3 bg-green-50">New Desc</th>
+                                       <th scope="col" className="px-4 py-3 bg-green-50">New Category</th>
                                        <th scope="col" className="px-4 py-3 w-10">Status</th>
                                    </tr>
                                </thead>
@@ -329,6 +379,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                                <td className="px-4 py-3 font-medium text-green-700 text-xs bg-green-50/30">{row.rewrittenTitle}</td>
                                                <td className="px-4 py-3 text-slate-500 text-xs">{row.originalDescription}</td>
                                                <td className="px-4 py-3 text-slate-900 font-medium bg-green-50/30 text-xs">{row.rewrittenDescription}</td>
+                                               <td className="px-4 py-3 font-semibold text-blue-700 text-xs bg-blue-50/30">{row.rewrittenCategory}</td>
                                                <td className="px-4 py-3">
                                                    {row.status === 'pending' && <span className="text-slate-400">...</span>}
                                                    {row.status === 'processing' && <LoadingSpinner className="w-4 h-4 text-indigo-500"/>}
@@ -339,7 +390,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                        ))
                                    ) : (
                                        <tr>
-                                           <td colSpan={6} className="text-center py-10 px-4 text-slate-500">
+                                           <td colSpan={7} className="text-center py-10 px-4 text-slate-500">
                                                Upload a CSV file to begin.
                                            </td>
                                        </tr>

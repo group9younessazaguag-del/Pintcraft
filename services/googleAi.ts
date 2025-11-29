@@ -1698,23 +1698,10 @@ export const rewriteDescriptionWithOpenRouter = async (
     model: string,
     title: string,
     description: string,
-    titleLength: number,
-    descriptionLength: number,
-): Promise<{ title: string; description: string }> => {
+    categoryOptions?: string
+): Promise<{ title: string; description: string; category: string }> => {
     try {
-        let descriptionRule;
-
-        if (descriptionLength > 420) {
-            descriptionRule = `The original description is too long (${descriptionLength} characters). **You MUST shorten it to a maximum of 420 characters.** While shortening, keep the most important keywords and the core message.`;
-        } else if (descriptionLength < 50 && descriptionLength > 0) {
-            descriptionRule = `The original description is very short (${descriptionLength} characters). Expand it slightly to be more engaging, aiming for a length between 80-120 characters.`;
-        } else if (descriptionLength === 0) {
-            descriptionRule = `The original description is empty. Create a new one that is engaging and between 150-200 characters long, based on the title.`;
-        } else {
-            descriptionRule = `The rewritten description's character count MUST be almost exactly the same as the original description's length of **${descriptionLength} characters**. A variation of only +/- 5 characters is allowed.`;
-        }
-
-        const systemPrompt = `You are an expert Pinterest SEO copy editor for bloggers, not e-commerce. 
+        let systemPrompt = `You are an expert Pinterest SEO copy editor for bloggers, not e-commerce. 
 Your #1 primary goal is to **REPHRASE AND REFINE** the existing text provided by the user. 
 Your secondary goal is to improve its SEO and engagement for Pinterest.
 
@@ -1724,18 +1711,18 @@ Your secondary goal is to improve its SEO and engagement for Pinterest.
 - The rewritten content should be a better, more polished version of the original, not a new piece of content.
 
 **CRITICAL RULES:**
-1.  **LENGTH PRESERVATION:**
-    *   **Title:** The rewritten title's character count MUST be extremely close to the original's length of **${titleLength} characters**. A variation of only **+/- 3 characters** is allowed.
-    *   **Description:** Follow this specific rule: ${descriptionRule}
-2.  **REFINEMENT:**
+1.  **REFINEMENT:**
     *   **Title:** Make it catchy and keyword-rich using words from the original content. Capitalize naturally. **NO EMOJIS.**
     *   **Description:** Make it more conversational. Naturally weave in keywords that are **already present** in the original text. Include a soft call-to-action (e.g., "Discover more..."). **NO HASHTAGS.**
-3.  **ABSOLUTELY FORBIDDEN TERMS:**
-    *   Your response must **NEVER** include commercial terms. Do NOT use: "Etsy", "eBay", "Amazon", "shop", "buy now", "purchase", "digital download", "printable", "product", "listing", "store".
-4.  **SELF-CORRECTION:** Before returning your answer, double-check the character counts of your rewritten text against the strict length rules. Revise it if it doesn't match.
+2.  **ABSOLUTELY FORBIDDEN TERMS:**
+    *   Your response must **NEVER** include commercial terms. Do NOT use: "Etsy", "eBay", "Amazon", "shop", "buy now", "purchase", "digital download", "printable", "product", "listing", "store".`;
 
-**CRITICAL OUTPUT INSTRUCTIONS:**
-*   Your entire response MUST be ONLY a single, valid JSON object with keys "title" and "description".
+        if (categoryOptions && categoryOptions.trim()) {
+            systemPrompt += `\n3. **Category:** Analyze the title and description, then choose the single most appropriate category from this list: [${categoryOptions}]. Do not invent a new one.`;
+        }
+
+        systemPrompt += `\n\n**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object with keys "title", "description", and "category".
 *   Do NOT include any text, commentary, or markdown.`;
 
         const userPrompt = `Rewrite the following content for a blog post, following all rules:
@@ -1777,44 +1764,18 @@ Original Description: "${description}"`;
             throw new Error("OpenRouter response did not contain valid content.");
         }
 
-        let potentialJson = jsonText.trim();
-        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        
-        if (markdownMatch && markdownMatch[1]) {
-            potentialJson = markdownMatch[1].trim();
-        } else {
-            const startIndex = potentialJson.indexOf('{');
-            const endIndex = potentialJson.lastIndexOf('}');
-            if (startIndex !== -1 && endIndex > startIndex) {
-                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
-            }
-        }
-        
-        if (!potentialJson.startsWith('{') || !potentialJson.endsWith('}')) {
-             const err = new Error("The AI response does not appear to contain a JSON object.");
-             (err as any).originalText = jsonText;
-             throw err;
-        }
-
         let parsedObject;
         try {
-            parsedObject = JSON.parse(potentialJson);
+            parsedObject = JSON.parse(jsonText);
         } catch (e) {
-            console.warn("Direct JSON parsing failed, attempting to repair.", { error: e, json: potentialJson });
-            try {
-                const repairedJson = repairJson(potentialJson);
-                parsedObject = JSON.parse(repairedJson);
-            } catch (repairError) {
-                 console.error("Failed to parse even after repairing JSON.", { error: repairError, original: potentialJson });
-                 const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
-                 (err as any).originalText = jsonText;
-                 throw err;
-            }
+            console.error("Failed to parse JSON from OpenRouter:", jsonText);
+            throw new Error("The AI returned a malformed JSON response.");
         }
 
         return {
             title: String(parsedObject.title || ''),
             description: String(parsedObject.description || ''),
+            category: String(parsedObject.category || ''),
         };
 
     } catch (error: any) {

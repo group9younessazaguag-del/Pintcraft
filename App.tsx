@@ -38,7 +38,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'pin-generator';
+  return hash || 'rewrite-title-description';
 };
 
 
@@ -731,7 +731,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex - 1);
+      setCurrentRowIndex(currentRowIndex + 1);
     }
   };
 
@@ -1283,6 +1283,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <DescriptionRewritePage 
                         openRouterApiKey={openRouterApiKey}
                         onSetOpenRouterApiKey={setOpenRouterApiKey}
+                        adminSettings={adminSettings}
                     />;
         case 'pin-generator':
         default:
