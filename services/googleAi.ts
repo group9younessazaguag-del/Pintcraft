@@ -1699,7 +1699,7 @@ export const rewriteDescriptionWithOpenRouter = async (
     title: string,
     description: string,
     categoryOptions?: string
-): Promise<{ title: string; description: string; category: string }> => {
+): Promise<{ title: string; description: string; category: string; keywords: string; }> => {
     try {
         let systemPrompt = `You are an expert Pinterest SEO copy editor for bloggers, not e-commerce. 
 Your #1 primary goal is to **REPHRASE AND REFINE** the existing text provided by the user. 
@@ -1714,6 +1714,7 @@ Your secondary goal is to improve its SEO and engagement for Pinterest.
 1.  **REFINEMENT:**
     *   **Title:** Make it catchy and keyword-rich using words from the original content. Capitalize naturally. **NO EMOJIS.**
     *   **Description:** Make it more conversational. Naturally weave in keywords that are **already present** in the original text. Include a soft call-to-action (e.g., "Discover more..."). **NO HASHTAGS.**
+    *   **Keywords:** Generate 5-8 relevant, comma-separated SEO keywords based on the original content. This should be a single string.
 2.  **ABSOLUTELY FORBIDDEN TERMS:**
     *   Your response must **NEVER** include commercial terms. Do NOT use: "Etsy", "eBay", "Amazon", "shop", "buy now", "purchase", "digital download", "printable", "product", "listing", "store".`;
 
@@ -1722,7 +1723,7 @@ Your secondary goal is to improve its SEO and engagement for Pinterest.
         }
 
         systemPrompt += `\n\n**CRITICAL OUTPUT INSTRUCTIONS:**
-*   Your entire response MUST be ONLY a single, valid JSON object with keys "title", "description", and "category".
+*   Your entire response MUST be ONLY a single, valid JSON object with keys "title", "description", "category", and "keywords".
 *   Do NOT include any text, commentary, or markdown.`;
 
         const userPrompt = `Rewrite the following content for a blog post, following all rules:
@@ -1776,6 +1777,7 @@ Original Description: "${description}"`;
             title: String(parsedObject.title || ''),
             description: String(parsedObject.description || ''),
             category: String(parsedObject.category || ''),
+            keywords: String(parsedObject.keywords || ''),
         };
 
     } catch (error: any) {

@@ -24,6 +24,7 @@ interface RewriteDataRow {
     rewrittenTitle: string;
     rewrittenDescription: string;
     rewrittenCategory: string;
+    rewrittenKeywords: string;
     status: 'pending' | 'processing' | 'completed' | 'failed';
     error?: string;
 }
@@ -121,6 +122,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                     rewrittenTitle: '',
                     rewrittenDescription: '',
                     rewrittenCategory: '',
+                    rewrittenKeywords: '',
                     status: 'pending'
                 };
             });
@@ -168,6 +170,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                 workingData[i].rewrittenTitle = result.title;
                 workingData[i].rewrittenDescription = result.description;
                 workingData[i].rewrittenCategory = result.category;
+                workingData[i].rewrittenKeywords = result.keywords;
                 workingData[i].status = 'completed';
             } catch (error: any) {
                 console.error(`Failed to rewrite row ${i + 1}:`, error);
@@ -202,7 +205,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
             return value;
         };
 
-        const headers = ['Original Title', 'Rewritten Title', 'Original Description', 'Rewritten Description', 'Category'];
+        const headers = ['Original Title', 'Rewritten Title', 'Original Description', 'Rewritten Description', 'Category', 'Keywords'];
         const headerString = headers.join(',');
 
         const rows = csvData.map(row => {
@@ -211,7 +214,8 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                 escapeCsvCell(row.rewrittenTitle || row.originalTitle),
                 escapeCsvCell(row.originalDescription),
                 escapeCsvCell(row.rewrittenDescription || row.originalDescription),
-                escapeCsvCell(row.rewrittenCategory || '')
+                escapeCsvCell(row.rewrittenCategory || ''),
+                escapeCsvCell(row.rewrittenKeywords || ''),
             ].join(',');
         });
 
@@ -220,7 +224,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', 'rewritten_content_with_categories.csv');
+        link.setAttribute('download', 'rewritten_content_with_categories_keywords.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -232,7 +236,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
             <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold tracking-tight text-slate-800">Rewrite Title & Description</h1>
                 <p className="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">
-                    Batch optimize your Pinterest Titles, Descriptions, and Categories for blogging using AI.
+                    Batch optimize your Pinterest Titles, Descriptions, Categories, and Keywords for blogging using AI.
                 </p>
             </div>
 
@@ -366,7 +370,8 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                        <th scope="col" className="px-4 py-3 bg-green-50">New Title</th>
                                        <th scope="col" className="px-4 py-3">Original Desc</th>
                                        <th scope="col" className="px-4 py-3 bg-green-50">New Desc</th>
-                                       <th scope="col" className="px-4 py-3 bg-green-50">New Category</th>
+                                       <th scope="col" className="px-4 py-3 bg-blue-50">New Category</th>
+                                       <th scope="col" className="px-4 py-3 bg-purple-50">New Keywords</th>
                                        <th scope="col" className="px-4 py-3 w-10">Status</th>
                                    </tr>
                                </thead>
@@ -380,6 +385,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                                <td className="px-4 py-3 text-slate-500 text-xs">{row.originalDescription}</td>
                                                <td className="px-4 py-3 text-slate-900 font-medium bg-green-50/30 text-xs">{row.rewrittenDescription}</td>
                                                <td className="px-4 py-3 font-semibold text-blue-700 text-xs bg-blue-50/30">{row.rewrittenCategory}</td>
+                                               <td className="px-4 py-3 font-medium text-purple-700 text-xs bg-purple-50/30">{row.rewrittenKeywords}</td>
                                                <td className="px-4 py-3">
                                                    {row.status === 'pending' && <span className="text-slate-400">...</span>}
                                                    {row.status === 'processing' && <LoadingSpinner className="w-4 h-4 text-indigo-500"/>}
@@ -390,7 +396,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                        ))
                                    ) : (
                                        <tr>
-                                           <td colSpan={7} className="text-center py-10 px-4 text-slate-500">
+                                           <td colSpan={8} className="text-center py-10 px-4 text-slate-500">
                                                Upload a CSV file to begin.
                                            </td>
                                        </tr>
