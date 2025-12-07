@@ -1,4 +1,3 @@
-
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -38,7 +37,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'rewrite-title-description';
+  return hash || 'pin-generator';
 };
 
 
@@ -58,6 +57,9 @@ const initialPersistedData: PersistedData = {
     startDate: new Date().toISOString().split('T')[0],
     imageModel: 'fal-ai/recraft/v3/text-to-image',
     textModel: 'gemini-2.5-flash',
+    scheduleMode: 'fixed',
+    pinsPerDayMin: 3,
+    pinsPerDayMax: 5,
 };
 
 const initialImageData = {
@@ -731,7 +733,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex + 1);
+      setCurrentRowIndex(currentRowIndex - 1);
     }
   };
 
@@ -811,7 +813,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
     const zip = zipRef.current;
     
-    const { pinsPerDay, startDate } = templateData;
+    const { pinsPerDay, startDate, scheduleMode, pinsPerDayMin, pinsPerDayMax } = templateData;
     const pinsPerDayNum = Math.max(1, parseInt(pinsPerDay.toString(), 10) || 1);
     const start = new Date(startDate);
     if (isNaN(start.getTime())) {
@@ -827,6 +829,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     const keywordsHeaderKey = Object.keys(currentRunCsvData[0] || {}).find(k => k.toLowerCase().trim() === 'keywords' || k.toLowerCase().trim() === 'interest used') || 'Keywords';
 
     let i = startIndex;
+    let pinsScheduledForCurrentDay = 0;
+    let currentDayOffset = 0;
+    let pinsToScheduleThisDay = 0;
+
     try {
         for (i = startIndex; i < dataForGeneration.length; i++) {
             const currentData = dataForGeneration[i];
@@ -992,20 +998,47 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 currentRunCsvData[i][mediaUrlHeaderKey] = imageUrl;
             }
 
-            const daysToAdd = Math.floor(i / pinsPerDayNum);
-            const publishDate = new Date(start);
-            publishDate.setDate(start.getDate() + daysToAdd);
+            let publishDate;
+            if (scheduleMode === 'random') {
+                const min = Math.max(1, pinsPerDayMin || 1);
+                const max = Math.max(min, pinsPerDayMax || min);
 
-            const pinIndexInDay = i % pinsPerDayNum;
-            const startHour = 9;
-            const endHour = 17;
-            const totalHoursInWindow = endHour - startHour;
-            const hourIncrement = pinsPerDayNum > 1 ? totalHoursInWindow / (pinsPerDayNum - 1) : 0;
-            const publishHourFloat = startHour + (pinIndexInDay * hourIncrement);
-            const publishHour = Math.floor(publishHourFloat);
-            const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
-            
-            publishDate.setHours(publishHour, publishMinute, 0, 0);
+                if (pinsScheduledForCurrentDay === 0) {
+                    pinsToScheduleThisDay = Math.floor(Math.random() * (max - min + 1)) + min;
+                }
+
+                const publishDateForDay = new Date(start);
+                publishDateForDay.setDate(start.getDate() + currentDayOffset);
+
+                const startHour = 9, endHour = 17;
+                const hourIncrement = pinsToScheduleThisDay > 1 ? (endHour - startHour) / (pinsToScheduleThisDay - 1) : 0;
+                const publishHourFloat = startHour + (pinsScheduledForCurrentDay * hourIncrement);
+                const publishHour = Math.floor(publishHourFloat);
+                const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
+
+                publishDateForDay.setHours(publishHour, publishMinute, 0, 0);
+                publishDate = publishDateForDay;
+
+                pinsScheduledForCurrentDay++;
+                if (pinsScheduledForCurrentDay >= pinsToScheduleThisDay) {
+                    currentDayOffset++;
+                    pinsScheduledForCurrentDay = 0;
+                }
+            } else { // 'fixed' mode
+                const daysToAdd = Math.floor(i / pinsPerDayNum);
+                const publishDateFixed = new Date(start);
+                publishDateFixed.setDate(start.getDate() + daysToAdd);
+
+                const pinIndexInDay = i % pinsPerDayNum;
+                const startHour = 9, endHour = 17;
+                const hourIncrement = pinsPerDayNum > 1 ? (endHour - startHour) / (pinsPerDayNum - 1) : 0;
+                const publishHourFloat = startHour + (pinIndexInDay * hourIncrement);
+                const publishHour = Math.floor(publishHourFloat);
+                const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
+                
+                publishDateFixed.setHours(publishHour, publishMinute, 0, 0);
+                publishDate = publishDateFixed;
+            }
 
             const year = publishDate.getFullYear();
             const month = (publishDate.getMonth() + 1).toString().padStart(2, '0');

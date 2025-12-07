@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -74,14 +73,14 @@ export const ControlCard: React.FC<{ icon: React.ReactNode; title: string; child
 );
 
 
-const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
+const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string | number) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
       <input
         type={type}
         id={id}
-        value={data[id] as string || ''}
-        onChange={(e) => onFieldChange(id, e.target.value)}
+        value={data[id] as any || ''}
+        onChange={(e) => onFieldChange(id, type === 'number' ? parseInt(e.target.value, 10) || 0 : e.target.value)}
         className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 transition-colors duration-200"
         placeholder={placeholder}
         min={min}
@@ -722,19 +721,44 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
              </ControlCard>
 
             <ControlCard icon={<BulkIcon />} title="Bulk Actions">
-                <div className="grid grid-cols-2 gap-4">
-                    <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
-                    <div>
-                        <label htmlFor="startDate" className="block text-sm font-medium text-slate-600 mb-1.5">Start Date</label>
-                        <input
-                            type="date"
-                            id="startDate"
-                            value={data.startDate}
-                            onChange={(e) => onFieldChange('startDate', e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
-                        />
+                <div>
+                    <label className="block text-sm font-medium text-slate-600 mb-2">Scheduling Mode</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            onClick={() => onFieldChange('scheduleMode', 'fixed')}
+                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 border ${data.scheduleMode !== 'random' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                        >
+                            Fixed
+                        </button>
+                        <button
+                            onClick={() => onFieldChange('scheduleMode', 'random')}
+                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 border ${data.scheduleMode === 'random' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                        >
+                            Random
+                        </button>
                     </div>
                 </div>
+
+                {data.scheduleMode === 'random' ? (
+                     <div className="grid grid-cols-2 gap-4">
+                        <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDayMin" label="Min Pins / Day" type="number" min="1" placeholder="e.g., 3" />
+                        <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDayMax" label="Max Pins / Day" type="number" min="1" placeholder="e.g., 5" />
+                    </div>
+                ) : (
+                    <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
+                )}
+
+                <div>
+                    <label htmlFor="startDate" className="block text-sm font-medium text-slate-600 mb-1.5">Start Date</label>
+                    <input
+                        type="date"
+                        id="startDate"
+                        value={data.startDate}
+                        onChange={(e) => onFieldChange('startDate', e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                    />
+                </div>
+
                 <div>
                     <InputField data={data} onFieldChange={onFieldChange} id="mediaUrlPrefix" label="Media URL Prefix" placeholder="e.g., http://yourwebsite.com/images/" />
                     <p className="text-xs text-slate-500 mt-1.5">This URL will be prefixed to the generated image filenames in the CSV.</p>

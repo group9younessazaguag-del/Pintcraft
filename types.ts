@@ -22,6 +22,9 @@ export interface TemplateData {
   startDate: string;
   imageModel: string;
   textModel: string;
+  scheduleMode?: 'fixed' | 'random';
+  pinsPerDayMin?: number;
+  pinsPerDayMax?: number;
 }
 
 export interface CsvRow {
