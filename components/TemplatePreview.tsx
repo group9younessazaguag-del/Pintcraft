@@ -1,5 +1,6 @@
 
 
+
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
 
@@ -1340,7 +1341,11 @@ const MontserratVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) 
             {/* Content Banner */}
             <div
                 className="flex-[1] flex flex-col justify-center items-center text-center p-4 font-baloo-2"
-                style={{ backgroundColor: '#DFA52B' }}
+                style={{ 
+                    backgroundColor: '#DFA52B',
+                    borderTop: '2px solid white',
+                    borderBottom: '2px solid white'
+                }}
             >
                 {subtitle && (
                     <p
