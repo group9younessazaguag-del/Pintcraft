@@ -14,11 +14,11 @@ export interface ControlsProps {
   data: TemplateData;
   onFieldChange: (field: keyof TemplateData, value: any) => void;
   onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void;
-  onGenerateImage: (imageNumber: 1 | 2 | 3) => void;
-  onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3) => void;
-  onGenerateImageWithMidApiAi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
-  onGenerateImageWithImagineApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
-  onGenerateImageWithUseApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
+  onGenerateImage: (imageNumber: 1 | 2 | 3) => Promise<string>;
+  onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3) => Promise<string[]>;
+  onGenerateImageWithMidApiAi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => Promise<string[]>;
+  onGenerateImageWithImagineApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => Promise<string[]>;
+  onGenerateImageWithUseApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => Promise<string[]>;
   onGenerateDescription: () => void;
   onGenerateKeywords: () => void;
   onGenerateShortTitle: () => void;

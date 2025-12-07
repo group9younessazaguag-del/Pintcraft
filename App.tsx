@@ -226,7 +226,7 @@ const App: React.FC = () => {
         });
   };
 
-  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
+  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<string> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -241,7 +241,7 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return;
+        return '';
     }
 
     setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: true }));
@@ -270,6 +270,7 @@ const App: React.FC = () => {
         
         const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
         setImageData(prev => ({ ...prev, [field]: imageUrl }));
+        return imageUrl;
     } catch (error: any) {
         console.error(`Error generating image:`, error);
         if (throwOnError) {
@@ -280,12 +281,13 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image.',
             helpLink: error.helpLink
         });
+        throw error;
     } finally {
         setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
     }
   };
 
-  const handleGenerateImageWithMidjourney = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
+  const handleGenerateImageWithMidjourney = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<string[]> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -300,14 +302,14 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return;
+        return [];
     }
 
     if (!apiframeApiKey || apiframeApiKey.length < 5) {
         const msg = 'Please enter an APIFrame.ai API key in the AI Configuration settings to use Midjourney.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return;
+        return [];
     }
 
     setIsGeneratingMidjourneyImage({ 1: true, 2: true, 3: true });
@@ -329,6 +331,7 @@ const App: React.FC = () => {
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
+        return imageUrls;
     } catch (error: any) {
         console.error(`Error generating image with Midjourney:`, error);
         if (throwOnError) {
@@ -339,12 +342,13 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image with Midjourney.',
             helpLink: error.helpLink
         });
+        throw error;
     } finally {
         setIsGeneratingMidjourneyImage({ 1: false, 2: false, 3: false });
     }
   };
 
-  const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
+  const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<string[]> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -358,14 +362,14 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return;
+        return [];
     }
 
     if (!midapiApiKey || midapiApiKey.length < 5) {
         const msg = 'Please enter a midapi.ai API key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return;
+        return [];
     }
 
     setIsGeneratingMidjourney2Image({ 1: true, 2: true, 3: true });
@@ -388,6 +392,7 @@ const App: React.FC = () => {
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
+        return imageUrls;
     } catch (error: any) {
         console.error(`Error generating image with midapi.ai:`, error);
         if (throwOnError) {
@@ -398,12 +403,13 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image with midapi.ai.',
             helpLink: error.helpLink
         });
+        throw error;
     } finally {
         setIsGeneratingMidjourney2Image({ 1: false, 2: false, 3: false });
     }
   };
 
-  const handleGenerateImageWithImagineApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
+  const handleGenerateImageWithImagineApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<string[]> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -417,14 +423,14 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return;
+        return [];
     }
 
     if (!imagineApiKey || imagineApiKey.length < 5) {
         const msg = 'Please enter an ImagineAPI key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return;
+        return [];
     }
 
     setIsGeneratingImagineImage({ 1: true, 2: true, 3: true });
@@ -447,6 +453,7 @@ const App: React.FC = () => {
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
+        return imageUrls;
     } catch (error: any) {
         console.error(`Error generating image with ImagineAPI:`, error);
         if (throwOnError) {
@@ -457,12 +464,13 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image with ImagineAPI.',
             helpLink: error.helpLink
         });
+        throw error;
     } finally {
         setIsGeneratingImagineImage({ 1: false, 2: false, 3: false });
     }
   };
 
-  const handleGenerateImageWithUseApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
+  const handleGenerateImageWithUseApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<string[]> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -476,14 +484,14 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return;
+        return [];
     }
 
     if (!useapiApiKey || useapiApiKey.length < 5) {
         const msg = 'Please enter a useapi.net API key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return;
+        return [];
     }
 
     setIsGeneratingUseApiImage({ 1: true, 2: true, 3: true });
@@ -506,6 +514,7 @@ const App: React.FC = () => {
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
+        return imageUrls;
     } catch (error: any) {
         console.error(`Error generating image with useapi.net:`, error);
         if (throwOnError) {
@@ -516,6 +525,7 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image with useapi.net.',
             helpLink: error.helpLink
         });
+        throw error;
     } finally {
         setIsGeneratingUseApiImage({ 1: false, 2: false, 3: false });
     }
@@ -733,7 +743,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex - 1);
+      setCurrentRowIndex(currentRowIndex + 1);
     }
   };
 
@@ -885,38 +895,41 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
             const prompt = currentData.title;
             let imageGenerated = false;
+            let generatedImageUrls: (string | null)[] = [null, null, null];
+            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId);
+            const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
 
             if (prompt) {
                 try {
-                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId);
-                    const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
                     const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
                     
                     // Determine if we should use batch processing (call API once) or loop (call API multiple times)
                     const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
 
                     if (isMultiImageGenerator) {
+                        let multiImageUrls: string[] = [];
                         // For batch generators, call ONCE. The handler functions populate all image slots.
                         if (imageGenerator === 'midjourney' && mjApiKey) {
-                            await handleGenerateImageWithMidjourney(1, true, prompt);
-                            await sleep(500);
+                            multiImageUrls = await handleGenerateImageWithMidjourney(1, true, prompt);
                         } else if (imageGenerator === 'midjourney2' && mj2ApiKey) {
                             const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            await handleGenerateImageWithMidApiAi(1, true, prompt, onProgress);
-                            await sleep(500);
+                            multiImageUrls = await handleGenerateImageWithMidApiAi(1, true, prompt, onProgress);
                         } else if (imageGenerator === 'imagine' && imgApiKey) {
                             const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            await handleGenerateImageWithImagineApi(1, true, prompt, onProgress);
-                            await sleep(500);
+                            multiImageUrls = await handleGenerateImageWithImagineApi(1, true, prompt, onProgress);
                         } else if (imageGenerator === 'useapi' && useApiKey) {
                             const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            await handleGenerateImageWithUseApi(1, true, prompt, onProgress);
-                            await sleep(500);
+                            multiImageUrls = await handleGenerateImageWithUseApi(1, true, prompt, onProgress);
                         }
+                        generatedImageUrls[0] = multiImageUrls[0] || null;
+                        generatedImageUrls[1] = multiImageUrls[1] || null;
+                        generatedImageUrls[2] = multiImageUrls[2] || null;
+                        await sleep(500);
                     } else {
                         // For single image generators (Fal.ai, or placeholder), loop through required slots
                         for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
-                            await handleGenerateImage(imgIdx as 1 | 2 | 3, true, prompt);
+                           const url = await handleGenerateImage(imgIdx as 1 | 2 | 3, true, prompt);
+                           generatedImageUrls[imgIdx - 1] = url;
                         }
                     }
                     
@@ -938,21 +951,25 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                             const newPrompt = await generateSafeImagePrompt(googleApiKey, templateData.textModel, currentData.title);
                             setBulkMessage(`Row ${i + 1}: Retrying with new prompt...`);
                             
-                            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId);
-                            const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
                             const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
                             const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
 
                             if (isMultiImageGenerator) {
+                                let multiImageUrls: string[] = [];
                                 // Batch retry
-                                if (imageGenerator === 'midjourney' && mjApiKey) { await handleGenerateImageWithMidjourney(1, true, newPrompt); await sleep(500); }
-                                else if (imageGenerator === 'midjourney2' && mj2ApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithMidApiAi(1, true, newPrompt, onProgress); await sleep(500); }
-                                else if (imageGenerator === 'imagine' && imgApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithImagineApi(1, true, newPrompt, onProgress); await sleep(500); }
-                                else if (imageGenerator === 'useapi' && useApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithUseApi(1, true, newPrompt, onProgress); await sleep(500); }
+                                if (imageGenerator === 'midjourney' && mjApiKey) { multiImageUrls = await handleGenerateImageWithMidjourney(1, true, newPrompt); }
+                                else if (imageGenerator === 'midjourney2' && mj2ApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); multiImageUrls = await handleGenerateImageWithMidApiAi(1, true, newPrompt, onProgress); }
+                                else if (imageGenerator === 'imagine' && imgApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); multiImageUrls = await handleGenerateImageWithImagineApi(1, true, newPrompt, onProgress); }
+                                else if (imageGenerator === 'useapi' && useApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); multiImageUrls = await handleGenerateImageWithUseApi(1, true, newPrompt, onProgress); }
+                                await sleep(500);
+                                generatedImageUrls[0] = multiImageUrls[0] || null;
+                                generatedImageUrls[1] = multiImageUrls[1] || null;
+                                generatedImageUrls[2] = multiImageUrls[2] || null;
                             } else {
                                 // Single loop retry
                                 for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
-                                    await handleGenerateImage(imgIdx as 1 | 2 | 3, true, newPrompt);
+                                    const url = await handleGenerateImage(imgIdx as 1 | 2 | 3, true, newPrompt);
+                                    generatedImageUrls[imgIdx-1] = url;
                                 }
                             }
                             
@@ -976,14 +993,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             await sleep(2000); // Wait for rendering
             
             // Explicitly wait for images to load to prevent blank pins
-            const { backgroundImage, backgroundImage2, backgroundImage3 } = imageData; // Get LATEST state
-            await waitForImageLoad(backgroundImage);
-            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId)) {
-                await waitForImageLoad(backgroundImage2);
-            }
-            if (['7', '15', '19', '22'].includes(templateData.templateId)) {
-                await waitForImageLoad(backgroundImage3);
-            }
+            await waitForImageLoad(generatedImageUrls[0]);
+            if (needsImage2) await waitForImageLoad(generatedImageUrls[1]);
+            if (needsImage3) await waitForImageLoad(generatedImageUrls[2]);
 
             if (imageGenerated && previewRef.current) {
                 const dataUrl = await window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2, fetchRequestInit: { mode: 'cors' }});
