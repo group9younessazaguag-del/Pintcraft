@@ -1,5 +1,4 @@
 
-
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
 
@@ -1337,30 +1336,32 @@ const MontserratVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) 
                 {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
             </div>
 
-            {/* Content Banner */}
-            <div
-                className="flex-[1] flex flex-col justify-center items-center text-center p-4 font-baloo-2"
-                style={{ backgroundColor: '#DFA52B' }}
-            >
-                {subtitle && (
-                    <p
-                        className="text-xs tracking-wide mb-1 font-semibold"
-                        style={{ color: 'rgba(0,0,0,0.6)' }}
-                    >
-                        {subtitle}
-                    </p>
-                )}
-                {title && (
-                    <h2
-                        className={`${titleFontSize} leading-tight tracking-tight uppercase font-bold text-white`}
-                        style={{
-                            wordBreak: 'break-word',
-                            textShadow: '1.5px 1.5px 0 #ffa600, -1.5px -1.5px 0 #ffa600, 1.5px -1.5px 0 #ffa600, -1.5px 1.5px 0 #ffa600'
-                        }}
-                    >
-                        {title}
-                    </h2>
-                )}
+            {/* Content Banner with White Outline */}
+            <div className="bg-white py-0.5">
+                <div
+                    className="flex-1 flex flex-col justify-center items-center text-center p-4 font-baloo-2"
+                    style={{ backgroundColor: '#DFA52B' }}
+                >
+                    {subtitle && (
+                        <p
+                            className="text-xs tracking-wide mb-1 font-semibold"
+                            style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                        >
+                            {subtitle}
+                        </p>
+                    )}
+                    {title && (
+                        <h2
+                            className={`${titleFontSize} leading-tight tracking-tight uppercase font-bold text-white`}
+                            style={{
+                                wordBreak: 'break-word',
+                                textShadow: '1.5px 1.5px 0 #ffa600, -1.5px -1.5px 0 #ffa600, 1.5px -1.5px 0 #ffa600, -1.5px 1.5px 0 #ffa600'
+                            }}
+                        >
+                            {title}
+                        </h2>
+                    )}
+                </div>
             </div>
 
             {/* Bottom Image Section */}
