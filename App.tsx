@@ -38,7 +38,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'rewrite-title-description';
+  return hash || 'pin-generator';
 };
 
 
