@@ -79,7 +79,6 @@ export type PinterestAccount = {
 
 export interface BackupData {
   adminSettings: AdminSettings;
-  googleAiApiKey: string;
   falAiApiKey: string;
   apiframeApiKey: string;
   midapiApiKey: string;

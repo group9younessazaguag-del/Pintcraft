@@ -45,8 +45,8 @@ export interface ControlsProps {
   onDownloadGeneratedAssets: () => void;
   lastCompletedRowIndex: number | null;
   onResetBulkGeneration: () => void;
-  userApiKey: string;
-  onSetUserApiKey: (key: string) => void;
+  openRouterApiKey: string;
+  onSetOpenRouterApiKey: (key: string) => void;
   onSetFalAiApiKey: (key: string) => void;
   falAiApiKey: string;
   apiframeApiKey: string;
@@ -298,7 +298,7 @@ export const ApiKeyInput: React.FC<{
     );
 };
 
-export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey, imagineApiKey, onSetImagineApiKey, useapiApiKey, onSetUseapiApiKey }) => {
+export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, openRouterApiKey, onSetOpenRouterApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey, imagineApiKey, onSetImagineApiKey, useapiApiKey, onSetUseapiApiKey }) => {
     const templateCount = 53;
     const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
         id: `${i + 1}`,
@@ -319,14 +319,14 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
       };
       
     const [falAiApiKeyInput, setFalAiApiKeyInput] = useState(falAiApiKey);
-    const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
+    const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
     const [apiframeApiKeyInput, setApiframeApiKeyInput] = useState(apiframeApiKey);
     const [midapiApiKeyInput, setMidapiApiKeyInput] = useState(midapiApiKey);
     const [imagineApiKeyInput, setImagineApiKeyInput] = useState(imagineApiKey);
     const [useapiApiKeyInput, setUseapiApiKeyInput] = useState(useapiApiKey);
 
     useEffect(() => { setFalAiApiKeyInput(falAiApiKey); }, [falAiApiKey]);
-    useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
+    useEffect(() => { setOpenRouterApiKeyInput(openRouterApiKey); }, [openRouterApiKey]);
     useEffect(() => { setApiframeApiKeyInput(apiframeApiKey); }, [apiframeApiKey]);
     useEffect(() => { setMidapiApiKeyInput(midapiApiKey); }, [midapiApiKey]);
     useEffect(() => { setImagineApiKeyInput(imagineApiKey); }, [imagineApiKey]);
@@ -334,8 +334,8 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     
     const handleSaveFalKey = () => onSetFalAiApiKey(falAiApiKeyInput.trim());
     const handleClearFalKey = () => { setFalAiApiKeyInput(''); onSetFalAiApiKey(''); };
-    const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
-    const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
+    const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
+    const handleClearOpenRouterKey = () => { setOpenRouterApiKeyInput(''); onSetOpenRouterApiKey(''); };
     const handleSaveApiframeKey = () => onSetApiframeApiKey(apiframeApiKeyInput.trim());
     const handleClearApiframeKey = () => { setApiframeApiKeyInput(''); onSetApiframeApiKey(''); };
     const handleSaveMidapiKey = () => onSetMidapiApiKey(midapiApiKeyInput.trim());
@@ -346,7 +346,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     const handleClearUseapiKey = () => { setUseapiApiKeyInput(''); onSetUseapiApiKey(''); };
 
 
-    const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
+    const openRouterKeyIsConfigured = openRouterApiKey && openRouterApiKey.length > 5;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
     const mjKeyIsConfigured = apiframeApiKey && apiframeApiKey.length > 5;
     const mj2KeyIsConfigured = midapiApiKey && midapiApiKey.length > 5;
@@ -381,17 +381,17 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
             <ControlCard icon={<SettingsIcon />} title="AI Configuration">
                 <div className="space-y-6">
                     <ApiKeyInput
-                        label="Google AI API Key (for Text)"
-                        value={googleApiKeyInput}
-                        onChange={setGoogleApiKeyInput}
-                        onSave={handleSaveGoogleKey}
-                        onClear={handleClearGoogleKey}
-                        placeholder="Enter your Google AI key"
-                        getLink="https://aistudio.google.com/app/apikey"
-                        getLinkText="Get a Google AI API Key"
+                        label="OpenRouter.ai API Key (for Text)"
+                        value={openRouterApiKeyInput}
+                        onChange={setOpenRouterApiKeyInput}
+                        onSave={handleSaveOpenRouterKey}
+                        onClear={handleClearOpenRouterKey}
+                        placeholder="Enter your OpenRouter key"
+                        getLink="https://openrouter.ai/keys"
+                        getLinkText="Get an OpenRouter API Key"
                         statusMessage={
-                            googleKeyIsConfigured ? (
-                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Google AI key is saved in this browser.</p>
+                            openRouterKeyIsConfigured ? (
+                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your OpenRouter key is saved in this browser.</p>
                             ) : (
                                 <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
                             )
@@ -495,8 +495,8 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         data={data}
                         onFieldChange={onFieldChange}
                         id="textModel"
-                        label="Text Generation Model (Google AI)"
-                         description={!googleKeyIsConfigured ? 'Add Google AI key to use.' : 'e.g., gemini-2.5-flash'}
+                        label="Text Generation Model (OpenRouter)"
+                         description={!openRouterKeyIsConfigured ? 'Add OpenRouter key to use.' : 'e.g., google/gemini-flash-1.5'}
                     />
                 </div>
             </ControlCard>
@@ -505,11 +505,11 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 };
 
 
-export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, userApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, onGenerateShortTitle, isGeneratingShortTitle, isBulkGenerating }) => {
+export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, openRouterApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, onGenerateShortTitle, isGeneratingShortTitle, isBulkGenerating }) => {
     const TITLE_RECOMMENDED_MAX_LENGTH = 35;
     const TITLE_HARD_MAX_LENGTH = 100;
     const titleLength = data.title?.length || 0;
-    const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
+    const openRouterKeyIsConfigured = openRouterApiKey && openRouterApiKey.length > 5;
 
     const getTitleCounterColor = () => {
         if (titleLength > TITLE_HARD_MAX_LENGTH) return 'text-red-600';
@@ -532,8 +532,8 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                      <button
                         type="button"
                         onClick={onGenerateShortTitle}
-                        disabled={isGeneratingShortTitle || isBulkGenerating || !googleKeyIsConfigured || titleLength <= TITLE_RECOMMENDED_MAX_LENGTH}
-                        title={!googleKeyIsConfigured ? "Add a Google AI key to enable" : titleLength <= TITLE_RECOMMENDED_MAX_LENGTH ? "Title is already a good length" : "Use AI to shorten the title"}
+                        disabled={isGeneratingShortTitle || isBulkGenerating || !openRouterKeyIsConfigured || titleLength <= TITLE_RECOMMENDED_MAX_LENGTH}
+                        title={!openRouterKeyIsConfigured ? "Add an OpenRouter API key to enable" : titleLength <= TITLE_RECOMMENDED_MAX_LENGTH ? "Title is already a good length" : "Use AI to shorten the title"}
                         className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 disabled:text-slate-300 disabled:cursor-not-allowed rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500 transition-colors"
                     >
                         {isGeneratingShortTitle ? <LoadingSpinner className="w-4 h-4" /> : '✨'}
@@ -560,7 +560,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     type="button"
                     onClick={onGenerateDescription}
                     disabled={isGeneratingDescription || isBulkGenerating}
-                    title={googleKeyIsConfigured ? 'Generate a high-quality description with Google AI' : 'Generate a basic placeholder description'}
+                    title={openRouterKeyIsConfigured ? 'Generate a high-quality description with OpenRouter' : 'Generate a basic placeholder description'}
                     className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
                 >
                     {isGeneratingDescription ? (
@@ -582,7 +582,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     type="button"
                     onClick={onGenerateKeywords}
                     disabled={isGeneratingKeywords || isBulkGenerating}
-                    title={googleKeyIsConfigured ? 'Generate keywords with Google AI' : 'Generate basic placeholder keywords'}
+                    title={openRouterKeyIsConfigured ? 'Generate keywords with OpenRouter' : 'Generate basic placeholder keywords'}
                     className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
                 >
                     {isGeneratingKeywords ? (

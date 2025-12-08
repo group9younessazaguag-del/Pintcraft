@@ -13,7 +13,7 @@ import ErrorIcon from '../icons/ErrorIcon';
 interface AssistantPageProps {
     accounts: PinterestAccount[];
     setAccounts: (accounts: PinterestAccount[]) => void;
-    userApiKey: string;
+    openRouterApiKey: string;
     textModel: string;
 }
 
@@ -51,7 +51,7 @@ const StarRating: React.FC<{ score: number; onRate: (newScore: number) => void }
 };
 
 
-const AssistantPage: React.FC<AssistantPageProps> = ({ accounts, setAccounts, userApiKey, textModel }) => {
+const AssistantPage: React.FC<AssistantPageProps> = ({ accounts, setAccounts, openRouterApiKey, textModel }) => {
     const [isIdeasModalOpen, setIsIdeasModalOpen] = useState(false);
     const [ideasModalContent, setIdeasModalContent] = useState<PinIdea[] | string | null>(null);
     const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
@@ -96,8 +96,8 @@ const AssistantPage: React.FC<AssistantPageProps> = ({ accounts, setAccounts, us
     };
 
     const handleGenerateIdeas = async (account: PinterestAccount) => {
-        if (!userApiKey) {
-            alert("Please add your Google AI API Key in the Pin Generator page's settings to use this feature.");
+        if (!openRouterApiKey) {
+            alert("Please add your OpenRouter API Key in the Pin Generator page's settings to use this feature.");
             return;
         }
         setIsGenerating(account.id);
@@ -106,7 +106,7 @@ const AssistantPage: React.FC<AssistantPageProps> = ({ accounts, setAccounts, us
         setIsIdeasModalOpen(true);
 
         try {
-            const ideas = await generatePinIdeas(userApiKey, textModel, account.name);
+            const ideas = await generatePinIdeas(openRouterApiKey, textModel, account.name);
             setIdeasModalContent(ideas);
         } catch (error: any) {
             setIdeasModalContent(`An error occurred while generating ideas:\n\n${error.message}`);
@@ -116,8 +116,8 @@ const AssistantPage: React.FC<AssistantPageProps> = ({ accounts, setAccounts, us
     };
 
     const handleGetSuggestions = async (account: PinterestAccount) => {
-        if (!userApiKey) {
-            alert("Please add your Google AI API Key to use this feature.");
+        if (!openRouterApiKey) {
+            alert("Please add your OpenRouter API Key to use this feature.");
             return;
         }
         setIsGenerating(account.id);
@@ -126,7 +126,7 @@ const AssistantPage: React.FC<AssistantPageProps> = ({ accounts, setAccounts, us
         setIsSuggestionsModalOpen(true);
 
         try {
-            const suggestions = await getAiSuggestions(userApiKey, textModel, account);
+            const suggestions = await getAiSuggestions(openRouterApiKey, textModel, account);
             setSuggestionsModalContent(suggestions);
         } catch (error: any) {
             setSuggestionsModalContent(`An error occurred while getting suggestions:\n\n${error.message}`);

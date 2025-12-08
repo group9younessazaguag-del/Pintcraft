@@ -15,8 +15,8 @@ import ContentIcon from '../icons/ContentIcon';
 
 
 interface FacebookPageBuilderPageProps {
-    userApiKey: string;
-    onSetUserApiKey: (key: string) => void;
+    openRouterApiKey: string;
+    onSetOpenRouterApiKey: (key: string) => void;
     textModel: string;
 }
 
@@ -34,8 +34,8 @@ const StrategySection: React.FC<{ icon: React.ReactNode; title: string; children
 
 
 const FacebookPageBuilderPage: React.FC<FacebookPageBuilderPageProps> = ({
-    userApiKey,
-    onSetUserApiKey,
+    openRouterApiKey,
+    onSetOpenRouterApiKey,
     textModel,
 }) => {
     const [niche, setNiche] = useState('');
@@ -44,21 +44,21 @@ const FacebookPageBuilderPage: React.FC<FacebookPageBuilderPageProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const [apiError, setApiError] = useState<string | null>(null);
 
-    const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
-    useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
+    const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
+    useEffect(() => { setOpenRouterApiKeyInput(openRouterApiKey); }, [openRouterApiKey]);
 
-    const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
-    const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
+    const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
+    const handleClearOpenRouterKey = () => { setOpenRouterApiKeyInput(''); onSetOpenRouterApiKey(''); };
 
-    const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
+    const openRouterKeyIsConfigured = openRouterApiKey && openRouterApiKey.length > 5;
 
     const handleGenerate = async () => {
         if (!niche.trim() || !country.trim()) {
             setApiError("Please enter both a niche and a primary country.");
             return;
         }
-        if (!googleKeyIsConfigured) {
-            setApiError("Please provide a Google AI API key in the configuration section.");
+        if (!openRouterKeyIsConfigured) {
+            setApiError("Please provide an OpenRouter API key in the configuration section.");
             return;
         }
 
@@ -67,7 +67,7 @@ const FacebookPageBuilderPage: React.FC<FacebookPageBuilderPageProps> = ({
         setStrategy(null);
 
         try {
-            const result = await generateFacebookPageStrategy(userApiKey, textModel, niche, country);
+            const result = await generateFacebookPageStrategy(openRouterApiKey, textModel, niche, country);
             setStrategy(result);
         } catch (error: any) {
             setApiError(error.message || "An unknown error occurred while generating the strategy.");
@@ -122,16 +122,16 @@ const FacebookPageBuilderPage: React.FC<FacebookPageBuilderPageProps> = ({
 
                     <ControlCard icon={<SettingsIcon />} title="2. AI Configuration">
                         <ApiKeyInput
-                            label="Google AI API Key"
-                            value={googleApiKeyInput}
-                            onChange={setGoogleApiKeyInput}
-                            onSave={handleSaveGoogleKey}
-                            onClear={handleClearGoogleKey}
-                            placeholder="Enter your Google AI key"
-                            getLink="https://aistudio.google.com/app/apikey"
-                            getLinkText="Get a Google AI API Key"
+                            label="OpenRouter.ai API Key"
+                            value={openRouterApiKeyInput}
+                            onChange={setOpenRouterApiKeyInput}
+                            onSave={handleSaveOpenRouterKey}
+                            onClear={handleClearOpenRouterKey}
+                            placeholder="Enter your OpenRouter key"
+                            getLink="https://openrouter.ai/keys"
+                            getLinkText="Get an OpenRouter API Key"
                             statusMessage={
-                                googleKeyIsConfigured ? (
+                                openRouterKeyIsConfigured ? (
                                     <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
                                 ) : (
                                     <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for strategy generation.</p>

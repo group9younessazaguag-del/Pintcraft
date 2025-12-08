@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { generateViralQuotes, generateViralQuotesWithOpenRouter, generateImageWithUseApi, enhanceViralQuote, enhanceViralQuoteWithOpenRouter, generateSoraVideoPrompt, generateSoraVideoPromptWithOpenRouter } from '../../services/googleAi';
+import { generateViralQuotes, enhanceViralQuote, generateImageWithUseApi, generateSoraVideoPrompt } from '../../services/googleAi';
 import { ControlCard, ApiKeyInput } from '../Controls';
 import SettingsIcon from '../icons/SettingsIcon';
 import QuoteIcon from '../icons/QuoteIcon';
@@ -11,35 +10,12 @@ import DownloadIcon from '../icons/DownloadIcon';
 import VideoIcon from '../icons/VideoIcon';
 
 interface QuoteGeneratorPageProps {
-    userApiKey: string;
-    onSetUserApiKey: (key: string) => void;
     useapiApiKey: string;
     onSetUseapiApiKey: (key: string) => void;
     openRouterApiKey: string;
     onSetOpenRouterApiKey: (key: string) => void;
     textModel: string;
 }
-
-const ServiceToggleButton: React.FC<{
-    options: { id: 'google' | 'openrouter'; name: string }[];
-    selected: 'google' | 'openrouter';
-    onSelect: (id: 'google' | 'openrouter') => void;
-}> = ({ options, selected, onSelect }) => (
-    <div>
-        <label className="block text-sm font-medium text-slate-600 mb-2">Text Generation Service</label>
-        <div className="grid grid-cols-2 gap-2">
-            {options.map(option => (
-                <button
-                    key={option.id}
-                    onClick={() => onSelect(option.id)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 ${selected === option.id ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
-                >
-                    {option.name}
-                </button>
-            ))}
-        </div>
-    </div>
-);
 
 const CATEGORIES = [
     "Self Love", "Love", "Sad", "Life", "Motivation", "Success", "Friendship", "Funny", "Healing", "Glow Up"
@@ -56,8 +32,6 @@ const IMAGE_STYLES = [
 ];
 
 const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
-    userApiKey,
-    onSetUserApiKey,
     useapiApiKey,
     onSetUseapiApiKey,
     openRouterApiKey,
@@ -82,11 +56,8 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
     const [videoPrompt, setVideoPrompt] = useState('');
     const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
 
-    const [service, setService] = useState<'google' | 'openrouter'>('google');
-    const [openRouterModel, setOpenRouterModel] = useState('google/gemini-2.5-flash');
+    const [openRouterModel, setOpenRouterModel] = useState('google/gemini-flash-1.5');
 
-    const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
-    useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
     const [useapiApiKeyInput, setUseapiApiKeyInput] = useState(useapiApiKey);
     useEffect(() => { setUseapiApiKeyInput(useapiApiKey); }, [useapiApiKey]);
     const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
@@ -94,14 +65,11 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
 
     const previewRef = useRef<HTMLDivElement>(null);
 
-    const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
-    const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
     const handleSaveUseapiKey = () => onSetUseapiApiKey(useapiApiKeyInput.trim());
     const handleClearUseapiKey = () => { setUseapiApiKeyInput(''); onSetUseapiApiKey(''); };
     const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
     const handleClearOpenRouterKey = () => { setOpenRouterApiKeyInput(''); onSetOpenRouterApiKey(''); };
 
-    const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
     const useapiKeyIsConfigured = useapiApiKey && useapiApiKey.length > 5;
     const openRouterKeyIsConfigured = openRouterApiKey && openRouterApiKey.length > 5;
 
@@ -115,11 +83,7 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
             return;
         }
 
-        if (service === 'google' && !googleKeyIsConfigured) {
-            setApiError("Please provide a Google AI API key.");
-            return;
-        }
-        if (service === 'openrouter' && !openRouterKeyIsConfigured) {
+        if (!openRouterKeyIsConfigured) {
             setApiError("Please provide an OpenRouter API key.");
             return;
         }
@@ -133,17 +97,9 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
         try {
             let result: string[] = [];
             if (activeTab === 'custom') {
-                 if (service === 'openrouter') {
-                    result = await enhanceViralQuoteWithOpenRouter(openRouterApiKey, openRouterModel, customQuote, quoteLength);
-                } else {
-                    result = await enhanceViralQuote(userApiKey, textModel, customQuote, quoteLength);
-                }
+                result = await enhanceViralQuote(openRouterApiKey, openRouterModel, customQuote, quoteLength);
             } else {
-                if (service === 'openrouter') {
-                    result = await generateViralQuotesWithOpenRouter(openRouterApiKey, openRouterModel, selectedCategory, quoteLength);
-                } else {
-                    result = await generateViralQuotes(userApiKey, textModel, selectedCategory, quoteLength);
-                }
+                result = await generateViralQuotes(openRouterApiKey, openRouterModel, selectedCategory, quoteLength);
             }
             
             setQuotes(result);
@@ -201,11 +157,7 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
             return;
         }
         
-        if (service === 'google' && !googleKeyIsConfigured) {
-             setApiError("Please provide a Google AI API key.");
-             return;
-        }
-        if (service === 'openrouter' && !openRouterKeyIsConfigured) {
+        if (!openRouterKeyIsConfigured) {
              setApiError("Please provide an OpenRouter API key.");
              return;
         }
@@ -214,12 +166,7 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
         setApiError(null);
 
         try {
-            let prompt = '';
-            if (service === 'openrouter') {
-                prompt = await generateSoraVideoPromptWithOpenRouter(openRouterApiKey, openRouterModel, selectedQuote);
-            } else {
-                prompt = await generateSoraVideoPrompt(userApiKey, textModel, selectedQuote);
-            }
+            const prompt = await generateSoraVideoPrompt(openRouterApiKey, openRouterModel, selectedQuote);
             setVideoPrompt(prompt);
         } catch (error: any) {
             setApiError(error.message || "Failed to generate video prompt.");
@@ -352,66 +299,34 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                     
                      <ControlCard icon={<SettingsIcon />} title="AI Configuration">
                         <div className="space-y-6">
-                            <ServiceToggleButton
-                                options={[
-                                    { id: 'google', name: 'Google AI' },
-                                    { id: 'openrouter', name: 'OpenRouter' }
-                                ]}
-                                selected={service}
-                                onSelect={setService}
+                            <ApiKeyInput
+                                label="OpenRouter.ai API Key"
+                                value={openRouterApiKeyInput}
+                                onChange={setOpenRouterApiKeyInput}
+                                onSave={handleSaveOpenRouterKey}
+                                onClear={handleClearOpenRouterKey}
+                                placeholder="Enter your OpenRouter key"
+                                getLink="https://openrouter.ai/keys"
+                                getLinkText="Get an OpenRouter API Key"
+                                statusMessage={
+                                    openRouterKeyIsConfigured ? (
+                                        <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
+                                    ) : (
+                                        <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for text.</p>
+                                    )
+                                }
                             />
-
-                            {service === 'google' && (
-                                <ApiKeyInput
-                                    label="Google AI API Key (for Text)"
-                                    value={googleApiKeyInput}
-                                    onChange={setGoogleApiKeyInput}
-                                    onSave={handleSaveGoogleKey}
-                                    onClear={handleClearGoogleKey}
-                                    placeholder="Enter your Google AI key"
-                                    getLink="https://aistudio.google.com/app/apikey"
-                                    getLinkText="Get a Google AI API Key"
-                                    statusMessage={
-                                        googleKeyIsConfigured ? (
-                                            <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
-                                        ) : (
-                                            <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for text.</p>
-                                        )
-                                    }
+                            <div>
+                                <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 mb-1.5">OpenRouter Model</label>
+                                <input
+                                    type="text"
+                                    id="openrouter-model"
+                                    value={openRouterModel}
+                                    onChange={(e) => setOpenRouterModel(e.target.value)}
+                                    placeholder="e.g., google/gemini-flash-1.5"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                                 />
-                            )}
-                             {service === 'openrouter' && (
-                                <>
-                                    <ApiKeyInput
-                                        label="OpenRouter.ai API Key"
-                                        value={openRouterApiKeyInput}
-                                        onChange={setOpenRouterApiKeyInput}
-                                        onSave={handleSaveOpenRouterKey}
-                                        onClear={handleClearOpenRouterKey}
-                                        placeholder="Enter your OpenRouter key"
-                                        getLink="https://openrouter.ai/keys"
-                                        getLinkText="Get an OpenRouter API Key"
-                                        statusMessage={
-                                            openRouterKeyIsConfigured ? (
-                                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
-                                            ) : (
-                                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for text.</p>
-                                            )
-                                        }
-                                    />
-                                    <div>
-                                        <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 mb-1.5">OpenRouter Model</label>
-                                        <input
-                                            type="text"
-                                            id="openrouter-model"
-                                            value={openRouterModel}
-                                            onChange={(e) => setOpenRouterModel(e.target.value)}
-                                            placeholder="e.g., google/gemini-2.5-flash"
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                        />
-                                    </div>
-                                </>
-                            )}
+                            </div>
                             <hr className="border-slate-200" />
                             <ApiKeyInput
                                 label="useapi.net API Key (Midjourney)"
