@@ -24,6 +24,13 @@ export interface TemplateData {
   textModel: string;
 }
 
+export interface CustomTheme {
+  primaryColor: string;
+  textColor: string;
+  titleFont: string;
+  bodyFont: string;
+}
+
 export interface CsvRow {
   title: string;
   website: string;
