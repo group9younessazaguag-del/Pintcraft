@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -37,7 +38,7 @@ declare global {
 const getCurrentPage = () => {
   // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
-  return hash || 'pin-generator';
+  return hash || 'rewrite-title-description';
 };
 
 
@@ -56,10 +57,7 @@ const initialPersistedData: PersistedData = {
     pinsPerDay: 3,
     startDate: new Date().toISOString().split('T')[0],
     imageModel: 'fal-ai/recraft/v3/text-to-image',
-    textModel: 'google/gemini-flash-1.5',
-    scheduleMode: 'fixed',
-    pinsPerDayMin: 3,
-    pinsPerDayMax: 5,
+    textModel: 'gemini-2.5-flash',
 };
 
 const initialImageData = {
@@ -86,6 +84,7 @@ const App: React.FC = () => {
   const [imageData, setImageData] = useState(initialImageData);
   const templateData: TemplateData = { ...persistedData, ...imageData };
 
+  const [userApiKey, setUserApiKey] = useLocalStorage('googleAiApiKey', ''); // For Google AI (text)
   const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
   const [apiframeApiKey, setApiframeApiKey] = useLocalStorage('apiframeApiKey', ''); // For APIFrame.ai (Midjourney)
   const [midapiApiKey, setMidapiApiKey] = useLocalStorage('midapiApiKey', ''); // For midapi.ai (Midjourney 2)
@@ -225,7 +224,7 @@ const App: React.FC = () => {
         });
   };
 
-  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<string> => {
+  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -240,7 +239,7 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return '';
+        return;
     }
 
     setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: true }));
@@ -269,7 +268,6 @@ const App: React.FC = () => {
         
         const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
         setImageData(prev => ({ ...prev, [field]: imageUrl }));
-        return imageUrl;
     } catch (error: any) {
         console.error(`Error generating image:`, error);
         if (throwOnError) {
@@ -280,13 +278,12 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image.',
             helpLink: error.helpLink
         });
-        throw error;
     } finally {
         setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
     }
   };
 
-  const handleGenerateImageWithMidjourney = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<string[]> => {
+  const handleGenerateImageWithMidjourney = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -301,14 +298,14 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return [];
+        return;
     }
 
     if (!apiframeApiKey || apiframeApiKey.length < 5) {
         const msg = 'Please enter an APIFrame.ai API key in the AI Configuration settings to use Midjourney.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return [];
+        return;
     }
 
     setIsGeneratingMidjourneyImage({ 1: true, 2: true, 3: true });
@@ -330,7 +327,6 @@ const App: React.FC = () => {
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
-        return imageUrls;
     } catch (error: any) {
         console.error(`Error generating image with Midjourney:`, error);
         if (throwOnError) {
@@ -341,13 +337,12 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image with Midjourney.',
             helpLink: error.helpLink
         });
-        throw error;
     } finally {
         setIsGeneratingMidjourneyImage({ 1: false, 2: false, 3: false });
     }
   };
 
-  const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<string[]> => {
+  const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -361,14 +356,14 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return [];
+        return;
     }
 
     if (!midapiApiKey || midapiApiKey.length < 5) {
         const msg = 'Please enter a midapi.ai API key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return [];
+        return;
     }
 
     setIsGeneratingMidjourney2Image({ 1: true, 2: true, 3: true });
@@ -391,7 +386,6 @@ const App: React.FC = () => {
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
-        return imageUrls;
     } catch (error: any) {
         console.error(`Error generating image with midapi.ai:`, error);
         if (throwOnError) {
@@ -402,13 +396,12 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image with midapi.ai.',
             helpLink: error.helpLink
         });
-        throw error;
     } finally {
         setIsGeneratingMidjourney2Image({ 1: false, 2: false, 3: false });
     }
   };
 
-  const handleGenerateImageWithImagineApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<string[]> => {
+  const handleGenerateImageWithImagineApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -422,14 +415,14 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return [];
+        return;
     }
 
     if (!imagineApiKey || imagineApiKey.length < 5) {
         const msg = 'Please enter an ImagineAPI key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return [];
+        return;
     }
 
     setIsGeneratingImagineImage({ 1: true, 2: true, 3: true });
@@ -452,7 +445,6 @@ const App: React.FC = () => {
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
-        return imageUrls;
     } catch (error: any) {
         console.error(`Error generating image with ImagineAPI:`, error);
         if (throwOnError) {
@@ -463,13 +455,12 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image with ImagineAPI.',
             helpLink: error.helpLink
         });
-        throw error;
     } finally {
         setIsGeneratingImagineImage({ 1: false, 2: false, 3: false });
     }
   };
 
-  const handleGenerateImageWithUseApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<string[]> => {
+  const handleGenerateImageWithUseApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -483,14 +474,14 @@ const App: React.FC = () => {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return [];
+        return;
     }
 
     if (!useapiApiKey || useapiApiKey.length < 5) {
         const msg = 'Please enter a useapi.net API key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
-        return [];
+        return;
     }
 
     setIsGeneratingUseApiImage({ 1: true, 2: true, 3: true });
@@ -513,7 +504,6 @@ const App: React.FC = () => {
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
-        return imageUrls;
     } catch (error: any) {
         console.error(`Error generating image with useapi.net:`, error);
         if (throwOnError) {
@@ -524,7 +514,6 @@ const App: React.FC = () => {
             message: error.message || 'Failed to generate image with useapi.net.',
             helpLink: error.helpLink
         });
-        throw error;
     } finally {
         setIsGeneratingUseApiImage({ 1: false, 2: false, 3: false });
     }
@@ -544,8 +533,8 @@ const App: React.FC = () => {
 
     try {
         let newDescription: string;
-        if (openRouterApiKey) {
-            newDescription = await generateDescription(openRouterApiKey, templateData.textModel, title);
+        if (userApiKey) {
+            newDescription = await generateDescription(userApiKey, templateData.textModel, title);
         } else {
             newDescription = generatePlaceholderDescription(title);
         }
@@ -579,8 +568,8 @@ const App: React.FC = () => {
 
     try {
         let newKeywords: string;
-        if (openRouterApiKey) {
-            newKeywords = await generateKeywords(openRouterApiKey, textModel, title);
+        if (userApiKey) {
+            newKeywords = await generateKeywords(userApiKey, textModel, title);
         } else {
             newKeywords = generatePlaceholderKeywords(title);
         }
@@ -612,8 +601,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
     try {
         let newTitle: string;
-        if (openRouterApiKey) {
-            newTitle = await generateShortTitle(openRouterApiKey, templateData.textModel, title);
+        if (userApiKey) {
+            newTitle = await generateShortTitle(userApiKey, templateData.textModel, title);
         } else {
             // Fallback for when no API key is present
             newTitle = title.length > 35 ? title.substring(0, 32) + '...' : title;
@@ -754,15 +743,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       return;
     }
 
-    const orApiKey = openRouterApiKey;
+    const googleApiKey = userApiKey;
     const falApiKey = falAiApiKey;
     const mjApiKey = apiframeApiKey;
     const mj2ApiKey = midapiApiKey;
     const imgApiKey = imagineApiKey;
     const useApiKey = useapiApiKey;
 
-    if (!orApiKey) {
-        if (!window.confirm("You are missing an OpenRouter API key. Only basic placeholder text will be created. Do you want to continue?")) {
+    if (!googleApiKey) {
+        if (!window.confirm("You are missing a Google AI API key. Only basic placeholder text will be created. Do you want to continue?")) {
             return;
         }
     }
@@ -822,7 +811,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
     const zip = zipRef.current;
     
-    const { pinsPerDay, startDate, scheduleMode, pinsPerDayMin, pinsPerDayMax } = templateData;
+    const { pinsPerDay, startDate } = templateData;
     const pinsPerDayNum = Math.max(1, parseInt(pinsPerDay.toString(), 10) || 1);
     const start = new Date(startDate);
     if (isNaN(start.getTime())) {
@@ -838,10 +827,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     const keywordsHeaderKey = Object.keys(currentRunCsvData[0] || {}).find(k => k.toLowerCase().trim() === 'keywords' || k.toLowerCase().trim() === 'interest used') || 'Keywords';
 
     let i = startIndex;
-    let pinsScheduledForCurrentDay = 0;
-    let currentDayOffset = 0;
-    let pinsToScheduleThisDay = 0;
-
     try {
         for (i = startIndex; i < dataForGeneration.length; i++) {
             const currentData = dataForGeneration[i];
@@ -858,8 +843,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 setBulkMessage(`Row ${i + 1}: Generating description...`);
                 try {
                     let description: string;
-                    if (orApiKey) {
-                        description = await generateDescription(orApiKey, templateData.textModel, currentData.title);
+                    if (googleApiKey) {
+                        description = await generateDescription(googleApiKey, templateData.textModel, currentData.title);
                     } else {
                         description = generatePlaceholderDescription(currentData.title);
                     }
@@ -876,8 +861,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 setBulkMessage(`Row ${i + 1}: Generating keywords...`);
                 try {
                     let keywords: string;
-                    if (orApiKey) {
-                        keywords = await generateKeywords(orApiKey, templateData.textModel, currentData.title);
+                    if (googleApiKey) {
+                        keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title);
                     } else {
                         keywords = generatePlaceholderKeywords(currentData.title);
                     }
@@ -894,41 +879,38 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
             const prompt = currentData.title;
             let imageGenerated = false;
-            let generatedImageUrls: (string | null)[] = [null, null, null];
-            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId);
-            const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
 
             if (prompt) {
                 try {
+                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId);
+                    const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
                     const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
                     
                     // Determine if we should use batch processing (call API once) or loop (call API multiple times)
                     const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
 
                     if (isMultiImageGenerator) {
-                        let multiImageUrls: string[] = [];
                         // For batch generators, call ONCE. The handler functions populate all image slots.
                         if (imageGenerator === 'midjourney' && mjApiKey) {
-                            multiImageUrls = await handleGenerateImageWithMidjourney(1, true, prompt);
+                            await handleGenerateImageWithMidjourney(1, true, prompt);
+                            await sleep(500);
                         } else if (imageGenerator === 'midjourney2' && mj2ApiKey) {
                             const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            multiImageUrls = await handleGenerateImageWithMidApiAi(1, true, prompt, onProgress);
+                            await handleGenerateImageWithMidApiAi(1, true, prompt, onProgress);
+                            await sleep(500);
                         } else if (imageGenerator === 'imagine' && imgApiKey) {
                             const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            multiImageUrls = await handleGenerateImageWithImagineApi(1, true, prompt, onProgress);
+                            await handleGenerateImageWithImagineApi(1, true, prompt, onProgress);
+                            await sleep(500);
                         } else if (imageGenerator === 'useapi' && useApiKey) {
                             const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            multiImageUrls = await handleGenerateImageWithUseApi(1, true, prompt, onProgress);
+                            await handleGenerateImageWithUseApi(1, true, prompt, onProgress);
+                            await sleep(500);
                         }
-                        generatedImageUrls[0] = multiImageUrls[0] || null;
-                        generatedImageUrls[1] = multiImageUrls[1] || null;
-                        generatedImageUrls[2] = multiImageUrls[2] || null;
-                        await sleep(500);
                     } else {
                         // For single image generators (Fal.ai, or placeholder), loop through required slots
                         for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
-                           const url = await handleGenerateImage(imgIdx as 1 | 2 | 3, true, prompt);
-                           generatedImageUrls[imgIdx - 1] = url;
+                            await handleGenerateImage(imgIdx as 1 | 2 | 3, true, prompt);
                         }
                     }
                     
@@ -942,33 +924,29 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     
                     const isBannedWordsError = error.message && error.message.toLowerCase().includes('banned words');
 
-                    if (isBannedWordsError && orApiKey) {
+                    if (isBannedWordsError && googleApiKey) {
                         setBulkMessage(`Row ${i + 1}: Banned words detected. Regenerating prompt...`);
                         await sleep(100);
 
                         try {
-                            const newPrompt = await generateSafeImagePrompt(orApiKey, templateData.textModel, currentData.title);
+                            const newPrompt = await generateSafeImagePrompt(googleApiKey, templateData.textModel, currentData.title);
                             setBulkMessage(`Row ${i + 1}: Retrying with new prompt...`);
                             
+                            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId);
+                            const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
                             const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
                             const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
 
                             if (isMultiImageGenerator) {
-                                let multiImageUrls: string[] = [];
                                 // Batch retry
-                                if (imageGenerator === 'midjourney' && mjApiKey) { multiImageUrls = await handleGenerateImageWithMidjourney(1, true, newPrompt); }
-                                else if (imageGenerator === 'midjourney2' && mj2ApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); multiImageUrls = await handleGenerateImageWithMidApiAi(1, true, newPrompt, onProgress); }
-                                else if (imageGenerator === 'imagine' && imgApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); multiImageUrls = await handleGenerateImageWithImagineApi(1, true, newPrompt, onProgress); }
-                                else if (imageGenerator === 'useapi' && useApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); multiImageUrls = await handleGenerateImageWithUseApi(1, true, newPrompt, onProgress); }
-                                await sleep(500);
-                                generatedImageUrls[0] = multiImageUrls[0] || null;
-                                generatedImageUrls[1] = multiImageUrls[1] || null;
-                                generatedImageUrls[2] = multiImageUrls[2] || null;
+                                if (imageGenerator === 'midjourney' && mjApiKey) { await handleGenerateImageWithMidjourney(1, true, newPrompt); await sleep(500); }
+                                else if (imageGenerator === 'midjourney2' && mj2ApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithMidApiAi(1, true, newPrompt, onProgress); await sleep(500); }
+                                else if (imageGenerator === 'imagine' && imgApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithImagineApi(1, true, newPrompt, onProgress); await sleep(500); }
+                                else if (imageGenerator === 'useapi' && useApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithUseApi(1, true, newPrompt, onProgress); await sleep(500); }
                             } else {
                                 // Single loop retry
                                 for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
-                                    const url = await handleGenerateImage(imgIdx as 1 | 2 | 3, true, newPrompt);
-                                    generatedImageUrls[imgIdx-1] = url;
+                                    await handleGenerateImage(imgIdx as 1 | 2 | 3, true, newPrompt);
                                 }
                             }
                             
@@ -992,9 +970,14 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             await sleep(2000); // Wait for rendering
             
             // Explicitly wait for images to load to prevent blank pins
-            await waitForImageLoad(generatedImageUrls[0]);
-            if (needsImage2) await waitForImageLoad(generatedImageUrls[1]);
-            if (needsImage3) await waitForImageLoad(generatedImageUrls[2]);
+            const { backgroundImage, backgroundImage2, backgroundImage3 } = imageData; // Get LATEST state
+            await waitForImageLoad(backgroundImage);
+            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53'].includes(templateData.templateId)) {
+                await waitForImageLoad(backgroundImage2);
+            }
+            if (['7', '15', '19', '22'].includes(templateData.templateId)) {
+                await waitForImageLoad(backgroundImage3);
+            }
 
             if (imageGenerated && previewRef.current) {
                 const dataUrl = await window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2, fetchRequestInit: { mode: 'cors' }});
@@ -1009,47 +992,20 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 currentRunCsvData[i][mediaUrlHeaderKey] = imageUrl;
             }
 
-            let publishDate;
-            if (scheduleMode === 'random') {
-                const min = Math.max(1, pinsPerDayMin || 1);
-                const max = Math.max(min, pinsPerDayMax || min);
+            const daysToAdd = Math.floor(i / pinsPerDayNum);
+            const publishDate = new Date(start);
+            publishDate.setDate(start.getDate() + daysToAdd);
 
-                if (pinsScheduledForCurrentDay === 0) {
-                    pinsToScheduleThisDay = Math.floor(Math.random() * (max - min + 1)) + min;
-                }
-
-                const publishDateForDay = new Date(start);
-                publishDateForDay.setDate(start.getDate() + currentDayOffset);
-
-                const startHour = 9, endHour = 17;
-                const hourIncrement = pinsToScheduleThisDay > 1 ? (endHour - startHour) / (pinsToScheduleThisDay - 1) : 0;
-                const publishHourFloat = startHour + (pinsScheduledForCurrentDay * hourIncrement);
-                const publishHour = Math.floor(publishHourFloat);
-                const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
-
-                publishDateForDay.setHours(publishHour, publishMinute, 0, 0);
-                publishDate = publishDateForDay;
-
-                pinsScheduledForCurrentDay++;
-                if (pinsScheduledForCurrentDay >= pinsToScheduleThisDay) {
-                    currentDayOffset++;
-                    pinsScheduledForCurrentDay = 0;
-                }
-            } else { // 'fixed' mode
-                const daysToAdd = Math.floor(i / pinsPerDayNum);
-                const publishDateFixed = new Date(start);
-                publishDateFixed.setDate(start.getDate() + daysToAdd);
-
-                const pinIndexInDay = i % pinsPerDayNum;
-                const startHour = 9, endHour = 17;
-                const hourIncrement = pinsPerDayNum > 1 ? (endHour - startHour) / (pinsPerDayNum - 1) : 0;
-                const publishHourFloat = startHour + (pinIndexInDay * hourIncrement);
-                const publishHour = Math.floor(publishHourFloat);
-                const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
-                
-                publishDateFixed.setHours(publishHour, publishMinute, 0, 0);
-                publishDate = publishDateFixed;
-            }
+            const pinIndexInDay = i % pinsPerDayNum;
+            const startHour = 9;
+            const endHour = 17;
+            const totalHoursInWindow = endHour - startHour;
+            const hourIncrement = pinsPerDayNum > 1 ? totalHoursInWindow / (pinsPerDayNum - 1) : 0;
+            const publishHourFloat = startHour + (pinIndexInDay * hourIncrement);
+            const publishHour = Math.floor(publishHourFloat);
+            const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
+            
+            publishDate.setHours(publishHour, publishMinute, 0, 0);
 
             const year = publishDate.getFullYear();
             const month = (publishDate.getMonth() + 1).toString().padStart(2, '0');
@@ -1163,6 +1119,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     if (data.adminSettings) {
         setAdminSettings(data.adminSettings);
     }
+    if (typeof data.googleAiApiKey === 'string') {
+        setUserApiKey(data.googleAiApiKey);
+    }
     if (typeof data.falAiApiKey === 'string') {
         setFalAiApiKey(data.falAiApiKey);
     }
@@ -1189,6 +1148,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const allData: BackupData = {
     adminSettings,
+    googleAiApiKey: userApiKey,
     falAiApiKey,
     apiframeApiKey,
     midapiApiKey,
@@ -1233,8 +1193,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
     lastCompletedRowIndex: lastCompletedRowIndex,
     onResetBulkGeneration: handleResetBulkGeneration,
-    openRouterApiKey: openRouterApiKey,
-    onSetOpenRouterApiKey: setOpenRouterApiKey,
+    onSetUserApiKey: setUserApiKey,
+    userApiKey: userApiKey,
     onSetFalAiApiKey: setFalAiApiKey,
     falAiApiKey: falAiApiKey,
     apiframeApiKey: apiframeApiKey,
@@ -1262,6 +1222,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <ContactPage content={adminSettings.contactPageContent} />;
         case 'content-generator':
             return <ContentGeneratorPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
                         openRouterApiKey={openRouterApiKey}
                         onSetOpenRouterApiKey={setOpenRouterApiKey}
                         textModel={templateData.textModel}
@@ -1271,7 +1233,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
              return <AssistantPage
                         accounts={pinterestAccounts}
                         setAccounts={setPinterestAccounts}
-                        openRouterApiKey={openRouterApiKey}
+                        userApiKey={userApiKey}
                         textModel={templateData.textModel}
                     />;
         case 'domain-suggestor':
@@ -1280,12 +1242,14 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <AuthorPage />;
         case 'facebook-page-builder':
             return <FacebookPageBuilderPage
-                        openRouterApiKey={openRouterApiKey}
-                        onSetOpenRouterApiKey={setOpenRouterApiKey}
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
                         textModel={templateData.textModel}
                     />;
         case 'quote-generator':
             return <QuoteGeneratorPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
                         useapiApiKey={useapiApiKey}
                         onSetUseapiApiKey={setUseapiApiKey}
                         openRouterApiKey={openRouterApiKey}
@@ -1305,6 +1269,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
              return <HomePage />;
         case 'facebook-post-generator':
             return <FacebookPostGeneratorPage
+                        userApiKey={userApiKey}
+                        onSetUserApiKey={setUserApiKey}
                         falAiApiKey={falAiApiKey}
                         onSetFalAiApiKey={setFalAiApiKey}
                         useapiApiKey={useapiApiKey}

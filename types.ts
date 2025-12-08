@@ -22,9 +22,6 @@ export interface TemplateData {
   startDate: string;
   imageModel: string;
   textModel: string;
-  scheduleMode?: 'fixed' | 'random';
-  pinsPerDayMin?: number;
-  pinsPerDayMax?: number;
 }
 
 export interface CsvRow {
@@ -79,6 +76,7 @@ export type PinterestAccount = {
 
 export interface BackupData {
   adminSettings: AdminSettings;
+  googleAiApiKey: string;
   falAiApiKey: string;
   apiframeApiKey: string;
   midapiApiKey: string;

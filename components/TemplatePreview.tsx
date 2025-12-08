@@ -1,6 +1,5 @@
 
 
-
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
 
@@ -1340,28 +1339,21 @@ const MontserratVerticalTemplate: React.FC<{ data: TemplateData }> = ({ data }) 
 
             {/* Content Banner */}
             <div
-                className="flex-[1] flex flex-col justify-center items-center text-center p-4 font-baloo-2"
-                style={{ 
-                    backgroundColor: '#DFA52B',
-                    borderTop: '2px solid white',
-                    borderBottom: '2px solid white'
-                }}
+                className="flex-[1] flex flex-col justify-center items-center text-center p-4 font-montserrat font-extrabold"
+                style={{ backgroundColor: 'black', color: '#FFFFFF' }}
             >
                 {subtitle && (
                     <p
-                        className="text-xs tracking-wide mb-1 font-semibold"
-                        style={{ color: 'rgba(0,0,0,0.6)' }}
+                        className="text-xs tracking-wide mb-1 font-semibold" /* Adjusted weight for subtitle */
+                        style={{ color: '#B50202' }}
                     >
                         {subtitle}
                     </p>
                 )}
                 {title && (
                     <h2
-                        className={`${titleFontSize} leading-tight tracking-tight uppercase font-bold text-white`}
-                        style={{
-                            wordBreak: 'break-word',
-                            textShadow: '1.5px 1.5px 0 #ffa600, -1.5px -1.5px 0 #ffa600, 1.5px -1.5px 0 #ffa600, -1.5px 1.5px 0 #ffa600'
-                        }}
+                        className={`${titleFontSize} leading-tight tracking-tight uppercase`} /* Added uppercase for style */
+                        style={{ wordBreak: 'break-word' }}
                     >
                         {title}
                     </h2>

@@ -1,3 +1,5 @@
+
+import { GoogleGenAI, Type } from '@google/genai';
 import { GeneratedContentRow, PinterestAccount, ImageAspectRatio, FacebookPost, FacebookPageStrategy } from '../types';
 
 // Helper to parse complex API errors
@@ -59,8 +61,8 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
         const isServiceUnavailable = errorBody.status === 'UNAVAILABLE' || errorBody.code === 503;
         
         if (isQuotaError) {
-            const userMessage = "You've exceeded the free usage limit for your API key. To continue, please check your provider's billing status or wait for your quota to reset.";
-            return { type: 'quota', message: userMessage, helpLink: helpLink || undefined };
+            const userMessage = "You've exceeded the free usage limit for your Google AI API key. To continue, please enable billing on your Google Cloud project or wait for your quota to reset.";
+            return { type: 'quota', message: userMessage, helpLink: helpLink || 'https://ai.google.dev/gemini-api/docs/billing' };
         }
         if (isServiceUnavailable) {
             return { type: 'service', message: 'Image generation service is temporarily unavailable.', helpLink: helpLink || undefined };
@@ -75,46 +77,33 @@ const getApiErrorDetails = (error: any): { type: 'quota' | 'service' | 'generic'
     return { type: 'generic', message, helpLink: helpLink || undefined };
 };
 
-async function generateWithOpenRouter(apiKey: string, model: string, systemPrompt: string, userPrompt: string, isJson: boolean = false) {
-    const headers: HeadersInit = {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
-        "X-Title": `Pin4You`,
-    };
+async function generateWithRetry(apiCall: () => Promise<any>) {
+    const MAX_RETRIES = 3;
+    let lastError: any = null;
 
-    const body: any = {
-        model: model,
-        messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-        ],
-    };
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            return await apiCall();
+        } catch (error: any) {
+            lastError = error;
+            const errorString = JSON.stringify(error).toLowerCase();
+            
+            const isRetryable = 
+                errorString.includes('500') ||       
+                errorString.includes('503') ||       
+                errorString.includes('xhr error') || 
+                errorString.includes('rpc failed') || 
+                errorString.includes('unavailable'); 
 
-    if (isJson) {
-        body.response_format = { "type": "json_object" };
+            if (isRetryable && attempt < MAX_RETRIES) {
+                console.warn(`Attempt ${attempt}/${MAX_RETRIES} failed with a transient error. Retrying...`, error);
+                await new Promise(resolve => setTimeout(resolve, 1500 * attempt)); 
+            } else {
+                throw error;
+            }
+        }
     }
-
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body)
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = errorData?.error?.message || JSON.stringify(errorData);
-        throw new Error(`OpenRouter API error: ${errorMessage}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content?.trim();
-
-    if (!content) {
-        throw new Error("OpenRouter returned an empty response.");
-    }
-    
-    return content;
+    throw lastError;
 }
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
@@ -144,8 +133,7 @@ export const generateImage = async (
             aspect_ratio: aspectRatio,
             num_images: 1,
             output_format: "jpeg",
-            sync_mode: true,
-            seed: Math.floor(Math.random() * 1000000) // Add random seed for variety
+            sync_mode: true
         });
 
         const response = await fetch(url, {
@@ -204,9 +192,6 @@ export const generateImageWithMidjourney = async (
 ): Promise<string[]> => {
     const BASE_URL = 'https://api.apiframe.pro';
 
-    const randomSeed = Math.floor(Math.random() * 4294967295); // Midjourney seed range
-    const fullPrompt = `${prompt} --seed ${randomSeed}`;
-
     const imagineResponse = await fetch(`${BASE_URL}/imagine`, {
         method: 'POST',
         headers: {
@@ -214,7 +199,7 @@ export const generateImageWithMidjourney = async (
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            prompt: fullPrompt,
+            prompt: prompt,
             aspect_ratio: aspectRatio,
             mode: 'fast'
         })
@@ -334,145 +319,171 @@ export const generateImageWithMidjourney = async (
     return validImages;
 };
 
-// FIX: Implement missing functions and types
-export const generatePlaceholderImage = async (prompt: string, aspectRatio: string): Promise<string> => {
-    const [width, height] = aspectRatio === '1:1' ? [1024, 1024] :
-                             aspectRatio === '3:4' ? [768, 1024] :
-                             aspectRatio === '4:5' ? [1024, 1280] :
-                             [1024, 1792]; // 9:16 default
-    const text = prompt.length > 50 ? prompt.substring(0, 47) + '...' : prompt;
-    return `https://placehold.co/${width}x${height}/EFEFEF/333333/png?text=${encodeURIComponent(text)}`;
-};
-
-export const generateDescription = async (apiKey: string, model: string, title: string): Promise<string> => {
-    const systemPrompt = "You are a Pinterest marketing expert. Create a compelling, SEO-friendly pin description for the given title. The description should be between 100 and 200 characters. It must be engaging and encourage clicks. Do not include hashtags. Output only the description text.";
-    return await generateWithOpenRouter(apiKey, model, systemPrompt, title);
-};
-
-export const generatePlaceholderDescription = (title: string): string => {
-    return `This is a placeholder description for "${title}". It's a great topic! You can replace this text with a more detailed and engaging description to attract more viewers on Pinterest. Make sure to include relevant keywords.`;
-};
-
-export const generateKeywords = async (apiKey: string, model: string, title: string): Promise<string> => {
-    const systemPrompt = "You are a Pinterest SEO expert. Based on the pin title, generate a comma-separated list of 5-10 relevant, high-traffic keywords. Do not include hashtags. Output only the comma-separated list of keywords.";
-    return await generateWithOpenRouter(apiKey, model, systemPrompt, title);
-};
-
-export const generatePlaceholderKeywords = (title: string): string => {
-    return title.toLowerCase().split(' ').join(', ') + ', placeholder, example';
-};
-
-export const generateShortTitle = async (apiKey: string, model: string, title: string): Promise<string> => {
-    const systemPrompt = "You are a copywriter. Rewrite the following title to be shorter and more engaging, ideally under 35 characters, but no more than 40. Output only the new title.";
-    return await generateWithOpenRouter(apiKey, model, systemPrompt, title);
-};
-
-export const DEFAULT_CONTENT_PROMPT = "You are a content strategist for a blog. Your task is to generate a table of Pinterest pin ideas based on a given keyword. The table should be in JSON format. Do not output any text before or after the JSON. The JSON should be an array of objects, where each object has the following keys: 'title' (string, a viral, click-worthy pin title), 'description' (string, a short, enticing pin description of about 150-250 characters), 'board' (string, a relevant Pinterest board name from the provided list), 'image_prompt' (string, a detailed, visually rich prompt for an AI image generator), 'alt_text' (string, a descriptive alt text for accessibility), 'interests' (array of strings, 3-5 related Pinterest interests/keywords), and 'category' (string, the most relevant category from the provided list).";
-
-export const generateSafeImagePrompt = async (apiKey: string, model: string, originalPrompt: string): Promise<string> => {
-    const systemPrompt = "You are an AI prompt engineer. The user's prompt was flagged for containing banned words. Rewrite the prompt to be safe for work and compliant with image generation policies, while preserving the original intent as much as possible. Focus on descriptive, visual terms. Output only the new prompt.";
-    return await generateWithOpenRouter(apiKey, model, systemPrompt, originalPrompt);
-};
-
 export const generateImageWithMidApiAi = async (
     apiKey: string,
     prompt: string,
     aspectRatio: ImageAspectRatio,
     onProgressUpdate?: (message: string) => void
 ): Promise<string[]> => {
-    const BASE_URL = 'https://api.midapi.ai/v1';
-
-    if (onProgressUpdate) onProgressUpdate('Submitting imagine task...');
-
-    const imagineResponse = await fetch(`${BASE_URL}/imagine`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            prompt: prompt,
-            ar: aspectRatio.replace(':', ' '),
-        })
-    });
-
-    if (!imagineResponse.ok) {
-        const errorData = await imagineResponse.json();
-        throw new Error(errorData.message || 'midapi.ai imagine request failed.');
-    }
-
-    const imagineData = await imagineResponse.json();
-    const taskId = imagineData.task_id;
-
-    if (!taskId) {
-        throw new Error('midapi.ai did not return a task ID.');
-    }
-
-    let jobStatus = '';
-    let jobData;
-    const maxAttempts = 30;
-    let attempt = 0;
-
-    if (onProgressUpdate) onProgressUpdate('Waiting for image generation to start...');
-
-    while ((jobStatus !== 'finished' && jobStatus !== 'failed') && attempt < maxAttempts) {
-        await sleep(5000);
-        attempt++;
-
-        const jobResponse = await fetch(`${BASE_URL}/task/${taskId}`, {
-            method: 'GET',
+    
+    const generationTask = async (): Promise<string[]> => {
+        const BASE_URL = 'https://api.midapi.ai/api/v1/mj';
+        
+        let arValue = '1:1';
+        if (aspectRatio === '9:16') arValue = '9:16';
+        if (aspectRatio === '3:4') arValue = '3:4';
+        
+        const generateResponse = await fetch(`${BASE_URL}/generate`, {
+            method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
             },
+            body: JSON.stringify({
+                taskType: 'mj_txt2img',
+                prompt: prompt,
+                speed: 'relaxed',
+                aspectRatio: arValue,
+                version: '7'
+            })
         });
 
-        if (!jobResponse.ok) {
-            console.error(`midapi.ai: Failed to check job status for ${taskId}, attempt ${attempt}, status: ${jobResponse.status}`);
-            continue;
-        }
+        if (!generateResponse.ok) {
+            const errorText = await generateResponse.text();
+            console.error('midapi.ai generate error response:', errorText);
 
-        jobData = await jobResponse.json();
-        jobStatus = jobData.status;
-
-        if (onProgressUpdate && jobData.progress) {
-            onProgressUpdate(`Progress: ${jobData.progress}%`);
-        }
-    }
-
-    if (jobStatus === 'failed') {
-        throw new Error(jobData?.error || 'midapi.ai image generation failed.');
-    }
-
-    if (jobStatus !== 'finished') {
-        throw new Error('midapi.ai: Image generation timed out.');
-    }
-
-    const imageUrls = jobData?.image_urls;
-
-    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-        throw new Error('The AI model did not return any valid image URLs from midapi.ai.');
-    }
-
-    const base64Images = await Promise.all(
-        imageUrls.map(async (url: string) => {
-            try {
-                const imageResponse = await fetch(url);
-                if (!imageResponse.ok) return null;
-                const imageBlob = await imageResponse.blob();
-                return await blobToBase64(imageBlob);
-            } catch (e) {
-                return null;
+            if (generateResponse.status === 401) {
+                throw new Error('midapi.ai authentication failed. Please check your midapi.ai API key.');
             }
-        })
-    );
+            
+            let message;
+            try {
+                const errorData = JSON.parse(errorText);
+                message = `midapi.ai error: ${errorData.msg || JSON.stringify(errorData)}`;
+            } catch (e) {
+                const strippedText = errorText.replace(/<[^>]*>?/gm, '').trim();
+                message = `midapi.ai request failed. Server returned: ${strippedText.substring(0, 200)}`;
+            }
+            throw new Error(message);
+        }
 
-    const validImages = base64Images.filter(img => img !== null) as string[];
+        const generateData = await generateResponse.json();
+        
+        if (generateData.code !== 200) {
+            throw new Error(`midapi.ai failed to start task: ${generateData.msg || 'Unknown error'}`);
+        }
 
-    if (validImages.length === 0) {
-        throw new Error('Failed to download any of the generated images from midapi.ai.');
+        const taskId = generateData.data?.taskId;
+        if (!taskId) {
+            throw new Error('midapi.ai did not return a task ID.');
+        }
+
+        if (onProgressUpdate) {
+            onProgressUpdate(`Task submitted. Waiting for result (this can take over a minute)...`);
+        }
+
+        const maxPollAttempts = 60;
+        let pollAttempt = 0;
+        let taskData;
+
+        while (pollAttempt < maxPollAttempts) {
+            await sleep(5000);
+            pollAttempt++;
+            
+            const statusResponse = await fetch(`${BASE_URL}/record-info?taskId=${taskId}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+            
+            if (!statusResponse.ok) {
+                const errorText = await statusResponse.text();
+                console.warn(`midapi.ai status check failed for ${taskId}, attempt ${pollAttempt}:`, errorText);
+                if (pollAttempt > 3) { throw new Error(`Failed to get job status after multiple attempts. Status: ${statusResponse.status}`); }
+                continue;
+            }
+
+            const result = await statusResponse.json();
+            if (result.code !== 200) {
+                console.warn(`midapi.ai status check for ${taskId} returned API error: ${result.msg}`);
+                if (pollAttempt > 3) { throw new Error(`API returned an error while checking status: ${result.msg}`); }
+                continue;
+            }
+
+            taskData = result.data;
+            const successFlag = taskData.successFlag;
+            
+            if (successFlag === 1) break;
+            if (successFlag === 2 || successFlag === 3) {
+                throw new Error(`midapi.ai task failed: ${taskData.errorMessage || 'Generation failed without a specific error message.'}`);
+            }
+        }
+
+        if (taskData?.successFlag !== 1) {
+            throw new Error('Image generation timed out. The service might be busy. Please try again later.');
+        }
+
+        const resultUrlsInfo = taskData.resultInfoJson?.resultUrls;
+        if (!resultUrlsInfo || !Array.isArray(resultUrlsInfo) || resultUrlsInfo.length === 0) {
+            console.error('Final job data from midapi.ai did not contain result URLs:', JSON.stringify(taskData, null, 2));
+            throw new Error('The AI model did not return any valid image URLs.');
+        }
+
+        const imageUrls = resultUrlsInfo.map((item: any) => item.resultUrl).filter(Boolean);
+
+        const base64Images = await Promise.all(
+            imageUrls.map(async (url: string) => {
+                try {
+                    const imageResponse = await fetch(url);
+                    if (!imageResponse.ok) {
+                        console.error(`Failed to download generated image from ${url}`);
+                        return null;
+                    }
+                    const imageBlob = await imageResponse.blob();
+                    return await blobToBase64(imageBlob);
+                } catch (e) {
+                    console.error(`Error fetching image blob from ${url}:`, e);
+                    return null;
+                }
+            })
+        );
+
+        const validImages = base64Images.filter(img => img !== null) as string[];
+        if (validImages.length === 0) {
+            throw new Error('Failed to download any of the generated images.');
+        }
+        return validImages;
+    };
+
+    const maxRetries = 25;
+    for (let retryAttempt = 1; retryAttempt <= maxRetries; retryAttempt++) {
+        try {
+            return await generationTask();
+        } catch (error: any) {
+            console.warn(`Attempt ${retryAttempt} failed for midapi.ai:`, error.message);
+            const isRetryableError = error.message && error.message.includes('internal error, please try again later');
+
+            if (isRetryableError && retryAttempt < maxRetries) {
+                const baseDelay = 15000;
+                const maxDelay = 90000;
+                const backoff = Math.min(baseDelay * Math.pow(2, retryAttempt - 1), maxDelay);
+                const jitter = backoff * 0.2 * (Math.random() - 0.5);
+                const delay = backoff + jitter;
+                
+                const retryMessage = `Service error on attempt ${retryAttempt}/${maxRetries}. Retrying in ~${Math.round(delay / 1000)}s...`;
+                console.log(retryMessage);
+                if (onProgressUpdate) {
+                    onProgressUpdate(retryMessage);
+                }
+                await sleep(delay);
+            } else {
+                const specificError = new Error(error.message || 'An unknown error occurred during midapi.ai image generation.');
+                (specificError as any).type = 'generic';
+                throw specificError;
+            }
+        }
     }
 
-    return validImages;
+    throw new Error(`Failed to generate image with midapi.ai after ${maxRetries} attempts.`);
 };
 
 export const generateImageWithImagineApi = async (
@@ -481,96 +492,137 @@ export const generateImageWithImagineApi = async (
     aspectRatio: ImageAspectRatio,
     onProgressUpdate?: (message: string) => void
 ): Promise<string[]> => {
-    const BASE_URL = 'https://api.imagineapi.dev/v1';
+    
+    const generationTask = async (): Promise<string[]> => {
+        const BASE_URL = 'https://api.imagineapi.dev/v1';
 
-    if (onProgressUpdate) onProgressUpdate('Submitting imagine task...');
+        let apiAspectRatio = '1:1';
+        if (aspectRatio === '9:16') apiAspectRatio = '9:16';
+        if (aspectRatio === '3:4') apiAspectRatio = '3:4';
 
-    const imagineResponse = await fetch(`${BASE_URL}/images/generations`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            prompt: prompt,
-            aspect_ratio: aspectRatio,
-            num_images: 4
-        })
-    });
-
-    if (!imagineResponse.ok) {
-        const errorData = await imagineResponse.json();
-        throw new Error(errorData.message || 'ImagineAPI imagine request failed.');
-    }
-
-    const imagineData = await imagineResponse.json();
-    const taskId = imagineData.id;
-
-    if (!taskId) {
-        throw new Error('ImagineAPI did not return a task ID.');
-    }
-
-    let jobStatus = '';
-    let jobData;
-    const maxAttempts = 30;
-    let attempt = 0;
-
-    if (onProgressUpdate) onProgressUpdate('Waiting for image...');
-
-    while ((jobStatus !== 'succeeded' && jobStatus !== 'failed') && attempt < maxAttempts) {
-        await sleep(3000);
-        attempt++;
-
-        const jobResponse = await fetch(`${BASE_URL}/images/generations/${taskId}`, {
-            method: 'GET',
+        if (onProgressUpdate) onProgressUpdate('Submitting image generation task...');
+        const generateResponse = await fetch(`${BASE_URL}/generations`, {
+            method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
             },
+            body: JSON.stringify({
+                prompt: prompt,
+                aspect_ratio: apiAspectRatio,
+            })
         });
 
-        if (!jobResponse.ok) {
-            console.error(`ImagineAPI: Failed to check job status for ${taskId}, attempt ${attempt}, status: ${jobResponse.status}`);
-            continue;
+        if (!generateResponse.ok) {
+            const errorText = await generateResponse.text();
+            console.error('ImagineAPI generate error response:', errorText);
+            if (generateResponse.status === 401) {
+                throw new Error('ImagineAPI authentication failed. Please check your API key.');
+            }
+            let message;
+            try {
+                const errorData = JSON.parse(errorText);
+                message = `ImagineAPI error: ${errorData.message || JSON.stringify(errorData)}`;
+            } catch (e) {
+                message = `ImagineAPI request failed. Server returned: ${errorText.substring(0, 200)}`;
+            }
+            throw new Error(message);
         }
 
-        jobData = await jobResponse.json();
-        jobStatus = jobData.status;
-    }
+        const generateData = await generateResponse.json();
+        const taskId = generateData.id;
 
-    if (jobStatus === 'failed') {
-        throw new Error(jobData?.error?.message || 'ImagineAPI image generation failed.');
-    }
+        if (!taskId) {
+            throw new Error('ImagineAPI did not return a task ID.');
+        }
+        
+        if (onProgressUpdate) onProgressUpdate('Task submitted. Waiting for result (~30s)...');
 
-    if (jobStatus !== 'succeeded') {
-        throw new Error('ImagineAPI: Image generation timed out.');
-    }
+        const maxPollAttempts = 20;
+        let pollAttempt = 0;
+        let taskData;
 
-    const imageUrls = jobData?.data?.map((img: any) => img.url);
+        while (pollAttempt < maxPollAttempts) {
+            await sleep(5000);
+            pollAttempt++;
+            
+            const statusResponse = await fetch(`${BASE_URL}/generations/${taskId}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
 
-    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-        throw new Error('The AI model did not return any valid image URLs from ImagineAPI.');
-    }
-
-    const base64Images = await Promise.all(
-        imageUrls.map(async (url: string) => {
-            try {
-                const imageResponse = await fetch(url);
-                if (!imageResponse.ok) return null;
-                const imageBlob = await imageResponse.blob();
-                return await blobToBase64(imageBlob);
-            } catch (e) {
-                return null;
+            if (!statusResponse.ok) {
+                console.warn(`ImagineAPI status check failed for ${taskId}, attempt ${pollAttempt}`);
+                if (pollAttempt > 3) { throw new Error(`Failed to get job status after multiple attempts. Status: ${statusResponse.status}`); }
+                continue;
             }
-        })
-    );
 
-    const validImages = base64Images.filter(img => img !== null) as string[];
+            taskData = await statusResponse.json();
+            const status = taskData.status;
+            
+            if (status === 'completed') break;
+            if (status === 'failed') {
+                throw new Error(`ImagineAPI task failed: ${taskData.error || 'Generation failed.'}`);
+            }
+        }
 
-    if (validImages.length === 0) {
-        throw new Error('Failed to download any of the generated images from ImagineAPI.');
+        if (taskData?.status !== 'completed') {
+            throw new Error('Image generation with ImagineAPI timed out.');
+        }
+
+        const imageUrls = taskData.image_urls;
+        if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+            console.error('Final job data from ImagineAPI did not contain image URLs:', JSON.stringify(taskData, null, 2));
+            throw new Error('ImagineAPI did not return any valid image URLs.');
+        }
+
+        const base64Images = await Promise.all(
+            imageUrls.map(async (url: string) => {
+                try {
+                    const imageResponse = await fetch(url);
+                    if (!imageResponse.ok) {
+                        console.error(`Failed to download generated image from ${url}`);
+                        return null;
+                    }
+                    const imageBlob = await imageResponse.blob();
+                    return await blobToBase64(imageBlob);
+                } catch (e) {
+                    console.error(`Error fetching image blob from ${url}:`, e);
+                    return null;
+                }
+            })
+        );
+
+        const validImages = base64Images.filter(img => img !== null) as string[];
+        if (validImages.length === 0) {
+            throw new Error('Failed to download any of the generated images from ImagineAPI.');
+        }
+        return validImages;
+    };
+    
+    const maxRetries = 3;
+    for (let retryAttempt = 1; retryAttempt <= maxRetries; retryAttempt++) {
+        try {
+            return await generationTask();
+        } catch (error: any) {
+            console.warn(`Attempt ${retryAttempt} failed for ImagineAPI:`, error.message);
+            const isRetryableError = error.message && (error.message.includes('503') || error.message.includes('Service Unavailable'));
+
+            if (isRetryableError && retryAttempt < maxRetries) {
+                const delay = 5000 * retryAttempt;
+                const retryMessage = `Service unavailable on attempt ${retryAttempt}. Retrying in ${delay / 1000}s...`;
+                console.log(retryMessage);
+                if (onProgressUpdate) onProgressUpdate(retryMessage);
+                await sleep(delay);
+            } else {
+                const specificError = new Error(error.message || 'An unknown error occurred during ImagineAPI generation.');
+                (specificError as any).type = 'generic';
+                throw specificError;
+            }
+        }
     }
 
-    return validImages;
+    throw new Error(`Failed to generate image with ImagineAPI after ${maxRetries} attempts.`);
 };
 
 export const generateImageWithUseApi = async (
@@ -579,253 +631,1066 @@ export const generateImageWithUseApi = async (
     aspectRatio: ImageAspectRatio,
     onProgressUpdate?: (message: string) => void
 ): Promise<string[]> => {
-    const BASE_URL = 'https://api.useapi.net/v1';
+    
+    const generationTask = async (): Promise<string[]> => {
+        const BASE_URL = 'https://api.useapi.net/v3/midjourney/jobs';
 
-    if (onProgressUpdate) onProgressUpdate('Submitting task...');
+        if (onProgressUpdate) onProgressUpdate('Submitting job to useapi.net...');
+        
+        const fullPrompt = `${prompt} --ar ${aspectRatio}`;
 
-    const imagineResponse = await fetch(`${BASE_URL}/jobs/imagine`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            prompt: prompt,
-            aspect_ratio: aspectRatio,
-            mode: "fast",
-        })
-    });
-
-    if (!imagineResponse.ok) {
-        const errorData = await imagineResponse.json();
-        throw new Error(errorData.detail || 'useapi.net imagine request failed.');
-    }
-
-    const imagineData = await imagineResponse.json();
-    const jobId = imagineData.jobid;
-
-    if (!jobId) {
-        throw new Error('useapi.net did not return a job ID.');
-    }
-
-    let jobData;
-    const maxAttempts = 30;
-    let attempt = 0;
-
-    while (attempt < maxAttempts) {
-        await sleep(5000);
-        attempt++;
-
-        const jobResponse = await fetch(`${BASE_URL}/jobs/${jobId}`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${apiKey}` },
+        const imagineResponse = await fetch(`${BASE_URL}/imagine`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: fullPrompt,
+                stream: false,
+            })
         });
 
-        if (!jobResponse.ok) {
-            console.error(`useapi.net: Failed to check job status for ${jobId}, attempt ${attempt}, status: ${jobResponse.status}`);
-            continue;
-        }
-
-        jobData = await jobResponse.json();
-
-        if (onProgressUpdate) {
-            onProgressUpdate(jobData.status.charAt(0).toUpperCase() + jobData.status.slice(1) + ` (${jobData.progress || 0}%)`);
-        }
-
-        if (jobData.status === 'completed') {
-            break;
-        }
-        if (jobData.status === 'failed' || jobData.status === 'cancelled') {
-            throw new Error(jobData.error?.message || `useapi.net job ${jobData.status}.`);
-        }
-    }
-
-    if (jobData?.status !== 'completed') {
-        throw new Error('useapi.net: Image generation timed out.');
-    }
-
-    const imageUrls = jobData.attachments?.map((att: any) => att.url);
-
-    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-        throw new Error('The AI model did not return any valid image URLs from useapi.net.');
-    }
-
-    const base64Images = await Promise.all(
-        imageUrls.map(async (url: string) => {
-            try {
-                const imageResponse = await fetch(url);
-                if (!imageResponse.ok) return null;
-                const imageBlob = await imageResponse.blob();
-                return await blobToBase64(imageBlob);
-            } catch (e) {
-                return null;
+        if (!imagineResponse.ok) {
+            const errorText = await imagineResponse.text();
+            console.error('useapi.net imagine error response:', errorText);
+            if (imagineResponse.status === 401) {
+                throw new Error('useapi.net authentication failed. Please check your API key.');
             }
-        })
-    );
+            let message;
+            try {
+                const errorData = JSON.parse(errorText);
+                message = `useapi.net error: ${errorData.error || JSON.stringify(errorData)}`;
+            } catch (e) {
+                message = `useapi.net request failed. Server returned: ${errorText.substring(0, 200)}`;
+            }
+            throw new Error(message);
+        }
 
-    const validImages = base64Images.filter(img => img !== null) as string[];
+        const imagineData = await imagineResponse.json();
+        const jobId = imagineData.jobid;
 
-    if (validImages.length === 0) {
-        throw new Error('Failed to download any of the generated images from useapi.net.');
+        if (!jobId) {
+            throw new Error('useapi.net did not return a job ID.');
+        }
+
+        if (onProgressUpdate) onProgressUpdate(`Job submitted. Waiting for result (this can take over a minute)...`);
+
+        const maxPollAttempts = 60;
+        let pollAttempt = 0;
+        let jobData;
+
+        while (pollAttempt < maxPollAttempts) {
+            await sleep(5000);
+            pollAttempt++;
+            
+            const statusResponse = await fetch(`${BASE_URL}/${jobId}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${apiKey}` }
+            });
+            
+            if (!statusResponse.ok) {
+                console.warn(`useapi.net status check failed for ${jobId}, attempt ${pollAttempt}`);
+                if (pollAttempt > 3) { throw new Error(`Failed to get job status after multiple attempts. Status: ${statusResponse.status}`); }
+                continue;
+            }
+
+            jobData = await statusResponse.json();
+            const status = jobData.status;
+            
+            if (status === 'completed') break;
+            if (status === 'failed' || status === 'cancelled') {
+                throw new Error(`useapi.net task failed: ${jobData.error || 'Generation failed without a specific error message.'}`);
+            }
+        }
+
+        if (jobData?.status !== 'completed') {
+            throw new Error('Image generation timed out with useapi.net. The service might be busy.');
+        }
+
+        const imageUx = jobData.response?.imageUx;
+        if (!imageUx || !Array.isArray(imageUx) || imageUx.length === 0) {
+            console.error('Final job data from useapi.net did not contain imageUx array:', JSON.stringify(jobData, null, 2));
+            throw new Error('The AI model did not return any valid image URLs from useapi.net.');
+        }
+
+        const imageUrls = imageUx.map((img: any) => img.url).filter(Boolean);
+
+        const base64Images = await Promise.all(
+            imageUrls.map(async (url: string) => {
+                try {
+                    const proxyUrl = `https://api.useapi.net/v1/proxy/cdn-midjourney/?cdnUrl=${encodeURIComponent(url)}`;
+                    
+                    const imageResponse = await fetch(proxyUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`
+                        }
+                    });
+
+                    if (!imageResponse.ok) {
+                        console.error(`Failed to download generated image from ${url} via useapi.net proxy. Status: ${imageResponse.status}`);
+                        return null;
+                    }
+                    const imageBlob = await imageResponse.blob();
+                    return await blobToBase64(imageBlob);
+                } catch (e) {
+                    console.error(`Error fetching image blob from ${url} via useapi.net proxy:`, e);
+                    return null;
+                }
+            })
+        );
+
+        const validImages = base64Images.filter(img => img !== null) as string[];
+        if (validImages.length === 0) {
+            throw new Error('Failed to download any of the generated images from useapi.net.');
+        }
+        return validImages;
+    };
+    
+    const maxRetries = 3;
+    for (let retryAttempt = 1; retryAttempt <= maxRetries; retryAttempt++) {
+        try {
+            return await generationTask();
+        } catch (error: any) {
+            console.warn(`Attempt ${retryAttempt} failed for useapi.net:`, error.message);
+            const isRetryableError = error.message && (error.message.includes('503') || error.message.includes('Service Unavailable') || error.message.includes('internal error'));
+
+            if (isRetryableError && retryAttempt < maxRetries) {
+                const delay = 5000 * retryAttempt;
+                const retryMessage = `Service error on attempt ${retryAttempt}. Retrying in ${delay / 1000}s...`;
+                console.log(retryMessage);
+                if (onProgressUpdate) onProgressUpdate(retryMessage);
+                await sleep(delay);
+            } else {
+                const specificError = new Error(error.message || 'An unknown error occurred during useapi.net generation.');
+                (specificError as any).type = 'generic';
+                throw specificError;
+            }
+        }
     }
-
-    return validImages;
+    throw new Error(`Failed to generate image with useapi.net after ${maxRetries} attempts.`);
 };
 
+
+export const generatePlaceholderImage = async (prompt: string, aspectRatio: ImageAspectRatio): Promise<string> => {
+    return new Promise(resolve => {
+        const canvas = document.createElement('canvas');
+        const [width, height] = aspectRatio === '3:4' ? [750, 1000] : aspectRatio === '1:1' ? [1000, 1000] : aspectRatio === '4:5' ? [1080, 1350] : [720, 1280];
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            const bgColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            ctx.font = 'bold 48px sans-serif';
+            const words = `Placeholder for: ${prompt}`.split(' ');
+            let line = '';
+            const y = height / 2 - ( (Math.ceil(words.length/5)) * 60 / 2);
+            let lineCount = 0;
+            for(let n = 0; n < words.length; n++) {
+              const testLine = line + words[n] + ' ';
+              const metrics = ctx.measureText(testLine);
+              const testWidth = metrics.width;
+              if (testWidth > width - 80 && n > 0) {
+                ctx.fillText(line, width/2, y + (lineCount * 60));
+                line = words[n] + ' ';
+                lineCount++;
+              }
+              else {
+                line = testLine;
+              }
+            }
+            ctx.fillText(line, width/2, y + (lineCount * 60));
+        }
+        resolve(canvas.toDataURL());
+    });
+};
+
+export const generateDescription = async (apiKey: string, model: string, title: string): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Act as a Pinterest SEO expert. Write a Pinterest pin description up to 200 characters, optimized for search and engagement for a pin with this title: "${title}".
+
+- Include 5–8 relevant keywords naturally.
+- Use active, inspiring language.
+- Place the main keyword in the first 50 characters.
+- Add a call to action at the end (e.g., "Click to learn more").
+- Keep it clear, conversational, and do not stuff keywords.
+- Do not use hashtags.
+
+Description:`;
+        
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt
+        }));
+
+        return response.text?.trim() || "";
+    } catch (error: any) {
+        throw getApiErrorDetails(error);
+    }
+};
+export const generatePlaceholderDescription = (title: string): string => {
+    return `Discover our latest on "${title}"! Get inspired and find more ideas on our website. #YourBrand #${title.split(' ').join('')}`;
+};
+
+
+export const generateKeywords = async (apiKey: string, model: string, title: string): Promise<string> => {
+     try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Generate a comma-separated list of 5-10 highly relevant and popular keywords for a Pinterest pin with the title "${title}". Include a mix of broad and long-tail keywords. Do not include hashtags.
+
+        Keywords:`;
+        
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt
+        }));
+
+        return response.text?.trim().replace(/, /g, ',').replace(/\n/g, '') || "";
+    } catch (error: any) {
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const generatePlaceholderKeywords = (title: string): string => {
+    const keywords = [
+        ...title.toLowerCase().split(' '), 
+    ].filter((v, i, a) => a.indexOf(v) === i && v.length > 3);
+    return keywords.join(',');
+};
+
+export const generateShortTitle = async (apiKey: string, model: string, title: string): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Shorten the following title to be more concise and impactful for a Pinterest pin, aiming for around 35 characters or less, while retaining the core meaning.
+        Original Title: "${title}"
+        
+        Shortened Title:`;
+        
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt
+        }));
+        
+        return response.text?.trim().replace(/"/g, '') || title; 
+    } catch (error: any) {
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const generateSafeImagePrompt = async (apiKey: string, model: string, title: string): Promise<string> => {
+    try {
+        if (!apiKey) {
+            return `A high-quality, visually appealing image related to: ${title}`;
+        }
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `The following title is for a Pinterest pin: "${title}".
+        An AI image generator rejected a prompt based on this title due to a content filter (e.g., "banned words").
+        Your task is to create a new, safe, and descriptive image prompt that captures the essence of the title but is highly unlikely to trigger content filters.
+        The prompt should be suitable for models like Midjourney or Stable Diffusion. Focus on visual details, scenery, and objects. Avoid potentially ambiguous or sensitive terms.
+        
+        New Safe Prompt:`;
+        
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt
+        }));
+
+        return response.text?.trim().replace(/"/g, '') || title;
+    } catch (error: any) {
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const DEFAULT_CONTENT_PROMPT = `You are an expert Pinterest SEO marketer who generates content plans. For the given keyword, you must generate a complete content plan according to these strict rules.
+
+**RULES FOR EACH COMPONENT:**
+1.  **Title:**
+    *   Create ONE catchy, SEO-optimized title.
+    *   Length MUST be a maximum of 56 characters.
+    *   It must be unique, clickable, and include the keyword naturally.
+    *   **CRITICAL: ABSOLUTELY NO EMOJIS IN THE TITLE.**
+
+2.  **Description:**
+    *   Write ONE engaging, keyword-rich description.
+    *   Length MUST be a maximum of 200 characters.
+    *   It must encourage clicks and saves. Avoid fluff and hashtags.
+
+3.  **Board:** Suggest ONE relevant Pinterest board name.
+
+4.  **Image Prompt:** Write ONE detailed, creative prompt for an AI image generator (e.g., Midjourney). Describe the style, lighting, and mood.
+
+5.  **Alt Text:** Write ONE short, descriptive text for accessibility and SEO. Length MUST be between 100 and 120 characters.
+
+6.  **Interests:** Suggest an array of 5 to 8 related Pinterest interests or niches as strings.
+
+7.  **Category:** Suggest the single most appropriate Pinterest category.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object.
+*   Do NOT include any text, commentary, or markdown like \`\`\`json before or after the JSON object.
+*   Strictly follow the JSON schema provided in the request.`;
+
+
 export const generatePinContentFromKeyword = async (
+    apiKey: string, 
+    model: string, 
+    keyword: string,
+    boardOptions?: string,
+    categoryOptions?: string
+): Promise<GeneratedContentRow> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+
+        let systemInstruction = DEFAULT_CONTENT_PROMPT;
+
+        if (boardOptions && boardOptions.trim()) {
+            systemInstruction += `\n\n**Constraint for 'board':** You MUST choose one board from this list: [${boardOptions}]. Do not invent a new one.`;
+        }
+        if (categoryOptions && categoryOptions.trim()) {
+            systemInstruction += `\n\n**Constraint for 'category':** You MUST choose one category from this list: [${categoryOptions}]. Do not invent a new one.`;
+        }
+
+        const prompt = `Generate the content plan for the keyword: "${keyword}"`;
+        
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                systemInstruction: systemInstruction,
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING, description: "A catchy, SEO-optimized pin title with a maximum of 56 characters. No emojis." },
+                        description: { type: Type.STRING, description: "An engaging pin description with a maximum of 200 characters." },
+                        board: { type: Type.STRING, description: "A relevant Pinterest board name." },
+                        image_prompt: { type: Type.STRING, description: "A detailed AI image generator prompt." },
+                        alt_text: { type: Type.STRING, description: "A descriptive alt text between 100-120 characters." },
+                        interests: { 
+                            type: Type.ARRAY, 
+                            items: { type: Type.STRING },
+                            description: "An array of 5-8 related Pinterest interests."
+                        },
+                        category: { type: Type.STRING, description: "The best Pinterest category for the pin." },
+                    },
+                    required: ["title", "description", "board", "image_prompt", "alt_text", "interests", "category"]
+                }
+            }
+        }));
+        
+        const jsonText = response.text?.trim() || "{}";
+        let parsedObject;
+
+        try {
+            parsedObject = JSON.parse(jsonText);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting recovery.", jsonText);
+            
+            let recoveredJsonString = null;
+
+            const markdownMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (markdownMatch && markdownMatch[1]) {
+                recoveredJsonString = markdownMatch[1];
+            } else {
+                const startIndex = jsonText.indexOf('{');
+                const endIndex = jsonText.lastIndexOf('}');
+                if (startIndex !== -1 && endIndex > startIndex) {
+                    recoveredJsonString = jsonText.substring(startIndex, endIndex + 1);
+                }
+            }
+
+            if (recoveredJsonString) {
+                try {
+                    parsedObject = JSON.parse(recoveredJsonString);
+                } catch (finalError) {
+                    console.error("Failed to parse recovered JSON string.", recoveredJsonString);
+                    const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                    (err as any).originalText = jsonText;
+                    throw err;
+                }
+            } else {
+                console.error("The AI response does not appear to contain a JSON object.", jsonText);
+                const err = new Error("The AI response does not appear to contain a JSON object.");
+                (err as any).originalText = jsonText;
+                throw err;
+            }
+        }
+
+        const finalObject: GeneratedContentRow = {
+            keyword: keyword,
+            title: String(parsedObject.title || ''),
+            board: String(parsedObject.board || ''),
+            image_prompt: String(parsedObject.image_prompt || ''),
+            description: String(parsedObject.description || ''),
+            alt_text: String(parsedObject.alt_text || ''),
+            interests: Array.isArray(parsedObject.interests) ? parsedObject.interests.map(String) : [],
+            category: String(parsedObject.category || ''),
+        };
+
+        return finalObject;
+
+    } catch (error: any) {
+        console.error("Error in generatePinContentFromKeyword:", error);
+        if (error.type) { 
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
+};
+
+const repairJson = (jsonString: string): string => {
+    if (!jsonString) return '';
+    let repaired = jsonString.trim();
+
+    repaired = repaired.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
+    
+    repaired = repaired.replace(/,(\s*})/g, '$1');
+    
+    repaired = repaired.replace(/,(\s*])/g, '$1');
+
+    return repaired;
+};
+
+export const generatePinContentFromKeywordWithOpenRouter = async (
     apiKey: string,
     model: string,
     keyword: string,
     boardOptions?: string,
     categoryOptions?: string
-): Promise<Omit<GeneratedContentRow, 'keyword'>> => {
-    let userPrompt = `Generate content for the keyword: "${keyword}".`;
-    if (boardOptions) {
-        userPrompt += `\n\nChoose a board from this list: ${boardOptions}.`;
-    }
-    if (categoryOptions) {
-        userPrompt += `\n\nChoose a category from this list: ${categoryOptions}.`;
-    }
-
-    const jsonString = await generateWithOpenRouter(apiKey, model, DEFAULT_CONTENT_PROMPT, userPrompt, true);
-    
-    const cleanedJsonString = jsonString.replace(/^```json\s*|```\s*$/g, '');
-
+): Promise<GeneratedContentRow> => {
     try {
-        const parsed = JSON.parse(cleanedJsonString);
-        const content = Array.isArray(parsed) ? parsed[0] : parsed;
+        let systemPrompt = DEFAULT_CONTENT_PROMPT; 
 
-        if (!content.title || !content.description) {
-            throw new Error("Invalid JSON structure returned from AI.");
+        if (boardOptions && boardOptions.trim()) {
+            systemPrompt += `\n\n**Constraint for 'board':** You MUST choose one board from this list: [${boardOptions}]. Do not invent a new one.`;
+        }
+        if (categoryOptions && categoryOptions.trim()) {
+            systemPrompt += `\n\n**Constraint for 'category':** You MUST choose one category from this list: [${categoryOptions}]. Do not invent a new one.`;
         }
 
-        return {
-            title: content.title,
-            description: content.description,
-            board: content.board,
-            image_prompt: content.image_prompt,
-            alt_text: content.alt_text,
-            interests: content.interests,
-            category: content.category,
+        const userPrompt = `Generate the content plan for the keyword: "${keyword}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 2048,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            const specificError = new Error(message);
+            (specificError as any).type = response.status === 429 ? 'quota' : 'generic';
+            throw specificError;
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+        
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+        
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('{');
+            const endIndex = potentialJson.lastIndexOf('}');
+            if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            }
+        }
+        
+        if (!potentialJson.startsWith('{') || !potentialJson.endsWith('}')) {
+             const err = new Error("The AI response does not appear to contain a JSON object.");
+             (err as any).originalText = jsonText;
+             throw err;
+        }
+        
+        let parsedObject;
+        try {
+            parsedObject = JSON.parse(potentialJson);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting to repair.", { error: e, json: potentialJson });
+            try {
+                const repairedJson = repairJson(potentialJson);
+                parsedObject = JSON.parse(repairedJson);
+                console.log("Successfully parsed repaired JSON.");
+            } catch (repairError) {
+                 console.error("Failed to parse even after repairing JSON.", { error: repairError, original: potentialJson });
+                 const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                 (err as any).originalText = jsonText;
+                 throw err;
+            }
+        }
+
+        const finalObject: GeneratedContentRow = {
+            keyword: keyword,
+            title: String(parsedObject.title || ''),
+            board: String(parsedObject.board || ''),
+            image_prompt: String(parsedObject.image_prompt || ''),
+            description: String(parsedObject.description || ''),
+            alt_text: String(parsedObject.alt_text || ''),
+            interests: Array.isArray(parsedObject.interests) ? parsedObject.interests.map(String) : [],
+            category: String(parsedObject.category || ''),
         };
-    } catch (e) {
-        console.error("Failed to parse JSON from AI:", cleanedJsonString);
-        throw new Error("Failed to get valid content from AI. Please try again.");
+
+        return finalObject;
+
+    } catch (error: any) {
+        console.error("Error in generatePinContentFromKeywordWithOpenRouter:", error);
+        if (error.type) { 
+            throw error;
+        }
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
     }
 };
 
 export const rewriteKeyword = async (apiKey: string, model: string, keyword: string): Promise<string> => {
-    const systemPrompt = "You are an SEO expert. The following keyword failed to generate content, likely because it was too specific or ambiguous. Rewrite it to be a more general, popular, or clearer search term while keeping the core topic. Output only the rewritten keyword.";
-    const userPrompt = `Original keyword: "${keyword}"`;
-    return await generateWithOpenRouter(apiKey, model, systemPrompt, userPrompt);
-};
-
-export interface PinIdea {
-    title: string;
-    description: string;
-    hashtags: string;
-}
-
-export interface AISuggestions {
-    bestTime: string;
-    nextPinType: string;
-    seasonalTheme: string;
-}
-
-export const generatePinIdeas = async (apiKey: string, model: string, accountName: string): Promise<PinIdea[]> => {
-    const systemPrompt = `You are a Pinterest content strategist. For a Pinterest account named "${accountName}", generate 3 diverse and viral pin ideas. For each idea, provide a 'title', a short 'description', and a 'hashtags' string (comma-separated). Return the response as a JSON array of objects. Do not output any text before or after the JSON.`;
-    const userPrompt = `Generate 3 pin ideas for ${accountName}.`;
-    const jsonString = await generateWithOpenRouter(apiKey, model, systemPrompt, userPrompt, true);
-    const cleanedJsonString = jsonString.replace(/^```json\s*|```\s*$/g, '');
     try {
-        return JSON.parse(cleanedJsonString);
-    } catch (e) {
-        console.error("Failed to parse JSON from AI for pin ideas:", cleanedJsonString);
-        throw new Error("Failed to get valid pin ideas from AI.");
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Rewrite the following keyword to be more descriptive and clear, while keeping the core topic the same. The original keyword might have caused an error with an AI model.
+        Original Keyword: "${keyword}"
+        
+        Rewritten Keyword:`;
+        
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt
+        }));
+        
+        const rewritten = response.text?.trim().replace(/"/g, '');
+        return rewritten || keyword;
+    } catch (error: any) {
+        console.error("Failed to rewrite keyword:", error);
+        return keyword;
     }
 };
 
-export const getAiSuggestions = async (apiKey: string, model: string, account: PinterestAccount): Promise<AISuggestions> => {
-    const systemPrompt = "You are a Pinterest account growth expert. Analyze the provided account data and give strategic suggestions. Return a JSON object with three keys: 'bestTime' (string, suggest the best day and time to post next), 'nextPinType' (string, suggest a type of pin to create next, e.g., 'Video Pin', 'Idea Pin', 'Infographic'), and 'seasonalTheme' (string, suggest a relevant upcoming seasonal or holiday theme). Do not output any text before or after the JSON.";
-    const userPrompt = `Account Name: ${account.name}\nLast Post: ${account.lastPostDate}\nNotes: ${account.notes}\nPerformance (1-5): ${account.performance}`;
-    const jsonString = await generateWithOpenRouter(apiKey, model, systemPrompt, userPrompt, true);
-    const cleanedJsonString = jsonString.replace(/^```json\s*|```\s*$/g, '');
+export const rewriteKeywordWithOpenRouter = async (apiKey: string, model: string, keyword: string): Promise<string> => {
     try {
-        return JSON.parse(cleanedJsonString);
-    } catch (e) {
-        console.error("Failed to parse JSON from AI for suggestions:", cleanedJsonString);
-        throw new Error("Failed to get valid suggestions from AI.");
+        const prompt = `Rewrite the following keyword to be more descriptive and clear, while keeping the core topic the same. The original keyword might have caused an error with an AI model.
+        Original Keyword: "${keyword}"
+        
+        Rewritten Keyword:`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "user", content: prompt },
+                ],
+                max_tokens: 1024,
+            }),
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter rewrite API error:', errorData);
+            return keyword; 
+        }
+
+        const result = await response.json();
+        const rewrittenKeyword = result.choices[0]?.message?.content;
+
+        return rewrittenKeyword ? rewrittenKeyword.trim().replace(/"/g, '') : keyword;
+    } catch (error) {
+        console.error("Error rewriting keyword with OpenRouter:", error);
+        return keyword;
     }
 };
 
-export const generateFacebookPost = async (apiKey: string, model: string, topic: string): Promise<FacebookPost> => {
-    const systemPrompt = "You are a social media marketing expert specializing in Facebook. Create content for a viral Facebook post based on the user's topic. Return a JSON object with four keys: 'postText' (string, engaging post copy, 2-3 paragraphs, use emojis), 'hashtags' (array of 3-5 relevant strings), 'imagePrompt' (string, a detailed, visually stunning prompt for an AI image generator, suitable for a 4:5 aspect ratio), and 'imageText' (string, a short, catchy text overlay for the image, max 5 words). Do not output any text before or after the JSON.";
-    const userPrompt = `Topic: ${topic}`;
-    const jsonString = await generateWithOpenRouter(apiKey, model, systemPrompt, userPrompt, true);
-    const cleanedJsonString = jsonString.replace(/^```json\s*|```\s*$/g, '');
+export type PinIdea = {
+  title: string;
+  description: string;
+  hashtags: string;
+};
+
+export const generatePinIdeas = async (
+  apiKey: string,
+  model: string,
+  accountName: string,
+): Promise<PinIdea[]> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const prompt = `You are an expert Pinterest SEO marketer. Generate 3 unique, creative, and engaging Pinterest pin ideas for an account named "${accountName}".
+
+**RULES FOR EACH IDEA:**
+1.  **Title:**
+    *   Must be 50-100 characters.
+    *   Must be catchy, keyword-rich, and clickable.
+    *   Capitalize naturally.
+    *   **CRITICAL: ABSOLUTELY NO EMOJIS in the title.**
+2.  **Variety:** Each of the 3 titles must be unique and should not start with the same phrase.
+3.  **Description:** A short, engaging description for the pin.
+4.  **Hashtags:** A few relevant hashtags, separated by spaces.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON array of objects.
+*   Do NOT include any extra text, commentary, or markdown.
+*   Strictly follow the JSON schema provided.`;
+    
+    const response = await generateWithRetry(() => ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING, description: "A catchy, SEO-optimized pin title. No emojis." },
+              description: { type: Type.STRING, description: "A short, engaging description for the pin." },
+              hashtags: { type: Type.STRING, description: "A few relevant hashtags, separated by spaces." },
+            },
+            required: ['title', 'description', 'hashtags']
+          },
+        },
+      },
+    }));
+
+    return JSON.parse(response.text?.trim() || "[]");
+  } catch (error: any) {
+    throw getApiErrorDetails(error);
+  }
+};
+
+export type AISuggestions = {
+  bestTime: string;
+  nextPinType: string;
+  seasonalTheme: string;
+};
+
+
+export const getAiSuggestions = async (
+  apiKey: string,
+  model: string,
+  account: PinterestAccount,
+): Promise<AISuggestions> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const prompt = `Based on the following data for the Pinterest account "${account.name}", provide strategic suggestions.
+    - Performance Score (1-5): ${account.performance}
+    - Last Posted: ${account.lastPostDate || 'N/A'}
+    - Next Post Due: ${account.nextPostDate || 'N/A'}
+    - Notes: ${account.notes || 'None'}
+    
+    Please provide:
+    1. The best time of day to post next.
+    2. A suggestion for the *type* of pin to create next (e.g., Idea Pin, Video Pin, standard image).
+    3. A relevant seasonal or trending theme idea for the next pin.`;
+
+    const response = await generateWithRetry(() => ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            bestTime: { type: Type.STRING, description: "The suggested best time to post." },
+            nextPinType: { type: Type.STRING, description: "The suggested type of pin to create." },
+            seasonalTheme: { type: Type.STRING, description: "A relevant seasonal or trending theme." },
+          },
+        },
+      },
+    }));
+
+    return JSON.parse(response.text?.trim() || "{}");
+  } catch (error: any) {
+    throw getApiErrorDetails(error);
+  }
+};
+
+export const generateFacebookPost = async (
+    apiKey: string,
+    model: string,
+    topic: string,
+): Promise<FacebookPost> => {
     try {
-        return JSON.parse(cleanedJsonString);
-    } catch (e) {
-        console.error("Failed to parse JSON from AI for Facebook post:", cleanedJsonString);
-        throw new Error("Failed to get valid content from AI.");
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `You are a social media marketing expert specializing in creating viral Facebook content for a broad audience, including Gen Z, millennials, and boomers. Your primary goal is to generate massive engagement (comments, shares, likes).
+
+For the given topic, generate a complete, engaging Facebook post by choosing ONE of the following viral content strategies:
+1.  **Relatable Content:** Connects with everyday experiences or timely events.
+2.  **Funny Content:** Uses humor to entertain and be shareable.
+3.  **Authentic Content:** Feels genuine and personal.
+4.  **Nostalgic Content:** Evokes memories and emotions, which performs very well with Facebook's core audience.
+5.  **Interactive Content:** Asks questions to get people talking and boost comments, which Facebook's algorithm loves.
+
+Topic: "${topic}"
+
+**RULES FOR EACH COMPONENT:**
+1.  **postText:** Based on your chosen viral strategy, write an engaging and slightly informal post text, between 2-4 sentences. It should be captivating and designed to spark conversation and shares. Use emojis where appropriate.
+2.  **imagePrompt:** Write a detailed, highly realistic, and creative prompt for an AI image generator like Midjourney. The goal is to create a photorealistic image that looks like a professional photograph. The image must be in a portrait aspect ratio (4:5, 1080x1350 pixels). The prompt should specify:
+    - Subject: A clear description of the main subject.
+    - Setting: A detailed background or environment.
+    - Style: Explicitly state "photorealistic, professional photography".
+    - Lighting: Describe the lighting, e.g., "soft natural light", "golden hour", "studio lighting".
+    - Details: Add specifics about colors, textures, and mood.
+    - Camera/Lens: Suggest a camera and lens type, e.g., "shot on a DSLR with a 50mm f/1.8 lens".
+3.  **hashtags:** Provide an array of 3 to 5 relevant and popular hashtags as strings.
+4.  **imageText:** Based on your chosen viral strategy, write a short, impactful text overlay for the image, between 5 and 15 words. This should be a headline, a powerful quote, or an **interactive question** to drive comments. It must grab attention. ALL CAPS is preferred for maximum impact.
+5. **Quote Generation:** If the topic is explicitly about a "quote" or "motivation", make sure the text reflects a deep, minimalist self-growth style.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object.
+*   Do NOT include any text, commentary, or markdown like \`\`\`json before or after the JSON object.
+*   Strictly follow the JSON schema provided.`;
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        postText: { type: Type.STRING, description: "Engaging post text, 2-4 sentences, with emojis." },
+                        imagePrompt: { type: Type.STRING, description: "A detailed AI image generator prompt for a portrait 4:5 image." },
+                        hashtags: {
+                            type: Type.ARRAY,
+                            items: { type: Type.STRING },
+                            description: "An array of 3-5 relevant hashtags."
+                        },
+                        imageText: { type: Type.STRING, description: "A short, impactful text overlay (5-15 words, preferably ALL CAPS) for the image." }
+                    },
+                    required: ["postText", "imagePrompt", "hashtags", "imageText"]
+                }
+            }
+        }));
+
+        const jsonText = response.text?.trim() || "{}";
+        let parsedObject;
+
+        try {
+            parsedObject = JSON.parse(jsonText);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting recovery.", jsonText);
+            
+            let recoveredJsonString = null;
+            const markdownMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (markdownMatch && markdownMatch[1]) {
+                recoveredJsonString = markdownMatch[1];
+            } else {
+                const startIndex = jsonText.indexOf('{');
+                const endIndex = jsonText.lastIndexOf('}');
+                if (startIndex !== -1 && endIndex > startIndex) {
+                    recoveredJsonString = jsonText.substring(startIndex, endIndex + 1);
+                }
+            }
+
+            if (recoveredJsonString) {
+                try {
+                    parsedObject = JSON.parse(recoveredJsonString);
+                } catch (finalError) {
+                    console.error("Failed to parse recovered JSON string.", recoveredJsonString);
+                    const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                    (err as any).originalText = jsonText;
+                    throw err;
+                }
+            } else {
+                console.error("The AI response does not appear to contain a JSON object.", jsonText);
+                const err = new Error("The AI response does not appear to contain a JSON object.");
+                (err as any).originalText = jsonText;
+                throw err;
+            }
+        }
+
+        const finalObject: FacebookPost = {
+            postText: String(parsedObject.postText || ''),
+            imagePrompt: String(parsedObject.imagePrompt || ''),
+            hashtags: Array.isArray(parsedObject.hashtags) ? parsedObject.hashtags.map(String) : [],
+            imageText: String(parsedObject.imageText || ''),
+        };
+
+        return finalObject;
+
+    } catch (error: any) {
+        console.error("Error in generateFacebookPost:", error);
+        if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
     }
 };
 
-export const generateFacebookPageStrategy = async (apiKey: string, model: string, niche: string, country: string): Promise<FacebookPageStrategy> => {
-    const systemPrompt = `You are an expert Facebook page growth strategist. Based on the user's niche and target country, generate a complete strategy for a new Facebook page. Return a single JSON object with the following structure, and do not output any text before or after the JSON:
-    {
-      "page_name_ideas": ["string", "string", "string"],
-      "page_bio_90chars": "string",
-      "categories": ["string", "string"],
-      "logo_brief": { "style": "string", "motifs": ["string"], "notes": "string" },
-      "cover_brief": { "concept": "string", "layout_notes": "string" },
-      "public_group": { "name": "string", "description": "string", "first_pinned_post": "string" },
-      "page_likes_ad": { "image_prompt": "string", "primary_text": "string", "headline": "string", "placements": ["string"] },
-      "first_20_post_themes": ["string", "string", ...]
-    }`;
-    const userPrompt = `Niche: ${niche}\nPrimary Country: ${country}`;
-    const jsonString = await generateWithOpenRouter(apiKey, model, systemPrompt, userPrompt, true);
-    const cleanedJsonString = jsonString.replace(/^```json\s*|```\s*$/g, '');
+export const generateFacebookPostWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    topic: string,
+): Promise<FacebookPost> => {
     try {
-        return JSON.parse(cleanedJsonString);
-    } catch (e) {
-        console.error("Failed to parse JSON from AI for Facebook page strategy:", cleanedJsonString);
-        throw new Error("Failed to get a valid strategy from AI.");
+        const systemPrompt = `You are a social media marketing expert specializing in creating viral Facebook content for a broad audience, including Gen Z, millennials, and boomers. Your primary goal is to generate massive engagement (comments, shares, likes).
+
+For the given topic, you must generate a complete, engaging Facebook post by choosing ONE of the following viral content strategies:
+1.  **Relatable Content:** Connects with everyday experiences or timely events.
+2.  **Funny Content:** Uses humor to entertain and be shareable.
+3.  **Authentic Content:** Feels genuine and personal.
+4.  **Nostalgic Content:** Evokes memories and emotions, which performs very well with Facebook's core audience.
+5.  **Interactive Content:** Asks questions to get people talking and boost comments, which Facebook's algorithm loves.
+
+**RULES FOR EACH COMPONENT:**
+1.  **postText:** Based on your chosen viral strategy, write an engaging and slightly informal post text, between 2-4 sentences. It should be captivating and designed to spark conversation and shares. Use emojis where appropriate.
+2.  **imagePrompt:** Write a detailed, highly realistic, and creative prompt for an AI image generator like Midjourney. The goal is to create a photorealistic image that looks like a professional photograph. The image must be in a portrait aspect ratio (4:5, 1080x1350 pixels). The prompt should specify:
+    - Subject: A clear description of the main subject.
+    - Setting: A detailed background or environment.
+    - Style: Explicitly state "photorealistic, professional photography".
+    - Lighting: Describe the lighting, e.g., "soft natural light", "golden hour", "studio lighting".
+    - Details: Add specifics about colors, textures, and mood.
+    - Camera/Lens: Suggest a camera and lens type, e.g., "shot on a DSLR with a 50mm f/1.8 lens".
+3.  **hashtags:** Provide an array of 3 to 5 relevant and popular hashtags as strings.
+4.  **imageText:** Based on your chosen viral strategy, write a short, impactful text overlay for the image, between 5 and 15 words. This should be a headline, a powerful quote, or an **interactive question** to drive comments. It must grab attention. ALL CAPS is preferred for maximum impact.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object.
+*   Do NOT include any text, commentary, or markdown.
+*   The JSON object should have keys: "postText", "imagePrompt", "hashtags", and "imageText".`;
+
+        const userPrompt = `Generate the Facebook post for the topic: "${topic}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`,
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 2048,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            const specificError = new Error(message);
+            (specificError as any).type = response.status === 429 ? 'quota' : 'generic';
+            throw specificError;
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+        
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('{');
+            const endIndex = potentialJson.lastIndexOf('}');
+            if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            }
+        }
+        
+        if (!potentialJson.startsWith('{') || !potentialJson.endsWith('}')) {
+             const err = new Error("The AI response does not appear to contain a JSON object.");
+             (err as any).originalText = jsonText;
+             throw err;
+        }
+
+        let parsedObject;
+        try {
+            parsedObject = JSON.parse(potentialJson);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting to repair.", { error: e, json: potentialJson });
+            try {
+                const repairedJson = repairJson(potentialJson);
+                parsedObject = JSON.parse(repairedJson);
+            } catch (repairError) {
+                 console.error("Failed to parse even after repairing JSON.", { error: repairError, original: potentialJson });
+                 const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                 (err as any).originalText = jsonText;
+                 throw err;
+            }
+        }
+
+        const finalObject: FacebookPost = {
+            postText: String(parsedObject.postText || ''),
+            imagePrompt: String(parsedObject.imagePrompt || ''),
+            hashtags: Array.isArray(parsedObject.hashtags) ? parsedObject.hashtags.map(String) : [],
+            imageText: String(parsedObject.imageText || ''),
+        };
+
+        return finalObject;
+
+    } catch (error: any) {
+        console.error("Error in generateFacebookPostWithOpenRouter:", error);
+        if (error.type) {
+            throw error;
+        }
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
     }
 };
 
-export const generateViralQuotes = async (apiKey: string, model: string, category: string, length: 'short' | 'long'): Promise<string[]> => {
-    const lengthDesc = length === 'short' ? 'short, impactful, and shareable (under 15 words)' : 'longer, more profound and thought-provoking (20-40 words)';
-    const systemPrompt = `You are a viral content creator. Generate 5 quotes for the category "${category}". The quotes should be ${lengthDesc}. Return a JSON array of strings. Do not output any text before or after the JSON.`;
-    const userPrompt = `Generate quotes for ${category}.`;
-    const jsonString = await generateWithOpenRouter(apiKey, model, systemPrompt, userPrompt, true);
-    const cleanedJsonString = jsonString.replace(/^```json\s*|```\s*$/g, '');
+export const rewriteTitleAndDescription = async (
+    apiKey: string,
+    model: string,
+    title: string,
+    description: string
+): Promise<{ title: string; description: string }> => {
     try {
-        return JSON.parse(cleanedJsonString);
-    } catch (e) {
-        console.error("Failed to parse JSON from AI for quotes:", cleanedJsonString);
-        throw new Error("Failed to get valid quotes from AI.");
-    }
-};
 
-export const enhanceViralQuote = async (apiKey: string, model: string, quote: string, length: 'short' | 'long'): Promise<string[]> => {
-    const lengthDesc = length === 'short' ? 'shorter, more impactful, and shareable (under 15 words)' : 'longer, more profound and thought-provoking (20-40 words)';
-    const systemPrompt = `You are a master copywriter. Rewrite and enhance the following user-provided quote to make it more viral. Provide 3 different versions. The new versions should be ${lengthDesc}. Return a JSON array of strings. Do not output any text before or after the JSON.`;
-    const userPrompt = `Quote to enhance: "${quote}"`;
-    const jsonString = await generateWithOpenRouter(apiKey, model, systemPrompt, userPrompt, true);
-    const cleanedJsonString = jsonString.replace(/^```json\s*|```\s*$/g, '');
-    try {
-        return JSON.parse(cleanedJsonString);
-    } catch (e) {
-        console.error("Failed to parse JSON from AI for enhanced quote:", cleanedJsonString);
-        throw new Error("Failed to get valid enhanced quotes from AI.");
-    }
-};
+        const systemPrompt = `You are a Pinterest SEO expert for bloggers, not e-commerce. Your task is to rewrite a given pin title and description to be more engaging, clickable, and optimized for Pinterest search, while staying true to the original topic. The goal is to drive traffic to a blog post.
 
-export const generateSoraVideoPrompt = async (apiKey: string, model: string, quote: string): Promise<string> => {
-    const systemPrompt = "You are a creative director specializing in AI video generation for platforms like OpenAI Sora. Based on the provided quote, write a single, detailed, and cinematic video prompt. The prompt should describe a visually stunning scene that evokes the emotion of the quote. Focus on camera movement, lighting, environment, and mood. The prompt should be a single paragraph. Output only the prompt text.";
-    const userPrompt = `Generate a video prompt for the quote: "${quote}"`;
-    return await generateWithOpenRouter(apiKey, model, systemPrompt, userPrompt);
+**CRITICAL RULES:**
+1.  **Title:**
+    *   Make it catchy and keyword-rich.
+    *   Capitalize it in a natural, title-case way.
+    *   **NO EMOJIS.**
+2.  **Description:**
+    *   Rewrite it to be engaging and conversational, as if for a blog post.
+    *   Naturally include 3-5 relevant keywords.
+    *   Include a soft call-to-action (e.g., "Discover more...", "Find the full recipe on the blog...").
+    *   **NO HASHTAGS.**
+3.  **ABSOLUTELY FORBIDDEN TERMS:**
+    *   Your response must **NEVER** include commercial or e-commerce terms.
+    *   Do NOT use: "Etsy", "eBay", "Amazon", "shop", "buy now", "purchase", "digital download", "printable", "product", "listing", "store".
+    *   The content should feel like it's from a blog, not a store.
+
+**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object.
+*   The JSON object must have two keys: "title" and "description".
+*   Do NOT include any text, commentary, or markdown.`;
+
+        const userPrompt = `Rewrite the following content for a blog post:
+Original Title: "${title}"
+Original Description: "${description}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 2048,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            const specificError = new Error(message);
+            (specificError as any).type = response.status === 429 ? 'quota' : 'generic';
+            throw specificError;
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('{');
+            const endIndex = potentialJson.lastIndexOf('}');
+            if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            }
+        }
+        
+        if (!potentialJson.startsWith('{') || !potentialJson.endsWith('}')) {
+             const err = new Error("The AI response does not appear to contain a JSON object.");
+             (err as any).originalText = jsonText;
+             throw err;
+        }
+
+        let parsedObject;
+        try {
+            parsedObject = JSON.parse(potentialJson);
+        } catch (e) {
+            console.warn("Direct JSON parsing failed, attempting to repair.", { error: e, json: potentialJson });
+            try {
+                const repairedJson = repairJson(potentialJson);
+                parsedObject = JSON.parse(repairedJson);
+            } catch (repairError) {
+                 console.error("Failed to parse even after repairing JSON.", { error: repairError, original: potentialJson });
+                 const err = new Error("The AI returned a malformed JSON response that could not be repaired.");
+                 (err as any).originalText = jsonText;
+                 throw err;
+            }
+        }
+
+        return {
+            title: String(parsedObject.title || ''),
+            description: String(parsedObject.description || ''),
+        };
+
+    } catch (error: any) {
+        console.error("Error in rewriteTitleAndDescription:", error);
+        if (error.type) {
+            throw error;
+        }
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
 };
 
 export const rewriteDescriptionWithOpenRouter = async (
@@ -834,19 +1699,667 @@ export const rewriteDescriptionWithOpenRouter = async (
     title: string,
     description: string,
     categoryOptions?: string
-): Promise<{ title: string; description: string; category: string; keywords: string }> => {
-    let systemPrompt = `You are a Pinterest SEO expert for bloggers. Rewrite the given title and description to be more engaging and SEO-friendly. Also, determine the most relevant blog post category from the provided list, and generate a comma-separated list of 5-7 relevant keywords.
-    Return a JSON object with four keys: 'title', 'description', 'category', and 'keywords'. Do not output any text before or after the JSON.`;
-    if (categoryOptions) {
-        systemPrompt += `\n\nAvailable categories: ${categoryOptions}`;
-    }
-    const userPrompt = `Title: "${title}"\nDescription: "${description}"`;
-    const jsonString = await generateWithOpenRouter(apiKey, model, systemPrompt, userPrompt, true);
-    const cleanedJsonString = jsonString.replace(/^```json\s*|```\s*$/g, '');
+): Promise<{ title: string; description: string; category: string; keywords: string; }> => {
     try {
-        return JSON.parse(cleanedJsonString);
-    } catch (e) {
-        console.error("Failed to parse JSON from AI for rewrite:", cleanedJsonString);
-        throw new Error("Failed to get valid rewritten content from AI.");
+        let systemPrompt = `You are an expert Pinterest SEO copy editor for bloggers, not e-commerce. 
+Your #1 primary goal is to **REPHRASE AND REFINE** the existing text provided by the user. 
+Your secondary goal is to improve its SEO and engagement for Pinterest.
+
+**PRIMARY DIRECTIVE: DO NOT ADD NEW INFORMATION**
+- You must work **ONLY** with the ideas, concepts, facts, and keywords already present in the original title and description.
+- **DO NOT** add new ideas "from your brain".
+- The rewritten content should be a better, more polished version of the original, not a new piece of content.
+
+**CRITICAL RULES:**
+1.  **REFINEMENT:**
+    *   **Title:** Make it catchy and keyword-rich using words from the original content. Capitalize naturally. **NO EMOJIS.**
+    *   **Description:** Make it more conversational. Naturally weave in keywords that are **already present** in the original text. Include a soft call-to-action (e.g., "Discover more..."). **NO HASHTAGS.**
+    *   **Keywords:** Generate 5-8 relevant, comma-separated SEO keywords based on the original content. This should be a single string.
+2.  **ABSOLUTELY FORBIDDEN TERMS:**
+    *   Your response must **NEVER** include commercial terms. Do NOT use: "Etsy", "eBay", "Amazon", "shop", "buy now", "purchase", "digital download", "printable", "product", "listing", "store".`;
+
+        if (categoryOptions && categoryOptions.trim()) {
+            systemPrompt += `\n3. **Category:** Analyze the title and description, then choose the single most appropriate category from this list: [${categoryOptions}]. Do not invent a new one.`;
+        }
+
+        systemPrompt += `\n\n**CRITICAL OUTPUT INSTRUCTIONS:**
+*   Your entire response MUST be ONLY a single, valid JSON object with keys "title", "description", "category", and "keywords".
+*   Do NOT include any text, commentary, or markdown.`;
+
+        const userPrompt = `Rewrite the following content for a blog post, following all rules:
+Original Title: "${title}"
+Original Description: "${description}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 2048,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            const specificError = new Error(message);
+            (specificError as any).type = response.status === 429 ? 'quota' : 'generic';
+            throw specificError;
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+
+        let parsedObject;
+        try {
+            parsedObject = JSON.parse(jsonText);
+        } catch (e) {
+            console.error("Failed to parse JSON from OpenRouter:", jsonText);
+            throw new Error("The AI returned a malformed JSON response.");
+        }
+
+        return {
+            title: String(parsedObject.title || ''),
+            description: String(parsedObject.description || ''),
+            category: String(parsedObject.category || ''),
+            keywords: String(parsedObject.keywords || ''),
+        };
+
+    } catch (error: any) {
+        console.error("Error in rewriteDescriptionWithOpenRouter:", error);
+        if (error.type) {
+            throw error;
+        }
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
+};
+
+export const generateFacebookPageStrategy = async (
+    apiKey: string,
+    model: string,
+    niche: string,
+    country: string,
+): Promise<FacebookPageStrategy> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+
+        const systemPrompt = `You are “Facebook Faceless Page Builder,” tasked to create a money-ready Facebook page in the niche "${niche}" for "${country}" audiences (Tier 1 focus). Follow these non-negotiable rules:
+
+STRATEGY (from my SOP):
+- Content types: image+text tiles and text-only posts; image size 1080x1350 pixels. Long, emotional captions (150–200 chars). No clickbait, no engagement bait, no copyrighted media. Link goes in the FIRST COMMENT, not in the caption.
+- Posting times (EST): 08:30, 11:30, 20:30 (priority). Initial volume: 6–8 posts/day; scale to 10–14/day.
+- Growth: invite engagers to like the page, share to relevant groups daily, build a public group and crosspost, run Page Likes ads at $5–$10/day and scale +20% weekly if CPL ≤ $0.05.
+- Compliance: obey Partner/Content Monetization policies; avoid repetitive/low-effort content, politics/misinformation, NSFW.
+
+OUTPUT (JSON ONLY):
+Your entire response MUST be ONLY a single, valid JSON object that strictly follows the provided schema. Do NOT include any text, commentary, or markdown like \`\`\`json before or after the JSON object.`;
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: `Generate the full page strategy now.`,
+            config: {
+                systemInstruction: systemPrompt,
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        page_name_ideas: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 clear, brandable, keyword-friendly page name ideas." },
+                        page_bio_90chars: { type: Type.STRING, description: "A benefit-led page bio, between 80-90 characters." },
+                        categories: { type: Type.ARRAY, items: { type: Type.STRING }, description: "An array of 3 suitable Facebook page categories." },
+                        logo_brief: {
+                            type: Type.OBJECT,
+                            properties: {
+                                style: { type: Type.STRING },
+                                motifs: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                notes: { type: Type.STRING }
+                            },
+                            required: ["style", "motifs", "notes"]
+                        },
+                        cover_brief: {
+                            type: Type.OBJECT,
+                            properties: {
+                                concept: { type: Type.STRING },
+                                layout_notes: { type: Type.STRING }
+                            },
+                            required: ["concept", "layout_notes"]
+                        },
+                        public_group: {
+                            type: Type.OBJECT,
+                            properties: {
+                                name: { type: Type.STRING },
+                                description: { type: Type.STRING },
+                                first_pinned_post: { type: Type.STRING }
+                            },
+                            required: ["name", "description", "first_pinned_post"]
+                        },
+                        page_likes_ad: {
+                            type: Type.OBJECT,
+                            properties: {
+                                image_prompt: { type: Type.STRING, description: "A detailed AI image prompt for a compelling ad image. The image should be visually striking and have an aspect ratio of 1080x1350 pixels (portrait 4:5)." },
+                                primary_text: { type: Type.STRING },
+                                headline: { type: Type.STRING },
+                                placements: { type: Type.ARRAY, items: { type: Type.STRING } }
+                            },
+                            required: ["image_prompt", "primary_text", "headline", "placements"]
+                        },
+                        first_20_post_themes: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of exactly 20 diverse post theme ideas." }
+                    },
+                    required: ["page_name_ideas", "page_bio_90chars", "categories", "logo_brief", "cover_brief", "public_group", "page_likes_ad", "first_20_post_themes"]
+                }
+            }
+        }));
+
+        const jsonText = response.text?.trim() || "{}";
+        const parsedObject = JSON.parse(jsonText);
+        return parsedObject as FacebookPageStrategy;
+
+    } catch (error: any) {
+        console.error("Error in generateFacebookPageStrategy:", error);
+        if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const generateViralQuotes = async (
+    apiKey: string,
+    model: string,
+    category: string,
+    length: 'short' | 'long' = 'short',
+): Promise<string[]> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        let prompt = '';
+        
+        if (length === 'long') {
+             prompt = `Generate 10 deep, emotional, and storytelling-style quotes about "${category}".
+
+Style: Vulnerable, poetic, narrative, touching.
+Tone: Healing, realization, growth, inner peace.
+
+Rules:
+- Length: Maximum 150 characters per quote.
+- They should read like a mini-story or a profound realization.
+- No clichés. Deep and raw emotion.
+- ABSOLUTELY NO EMOJIS.
+
+CRITICAL OUTPUT INSTRUCTIONS:
+- Your response must be a single valid JSON array of strings.
+- Do not number them in the JSON.
+- Do not add any markdown formatting outside the JSON structure.`;
+        } else {
+             prompt = `Generate 10 short viral quotes about "${category}".
+
+Style: Modern, viral social media quotes (TikTok/Instagram/Pinterest).
+Tone: aesthetic, minimal, soft, thoughtful, emotional, relatable.
+
+Rules:
+- Max 8–14 words each
+- Must feel emotional, relatable, and shareable
+- Should fit TikTok, Instagram, Pinterest, Facebook
+- Avoid clichés like "follow your dreams", "never give up", etc.
+- Make them fresh, unique, and a little deeper
+- ABSOLUTELY NO EMOJIS
+
+CRITICAL OUTPUT INSTRUCTIONS:
+- Your response must be a single valid JSON array of strings.
+- Do not number them in the JSON.
+- Do not add any markdown formatting outside the JSON structure.`;
+        }
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                }
+            }
+        }));
+
+        const jsonText = response.text?.trim() || "[]";
+        const parsedArray = JSON.parse(jsonText);
+        
+        if (Array.isArray(parsedArray)) {
+            return parsedArray.map(String);
+        }
+        
+        throw new Error("AI response was not a valid array.");
+
+    } catch (error: any) {
+        console.error("Error in generateViralQuotes:", error);
+         if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const generateViralQuotesWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    category: string,
+    length: 'short' | 'long' = 'short',
+): Promise<string[]> => {
+    try {
+        let systemPrompt = '';
+        
+        if (length === 'long') {
+            systemPrompt = `Generate 10 deep, emotional, and storytelling-style quotes about "${category}".
+
+Style: Vulnerable, poetic, narrative, touching.
+Tone: Healing, realization, growth, inner peace.
+
+Rules:
+- Length: Maximum 150 characters per quote.
+- They should read like a mini-story or a profound realization.
+- No clichés. Deep and raw emotion.
+- ABSOLUTELY NO EMOJIS.
+
+CRITICAL OUTPUT INSTRUCTIONS:
+- Your response must be a single valid JSON array of strings.
+- Do not number them in the JSON.
+- Do not add any text or markdown formatting outside the JSON structure.`;
+        } else {
+            systemPrompt = `Generate 10 short viral quotes about "${category}".
+
+Style: Modern, viral social media quotes (TikTok/Instagram/Pinterest).
+Tone: aesthetic, minimal, soft, thoughtful, emotional, relatable.
+
+Rules:
+- Max 8–14 words each
+- Must feel emotional, relatable, and shareable
+- Should fit TikTok, Instagram, Pinterest, Facebook
+- Avoid clichés like "follow your dreams", "never give up", etc.
+- Make them fresh, unique, and a little deeper
+- ABSOLUTELY NO EMOJIS
+
+CRITICAL OUTPUT INSTRUCTIONS:
+- Your response must be a single valid JSON array of strings, e.g. ["Quote 1", "Quote 2"].
+- Do not number them in the JSON.
+- Do not add any text or markdown formatting outside the JSON structure.`;
+        }
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "user", content: systemPrompt },
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 2048,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            throw new Error(message);
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+        
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('[');
+            const endIndex = potentialJson.lastIndexOf(']');
+            if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            } else {
+                const startObj = potentialJson.indexOf('{');
+                const endObj = potentialJson.lastIndexOf('}');
+                if (startObj !== -1 && endObj > startObj) {
+                    potentialJson = potentialJson.substring(startObj, endObj + 1);
+                }
+            }
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(potentialJson);
+        } catch (e) {
+             try {
+                const repaired = repairJson(potentialJson);
+                parsed = JSON.parse(repaired);
+             } catch (repairError) {
+                console.error("Failed to parse JSON from OpenRouter:", potentialJson);
+                throw new Error("The AI returned a malformed response.");
+             }
+        }
+
+        if (Array.isArray(parsed)) {
+            return parsed.map(String);
+        } else if (typeof parsed === 'object' && parsed !== null) {
+             const values = Object.values(parsed);
+             if (values.length > 0 && Array.isArray(values[0])) {
+                 return values[0].map(String);
+             }
+        }
+        
+        throw new Error("AI response was not a valid array of quotes.");
+
+    } catch (error: any) {
+        console.error("Error in generateViralQuotesWithOpenRouter:", error);
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
+};
+
+export const enhanceViralQuote = async (
+    apiKey: string,
+    model: string,
+    quote: string,
+    length: 'short' | 'long' = 'short',
+): Promise<string[]> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        let prompt = '';
+        
+        if (length === 'long') {
+            prompt = `Here is a quote: "${quote}".
+            
+            Your task: Rewrite this quote into a deeper, more emotional mini-story or realization.
+            Generate 5-10 variations that are storytelling-style, vulnerable, and poetic.
+            
+            Rules: 
+            - Maximum 150 characters per variation.
+            - No Emojis. No Clichés. Deep emotional impact.
+    
+            CRITICAL OUTPUT INSTRUCTIONS:
+            - Your response must be a single valid JSON array of strings.
+            - Do not number them.
+            - Do not add any markdown formatting.`;
+        } else {
+            prompt = `Here is a quote: "${quote}".
+            
+            Your task: Rewrite this quote to make it more attractive, sentimental, viral, and deep.
+            Generate 5-10 variations that are aesthetic, emotional, and "Instagram-ready".
+            
+            Tone: aesthetic, minimal, soft, thoughtful, emotional.
+            Rules: Max 14 words per variation. No Emojis. No Clichés.
+    
+            CRITICAL OUTPUT INSTRUCTIONS:
+            - Your response must be a single valid JSON array of strings.
+            - Do not number them.
+            - Do not add any markdown formatting.`;
+        }
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                }
+            }
+        }));
+
+        const jsonText = response.text?.trim() || "[]";
+        const parsedArray = JSON.parse(jsonText);
+        
+        if (Array.isArray(parsedArray)) {
+            return parsedArray.map(String);
+        }
+        throw new Error("AI response was not a valid array.");
+
+    } catch (error: any) {
+        console.error("Error in enhanceViralQuote:", error);
+         if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const enhanceViralQuoteWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    quote: string,
+    length: 'short' | 'long' = 'short',
+): Promise<string[]> => {
+    try {
+        let systemPrompt = '';
+        
+        if (length === 'long') {
+            systemPrompt = `Here is a quote provided by the user: "${quote}".
+            
+            Your task: Rewrite this quote into a deeper, more emotional mini-story or realization.
+            Generate 5-10 variations that are storytelling-style, vulnerable, and poetic.
+            
+            Rules: 
+            - Maximum 150 characters per variation.
+            - No Emojis. No Clichés. Deep emotional impact.
+    
+            CRITICAL OUTPUT INSTRUCTIONS:
+            - Your response must be a single valid JSON array of strings.
+            - Do not number them.
+            - Do not add any markdown formatting.`;
+        } else {
+            systemPrompt = `Here is a quote provided by the user: "${quote}".
+            
+            Your task: Rewrite this quote to make it more attractive, sentimental, viral, and deep.
+            Generate 5-10 variations that are aesthetic, emotional, and "Instagram-ready".
+            
+            Tone: aesthetic, minimal, soft, thoughtful, emotional.
+            Rules: Max 14 words per variation. No Emojis. No Clichés.
+    
+            CRITICAL OUTPUT INSTRUCTIONS:
+            - Your response must be a single valid JSON array of strings.
+            - Do not number them.
+            - Do not add any markdown formatting.`;
+        }
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "user", content: systemPrompt },
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 2048,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenRouter API error:', errorData);
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            throw new Error(message);
+        }
+
+        const result = await response.json();
+        const jsonText = result.choices[0]?.message?.content;
+        
+        if (!jsonText) {
+            throw new Error("OpenRouter response did not contain valid content.");
+        }
+
+        let potentialJson = jsonText.trim();
+        const markdownMatch = potentialJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (markdownMatch && markdownMatch[1]) {
+            potentialJson = markdownMatch[1].trim();
+        } else {
+            const startIndex = potentialJson.indexOf('[');
+            const endIndex = potentialJson.lastIndexOf(']');
+             if (startIndex !== -1 && endIndex > startIndex) {
+                potentialJson = potentialJson.substring(startIndex, endIndex + 1);
+            } else {
+                 const startObj = potentialJson.indexOf('{');
+                const endObj = potentialJson.lastIndexOf('}');
+                if (startObj !== -1 && endObj > startObj) {
+                    potentialJson = potentialJson.substring(startObj, endObj + 1);
+                }
+            }
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(potentialJson);
+        } catch (e) {
+             try {
+                const repaired = repairJson(potentialJson);
+                parsed = JSON.parse(repaired);
+             } catch (repairError) {
+                console.error("Failed to parse JSON from OpenRouter:", potentialJson);
+                throw new Error("The AI returned a malformed response.");
+             }
+        }
+
+        if (Array.isArray(parsed)) {
+            return parsed.map(String);
+        } else if (typeof parsed === 'object' && parsed !== null) {
+             const values = Object.values(parsed);
+             if (values.length > 0 && Array.isArray(values[0])) {
+                 return values[0].map(String);
+             }
+        }
+        throw new Error("AI response was not a valid array of quotes.");
+
+    } catch (error: any) {
+        console.error("Error in enhanceViralQuoteWithOpenRouter:", error);
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
+    }
+};
+
+export const generateSoraVideoPrompt = async (
+    apiKey: string,
+    model: string,
+    quote: string,
+    includeOverlay: boolean = false
+): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const overlayInstruction = includeOverlay 
+            ? 'Text Overlay: The quote MUST be visually displayed on the screen as text, in an elegant, readable font (approx 40px size), perfectly timed with the voiceover.'
+            : 'Text Overlay: None. The video should be clean with no text on screen.';
+
+        const prompt = `Create a breathtaking, high-fidelity text-to-video prompt suitable for Sora v2 based on this quote: "${quote}".
+
+Visuals: A cinematic masterpiece. High-angle drone shot looking down at a solitary figure walking slowly through a stunningly beautiful, vast landscape that matches the deep emotion of the quote. The scene should be bathed in the soft, golden glow of magic hour or ethereal twilight. Rich, vivid colors, soft cinematic lighting, and a dreamy atmosphere. 8k resolution, photorealistic, award-winning cinematography.
+Examples of landscapes (choose one that fits best): A pristine beach with turquoise waves at sunset, a field of glowing flowers under a starry sky, a majestic snowy mountain ridge, or a misty ancient forest with sunbeams filtering through.
+Audio: The video MUST include a clear, professional voiceover narrating exactly this text: "${quote}". No background music, just immersive natural ambient sounds (e.g., waves crashing, wind in trees, crunching snow, birds chirping) and the voice.
+${overlayInstruction}
+
+Output ONLY the prompt text. Do not add quotes or intro text.`;
+
+        const response = await generateWithRetry(() => ai.models.generateContent({
+            model: model,
+            contents: prompt
+        }));
+
+        return response.text?.trim() || "";
+
+    } catch (error: any) {
+        console.error("Error in generateSoraVideoPrompt:", error);
+         if (error.type) {
+            throw error;
+        }
+        throw getApiErrorDetails(error);
+    }
+};
+
+export const generateSoraVideoPromptWithOpenRouter = async (
+    apiKey: string,
+    model: string,
+    quote: string,
+    includeOverlay: boolean = false
+): Promise<string> => {
+    try {
+        const overlayInstruction = includeOverlay 
+            ? 'Text Overlay: The quote MUST be visually displayed on the screen as text, in an elegant, readable font (approx 40px size), perfectly timed with the voiceover.'
+            : 'Text Overlay: None. The video should be clean with no text on screen.';
+
+        const systemPrompt = `Create a breathtaking, high-fidelity text-to-video prompt suitable for Sora v2 based on the user's quote.
+
+Visuals: A cinematic masterpiece. High-angle drone shot looking down at a solitary figure walking slowly through a stunningly beautiful, vast landscape that matches the deep emotion of the quote. The scene should be bathed in the soft, golden glow of magic hour or ethereal twilight. Rich, vivid colors, soft cinematic lighting, and a dreamy atmosphere. 8k resolution, photorealistic, award-winning cinematography.
+Examples of landscapes (choose one that fits best): A pristine beach with turquoise waves at sunset, a field of glowing flowers under a starry sky, a majestic snowy mountain ridge, or a misty ancient forest with sunbeams filtering through.
+Audio: The video MUST include a clear, professional voiceover narrating the provided quote exactly. No background music, just immersive natural ambient sounds (e.g., waves crashing, wind in trees, crunching snow, birds chirping) and the voice.
+${overlayInstruction}
+
+Output ONLY the prompt text. Do not add quotes or intro text.`;
+        
+        const userPrompt = `Quote: "${quote}"`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": `https://main--pinterest-pin-generator-gpt.pro.ai-studio.google.com/`, 
+                "X-Title": `Pin4You`,
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+                max_tokens: 2048,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            const message = errorData.error?.message || `Request failed with status: ${response.status}`;
+            throw new Error(message);
+        }
+
+        const result = await response.json();
+        return result.choices[0]?.message?.content.trim() || "Failed to generate prompt.";
+
+    } catch (error: any) {
+        console.error("Error in generateSoraVideoPromptWithOpenRouter:", error);
+        const newError = new Error(error.message || 'An unknown error occurred with OpenRouter.');
+        (newError as any).type = 'generic';
+        throw newError;
     }
 };

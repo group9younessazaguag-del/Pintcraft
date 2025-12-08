@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -14,11 +15,11 @@ export interface ControlsProps {
   data: TemplateData;
   onFieldChange: (field: keyof TemplateData, value: any) => void;
   onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void;
-  onGenerateImage: (imageNumber: 1 | 2 | 3) => Promise<string>;
-  onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3) => Promise<string[]>;
-  onGenerateImageWithMidApiAi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => Promise<string[]>;
-  onGenerateImageWithImagineApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => Promise<string[]>;
-  onGenerateImageWithUseApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => Promise<string[]>;
+  onGenerateImage: (imageNumber: 1 | 2 | 3) => void;
+  onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3) => void;
+  onGenerateImageWithMidApiAi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
+  onGenerateImageWithImagineApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
+  onGenerateImageWithUseApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
   onGenerateDescription: () => void;
   onGenerateKeywords: () => void;
   onGenerateShortTitle: () => void;
@@ -45,8 +46,8 @@ export interface ControlsProps {
   onDownloadGeneratedAssets: () => void;
   lastCompletedRowIndex: number | null;
   onResetBulkGeneration: () => void;
-  openRouterApiKey: string;
-  onSetOpenRouterApiKey: (key: string) => void;
+  userApiKey: string;
+  onSetUserApiKey: (key: string) => void;
   onSetFalAiApiKey: (key: string) => void;
   falAiApiKey: string;
   apiframeApiKey: string;
@@ -73,14 +74,14 @@ export const ControlCard: React.FC<{ icon: React.ReactNode; title: string; child
 );
 
 
-const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string | number) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
+const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
       <input
         type={type}
         id={id}
-        value={data[id] as any || ''}
-        onChange={(e) => onFieldChange(id, type === 'number' ? parseInt(e.target.value, 10) || 0 : e.target.value)}
+        value={data[id] as string || ''}
+        onChange={(e) => onFieldChange(id, e.target.value)}
         className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 transition-colors duration-200"
         placeholder={placeholder}
         min={min}
@@ -298,7 +299,7 @@ export const ApiKeyInput: React.FC<{
     );
 };
 
-export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, openRouterApiKey, onSetOpenRouterApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey, imagineApiKey, onSetImagineApiKey, useapiApiKey, onSetUseapiApiKey }) => {
+export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, userApiKey, onSetUserApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey, imagineApiKey, onSetImagineApiKey, useapiApiKey, onSetUseapiApiKey }) => {
     const templateCount = 53;
     const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
         id: `${i + 1}`,
@@ -319,14 +320,14 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
       };
       
     const [falAiApiKeyInput, setFalAiApiKeyInput] = useState(falAiApiKey);
-    const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
+    const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
     const [apiframeApiKeyInput, setApiframeApiKeyInput] = useState(apiframeApiKey);
     const [midapiApiKeyInput, setMidapiApiKeyInput] = useState(midapiApiKey);
     const [imagineApiKeyInput, setImagineApiKeyInput] = useState(imagineApiKey);
     const [useapiApiKeyInput, setUseapiApiKeyInput] = useState(useapiApiKey);
 
     useEffect(() => { setFalAiApiKeyInput(falAiApiKey); }, [falAiApiKey]);
-    useEffect(() => { setOpenRouterApiKeyInput(openRouterApiKey); }, [openRouterApiKey]);
+    useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
     useEffect(() => { setApiframeApiKeyInput(apiframeApiKey); }, [apiframeApiKey]);
     useEffect(() => { setMidapiApiKeyInput(midapiApiKey); }, [midapiApiKey]);
     useEffect(() => { setImagineApiKeyInput(imagineApiKey); }, [imagineApiKey]);
@@ -334,8 +335,8 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     
     const handleSaveFalKey = () => onSetFalAiApiKey(falAiApiKeyInput.trim());
     const handleClearFalKey = () => { setFalAiApiKeyInput(''); onSetFalAiApiKey(''); };
-    const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
-    const handleClearOpenRouterKey = () => { setOpenRouterApiKeyInput(''); onSetOpenRouterApiKey(''); };
+    const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
+    const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
     const handleSaveApiframeKey = () => onSetApiframeApiKey(apiframeApiKeyInput.trim());
     const handleClearApiframeKey = () => { setApiframeApiKeyInput(''); onSetApiframeApiKey(''); };
     const handleSaveMidapiKey = () => onSetMidapiApiKey(midapiApiKeyInput.trim());
@@ -346,7 +347,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     const handleClearUseapiKey = () => { setUseapiApiKeyInput(''); onSetUseapiApiKey(''); };
 
 
-    const openRouterKeyIsConfigured = openRouterApiKey && openRouterApiKey.length > 5;
+    const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
     const mjKeyIsConfigured = apiframeApiKey && apiframeApiKey.length > 5;
     const mj2KeyIsConfigured = midapiApiKey && midapiApiKey.length > 5;
@@ -381,17 +382,17 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
             <ControlCard icon={<SettingsIcon />} title="AI Configuration">
                 <div className="space-y-6">
                     <ApiKeyInput
-                        label="OpenRouter.ai API Key (for Text)"
-                        value={openRouterApiKeyInput}
-                        onChange={setOpenRouterApiKeyInput}
-                        onSave={handleSaveOpenRouterKey}
-                        onClear={handleClearOpenRouterKey}
-                        placeholder="Enter your OpenRouter key"
-                        getLink="https://openrouter.ai/keys"
-                        getLinkText="Get an OpenRouter API Key"
+                        label="Google AI API Key (for Text)"
+                        value={googleApiKeyInput}
+                        onChange={setGoogleApiKeyInput}
+                        onSave={handleSaveGoogleKey}
+                        onClear={handleClearGoogleKey}
+                        placeholder="Enter your Google AI key"
+                        getLink="https://aistudio.google.com/app/apikey"
+                        getLinkText="Get a Google AI API Key"
                         statusMessage={
-                            openRouterKeyIsConfigured ? (
-                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your OpenRouter key is saved in this browser.</p>
+                            googleKeyIsConfigured ? (
+                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Google AI key is saved in this browser.</p>
                             ) : (
                                 <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
                             )
@@ -495,8 +496,8 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         data={data}
                         onFieldChange={onFieldChange}
                         id="textModel"
-                        label="Text Generation Model (OpenRouter)"
-                         description={!openRouterKeyIsConfigured ? 'Add OpenRouter key to use.' : 'e.g., google/gemini-flash-1.5'}
+                        label="Text Generation Model (Google AI)"
+                         description={!googleKeyIsConfigured ? 'Add Google AI key to use.' : 'e.g., gemini-2.5-flash'}
                     />
                 </div>
             </ControlCard>
@@ -505,11 +506,11 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
 };
 
 
-export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, openRouterApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, onGenerateShortTitle, isGeneratingShortTitle, isBulkGenerating }) => {
+export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChange, userApiKey, onGenerateDescription, isGeneratingDescription, onGenerateKeywords, isGeneratingKeywords, onGenerateShortTitle, isGeneratingShortTitle, isBulkGenerating }) => {
     const TITLE_RECOMMENDED_MAX_LENGTH = 35;
     const TITLE_HARD_MAX_LENGTH = 100;
     const titleLength = data.title?.length || 0;
-    const openRouterKeyIsConfigured = openRouterApiKey && openRouterApiKey.length > 5;
+    const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
 
     const getTitleCounterColor = () => {
         if (titleLength > TITLE_HARD_MAX_LENGTH) return 'text-red-600';
@@ -532,8 +533,8 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                      <button
                         type="button"
                         onClick={onGenerateShortTitle}
-                        disabled={isGeneratingShortTitle || isBulkGenerating || !openRouterKeyIsConfigured || titleLength <= TITLE_RECOMMENDED_MAX_LENGTH}
-                        title={!openRouterKeyIsConfigured ? "Add an OpenRouter API key to enable" : titleLength <= TITLE_RECOMMENDED_MAX_LENGTH ? "Title is already a good length" : "Use AI to shorten the title"}
+                        disabled={isGeneratingShortTitle || isBulkGenerating || !googleKeyIsConfigured || titleLength <= TITLE_RECOMMENDED_MAX_LENGTH}
+                        title={!googleKeyIsConfigured ? "Add a Google AI key to enable" : titleLength <= TITLE_RECOMMENDED_MAX_LENGTH ? "Title is already a good length" : "Use AI to shorten the title"}
                         className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 disabled:text-slate-300 disabled:cursor-not-allowed rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500 transition-colors"
                     >
                         {isGeneratingShortTitle ? <LoadingSpinner className="w-4 h-4" /> : '✨'}
@@ -560,7 +561,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     type="button"
                     onClick={onGenerateDescription}
                     disabled={isGeneratingDescription || isBulkGenerating}
-                    title={openRouterKeyIsConfigured ? 'Generate a high-quality description with OpenRouter' : 'Generate a basic placeholder description'}
+                    title={googleKeyIsConfigured ? 'Generate a high-quality description with Google AI' : 'Generate a basic placeholder description'}
                     className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
                 >
                     {isGeneratingDescription ? (
@@ -582,7 +583,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     type="button"
                     onClick={onGenerateKeywords}
                     disabled={isGeneratingKeywords || isBulkGenerating}
-                    title={openRouterKeyIsConfigured ? 'Generate keywords with OpenRouter' : 'Generate basic placeholder keywords'}
+                    title={googleKeyIsConfigured ? 'Generate keywords with Google AI' : 'Generate basic placeholder keywords'}
                     className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
                 >
                     {isGeneratingKeywords ? (
@@ -721,44 +722,19 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
              </ControlCard>
 
             <ControlCard icon={<BulkIcon />} title="Bulk Actions">
-                <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-2">Scheduling Mode</label>
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            onClick={() => onFieldChange('scheduleMode', 'fixed')}
-                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 border ${data.scheduleMode !== 'random' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
-                        >
-                            Fixed
-                        </button>
-                        <button
-                            onClick={() => onFieldChange('scheduleMode', 'random')}
-                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 border ${data.scheduleMode === 'random' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
-                        >
-                            Random
-                        </button>
-                    </div>
-                </div>
-
-                {data.scheduleMode === 'random' ? (
-                     <div className="grid grid-cols-2 gap-4">
-                        <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDayMin" label="Min Pins / Day" type="number" min="1" placeholder="e.g., 3" />
-                        <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDayMax" label="Max Pins / Day" type="number" min="1" placeholder="e.g., 5" />
-                    </div>
-                ) : (
+                <div className="grid grid-cols-2 gap-4">
                     <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
-                )}
-
-                <div>
-                    <label htmlFor="startDate" className="block text-sm font-medium text-slate-600 mb-1.5">Start Date</label>
-                    <input
-                        type="date"
-                        id="startDate"
-                        value={data.startDate}
-                        onChange={(e) => onFieldChange('startDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
-                    />
+                    <div>
+                        <label htmlFor="startDate" className="block text-sm font-medium text-slate-600 mb-1.5">Start Date</label>
+                        <input
+                            type="date"
+                            id="startDate"
+                            value={data.startDate}
+                            onChange={(e) => onFieldChange('startDate', e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                        />
+                    </div>
                 </div>
-
                 <div>
                     <InputField data={data} onFieldChange={onFieldChange} id="mediaUrlPrefix" label="Media URL Prefix" placeholder="e.g., http://yourwebsite.com/images/" />
                     <p className="text-xs text-slate-500 mt-1.5">This URL will be prefixed to the generated image filenames in the CSV.</p>
