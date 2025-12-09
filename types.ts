@@ -1,3 +1,4 @@
+
 export type TemplateId = `${number}`;
 
 export type PinSize = 'standard' | 'long' | 'extraLong';
@@ -19,6 +20,9 @@ export interface TemplateData {
   keywords: string;
   mediaUrlPrefix: string;
   pinsPerDay: number;
+  useRandomPinsPerDay: boolean;
+  pinsPerDayMin: number;
+  pinsPerDayMax: number;
   startDate: string;
   imageModel: string;
   textModel: string;

@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -77,7 +79,7 @@ export const ControlCard: React.FC<{ icon: React.ReactNode; title: string; child
 );
 
 
-const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
+const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: any) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
       <input
@@ -726,7 +728,14 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
 
             <ControlCard icon={<BulkIcon />} title="Bulk Actions">
                 <div className="grid grid-cols-2 gap-4">
-                    <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
+                    {data.useRandomPinsPerDay ? (
+                        <>
+                            <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDayMin" label="Min Pins" type="number" min="1" placeholder="e.g., 3" />
+                            <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDayMax" label="Max Pins" type="number" min="1" placeholder="e.g., 5" />
+                        </>
+                    ) : (
+                        <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
+                    )}
                     <div>
                         <label htmlFor="startDate" className="block text-sm font-medium text-slate-600 mb-1.5">Start Date</label>
                         <input
@@ -738,11 +747,23 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                         />
                     </div>
                 </div>
+                <div className="mt-2 mb-2 flex items-center">
+                    <input
+                        type="checkbox"
+                        id="useRandomPinsPerDay"
+                        checked={data.useRandomPinsPerDay}
+                        onChange={(e) => onFieldChange('useRandomPinsPerDay', e.target.checked)}
+                        className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="useRandomPinsPerDay" className="ml-2 block text-sm text-slate-600">
+                        Randomize daily count?
+                    </label>
+                </div>
                 <div>
                     <InputField data={data} onFieldChange={onFieldChange} id="mediaUrlPrefix" label="Media URL Prefix" placeholder="e.g., http://yourwebsite.com/images/" />
                     <p className="text-xs text-slate-500 mt-1.5">This URL will be prefixed to the generated image filenames in the CSV.</p>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 mt-4">
                     {hasPausedJob ? (
                         <button
                             onClick={() => bulkJobType && onBulkGeneration(bulkJobType, true)}
