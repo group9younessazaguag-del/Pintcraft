@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -821,6 +815,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     
     const { pinsPerDay, startDate, useRandomPinsPerDay, pinsPerDayMin, pinsPerDayMax } = templateData;
     const pinsPerDayNum = Math.max(1, parseInt(pinsPerDay.toString(), 10) || 1);
+    const minPins = Math.max(1, parseInt(pinsPerDayMin.toString(), 10) || 1);
+    const maxPins = Math.max(minPins, parseInt(pinsPerDayMax.toString(), 10) || 1);
+
     const start = new Date(startDate);
     if (isNaN(start.getTime())) {
         setApiError({ type: 'generic', message: 'Invalid start date. Please select a valid date.'});
@@ -839,7 +836,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     let currentDate = new Date(start);
     let currentDayPinCount = 0;
     let targetPinsForDay = useRandomPinsPerDay 
-        ? Math.floor(Math.random() * ((pinsPerDayMax || 5) - (pinsPerDayMin || 3) + 1)) + (pinsPerDayMin || 3)
+        ? Math.floor(Math.random() * (maxPins - minPins + 1)) + minPins
         : pinsPerDayNum;
 
     for (let k = 0; k < dataForGeneration.length; k++) {
@@ -870,7 +867,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             currentDate.setDate(currentDate.getDate() + 1);
             currentDayPinCount = 0;
             targetPinsForDay = useRandomPinsPerDay 
-                ? Math.floor(Math.random() * ((pinsPerDayMax || 5) - (pinsPerDayMin || 3) + 1)) + (pinsPerDayMin || 3)
+                ? Math.floor(Math.random() * (maxPins - minPins + 1)) + minPins
                 : pinsPerDayNum;
         }
     }
