@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -883,7 +885,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
             if (prompt) {
                 try {
-                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58'].includes(templateData.templateId);
+                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68'].includes(templateData.templateId);
                     const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
                     const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
                     
@@ -933,7 +935,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                             const newPrompt = await generateSafeImagePrompt(googleApiKey, templateData.textModel, currentData.title);
                             setBulkMessage(`Row ${i + 1}: Retrying with new prompt...`);
                             
-                            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58'].includes(templateData.templateId);
+                            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68'].includes(templateData.templateId);
                             const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
                             const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
                             const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
@@ -973,7 +975,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             // Explicitly wait for images to load to prevent blank pins
             const { backgroundImage, backgroundImage2, backgroundImage3 } = imageData; // Get LATEST state
             await waitForImageLoad(backgroundImage);
-            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58'].includes(templateData.templateId)) {
+            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68'].includes(templateData.templateId)) {
                 await waitForImageLoad(backgroundImage2);
             }
             if (['7', '15', '19', '22'].includes(templateData.templateId)) {

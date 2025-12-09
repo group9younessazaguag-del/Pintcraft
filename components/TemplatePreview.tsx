@@ -1,6 +1,7 @@
 
 
 
+
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
 
@@ -878,6 +879,190 @@ const MinimalistIngredientsTemplate: React.FC<{ data: TemplateData }> = ({ data 
         </div>
     );
 };
+
+// -- New Templates 59-68 --
+
+const SoftLavenderTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#F3E8FF', borderColor: '#FFFFFF', color: '#3A2E4A' }}>
+                    {title && <h2 className={`font-poppins font-bold ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-allura text-3xl mt-2 opacity-90">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const WarmCaramelTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#F5D9B0', borderColor: '#FFFFFF', color: '#3C2F1C' }}>
+                    {title && <h2 className={`font-montserrat font-extrabold ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-caveat-brush text-2xl mt-2 opacity-90">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const SkyBlueTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#DFF3FF', borderColor: '#FFFFFF', color: '#13334C' }}>
+                    {title && <h2 className={`font-nunito font-black ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-pacifico text-2xl mt-2 opacity-90">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const BlushPinkTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#FFE4EC', borderColor: '#FFFFFF', color: '#842B47' }}>
+                    {title && <h2 className={`font-playfair font-bold ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-montserrat font-medium text-sm uppercase tracking-widest mt-2">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const MochaCafeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#E9D7C5', borderColor: '#FFFFFF', color: '#4B2E14' }}>
+                    {title && <h2 className={`font-cormorant-garamond font-bold ${titleFontSize} leading-none tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-poppins text-xs uppercase tracking-widest mt-3">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const PastelYellowTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#FFF4B8', borderColor: '#FFFFFF', color: '#2A2A2A' }}>
+                    {title && <h2 className={`font-anton uppercase ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-dm-sans text-sm mt-3">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const CoolGreyTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#F2F2F2', borderColor: '#FFFFFF', color: '#111111' }}>
+                    {title && <h2 className={`font-bebas-neue ${titleFontSize} tracking-wide leading-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-open-sans text-sm mt-2 font-semibold uppercase">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const SoftCoralTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#FFD8C8', borderColor: '#FFFFFF', color: '#5A2E25' }}>
+                    {title && <h2 className={`font-nunito font-extrabold ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-great-vibes text-3xl mt-2">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const FreshLimeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#E6FFC9', borderColor: '#FFFFFF', color: '#1C3A13' }}>
+                    {title && <h2 className={`font-poppins font-black ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-allura text-3xl mt-2">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+const VanillaRoseTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage} />{!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="flex-1 relative"><BackgroundImage imageUrl={backgroundImage2} />{!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}</div>
+            <div className="absolute inset-0 flex justify-center items-center p-8">
+                <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#FBF7F2', borderColor: '#D7AFA6', color: '#6D3F36' }}>
+                    {title && <h2 className={`font-playfair font-black ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                    {subtitle && <p className="font-montserrat font-light text-sm uppercase tracking-widest mt-3">{subtitle}</p>}
+                </div>
+            </div>
+            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
+        </div>
+    );
+};
+
+// -- End New Templates --
 
 const ElegantRecipeCardTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
@@ -1922,7 +2107,6 @@ const templateMap: { [key: string]: React.FC<{ data: TemplateData }> } = {
     '46': DidYouKnowTemplate,
     '47': ElegantTextBorderTemplate,
     '48': FoodieSplitTemplate,
-    // FIX: Replaced missing FoodieRecipeSplitTemplateStyle components with existing foodie-themed templates as fallbacks.
     '49': BoldFoodieSplitTemplate2,
     '50': VibrantFoodieSplitTemplate,
     '51': ElegantFoodieSplitTemplate,
@@ -1933,6 +2117,16 @@ const templateMap: { [key: string]: React.FC<{ data: TemplateData }> } = {
     '56': LemonBrightViralTemplate,
     '57': CreamGoldPremiumTemplate,
     '58': WhiteStrawberryRedTemplate,
+    '59': SoftLavenderTemplate,
+    '60': WarmCaramelTemplate,
+    '61': SkyBlueTemplate,
+    '62': BlushPinkTemplate,
+    '63': MochaCafeTemplate,
+    '64': PastelYellowTemplate,
+    '65': CoolGreyTemplate,
+    '66': SoftCoralTemplate,
+    '67': FreshLimeTemplate,
+    '68': VanillaRoseTemplate,
 };
 
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {
@@ -1957,5 +2151,4 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
   );
 });
 
-// FIX: Add default export for the TemplatePreview component
 export default TemplatePreview;
