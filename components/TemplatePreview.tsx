@@ -1,7 +1,4 @@
 
-
-
-
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
 
@@ -1062,6 +1059,61 @@ const VanillaRoseTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     );
 };
 
+const GreenGrungeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-stone-300"></div>}
+            </div>
+            <div className="flex-1 relative overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-stone-400"></div>}
+            </div>
+
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-6">
+                <div 
+                    className="relative p-6 md:p-8 transform -rotate-1 max-w-[90%] text-center shadow-[4px_4px_0px_rgba(0,0,0,0.25)]"
+                    style={{
+                        backgroundColor: '#4F6F3A',
+                        color: '#FFFFFF',
+                        // Creating a rough edge look with clip-path
+                        clipPath: 'polygon(2% 0%, 98% 1%, 100% 98%, 0% 100%)' 
+                    }}
+                >
+                    {/* Inner dashed border to mimic stitching/patch */}
+                    <div className="border-2 border-dashed border-white/40 p-4 flex flex-col justify-center items-center h-full">
+                        {title && (
+                            <h2 
+                                className={`font-nunito font-extrabold ${titleFontSize} leading-[0.9] tracking-normal uppercase drop-shadow-md`}
+                                style={{ wordBreak: 'break-word' }}
+                            >
+                                {title}
+                            </h2>
+                        )}
+                        {subtitle && (
+                            <p className="font-nunito font-bold text-lg sm:text-xl mt-3 text-[#E0F2D5] uppercase tracking-wide leading-tight">
+                                {subtitle}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {website && (
+                <div className="absolute bottom-4 right-4 transform rotate-2">
+                     <p className="text-xs font-extrabold tracking-[0.15em] text-[#4F6F3A] bg-white/90 px-3 py-1.5 uppercase font-nunito shadow-sm border border-[#4F6F3A]">
+                        {website}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // -- End New Templates --
 
 const ElegantRecipeCardTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
@@ -1812,15 +1864,15 @@ const ComicBookTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
                                 >
                                     {title}
                                 </h2>
-                            </div>
+                             </div>
                          </div>
                      )}
                 </div>
-
-                {/* Bottom Website */}
-                 {website && (
-                    <div className="bg-blue-500 text-white p-1 text-center font-bold text-xs tracking-widest shadow-lg">
-                        {website}
+                
+                {/* Website */}
+                {website && (
+                    <div className="absolute bottom-2 right-2 transform -rotate-2 bg-white px-2 py-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        <p className="text-xs font-bold tracking-widest uppercase">{website}</p>
                     </div>
                 )}
             </div>
@@ -1828,327 +1880,87 @@ const ComicBookTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     );
 };
 
-const MinimalistPhotoFocusTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage } = data;
-    return (
-        <div className="w-full h-full relative font-poppins text-gray-800">
-            <BackgroundImage imageUrl={backgroundImage} />
-            {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            
-            <div className="absolute bottom-4 left-4 right-4 z-10">
-                <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-md">
-                    <h2 className="font-semibold text-lg leading-tight" style={{ wordBreak: 'break-word' }}>{title}</h2>
-                    {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
-                    {website && <p className="text-xs font-bold tracking-widest text-gray-400 uppercase mt-3 pt-2 border-t border-gray-200">{website}</p>}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const DidYouKnowTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl', 100, 60);
-    return (
-        <div className="w-full h-full relative flex flex-col justify-center items-center text-center p-8 text-slate-800">
-            <BackgroundImage imageUrl={backgroundImage} />
-            {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            
-            <div className="relative z-10 w-full flex flex-col items-center">
-                <div className="bg-yellow-400 text-black p-2 mb-6 shadow-lg">
-                    <p className="font-anton text-2xl md:text-3xl tracking-wider">DID YOU KNOW?</p>
-                </div>
-
-                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-lg">
-                    {title && (
-                        <h2 
-                            className={`font-playfair font-bold ${titleFontSize} leading-tight tracking-tight`}
-                            style={{ wordBreak: 'break-word' }}
-                        >
-                            {title}
-                        </h2>
-                    )}
-                    {subtitle && (
-                         <p 
-                            className="text-sm font-semibold tracking-wide mt-4 opacity-90 max-w-md mx-auto"
-                            style={{ wordBreak: 'break-word' }}
-                        >
-                            {subtitle}
-                        </p>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const ElegantTextBorderTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
-    return (
-        <div className="w-full h-full relative flex flex-col justify-center items-center text-center p-6 text-white">
-            <BackgroundImage imageUrl={backgroundImage} />
-            <div className="absolute inset-0 bg-slate-800/60"></div>
-            {/* Border */}
-            <div className="absolute inset-4 border-2 border-white/50"></div>
-            
-            <div className="relative z-10 w-full flex flex-col items-center max-w-md">
-                 {subtitle && (
-                    <p 
-                        className="font-poppins text-sm font-semibold tracking-widest uppercase mb-4 opacity-80"
-                        style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}
-                    >
-                        {subtitle}
-                    </p>
-                )}
-                {title && (
-                    <h2 
-                        className={`font-playfair font-bold ${titleFontSize} leading-tight tracking-tight`}
-                        style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.6)', wordBreak: 'break-word' }}
-                    >
-                        {title}
-                    </h2>
-                )}
-                 {website && (
-                    <p 
-                        className="font-poppins text-xs font-bold tracking-[0.15em] mt-8 pt-4 border-t-2 border-white/50 w-2/3 mx-auto uppercase opacity-80"
-                        style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}
-                    >
-                        {website}
-                    </p>
-                )}
-            </div>
-        </div>
-    );
-};
-
-const SoftPeachDessertTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
-    return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage} />
-                 {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-             <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage2} />
-                 {!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-            <div className="absolute inset-0 flex justify-center items-center p-8">
-                <div
-                    className="text-center p-8 shadow-2xl rounded-lg"
-                    style={{ backgroundColor: '#FFE9DD', borderColor: '#FFFFFF', borderWidth: '3px', color: '#2B170C' }}
-                >
-                    {title && <h2 className={`font-montserrat font-extrabold ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                    {subtitle && <p className="font-great-vibes text-4xl mt-4">{subtitle}</p>}
-                </div>
-            </div>
-            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
-        </div>
-    );
-};
-
-const FreshMintCleanTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
-    return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage} />
-                 {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-             <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage2} />
-                 {!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-            <div className="absolute inset-0 flex justify-center items-center p-8">
-                <div
-                    className="text-center p-8 shadow-2xl rounded-lg"
-                    style={{ backgroundColor: '#D9F4E6', borderColor: '#FFFFFF', borderWidth: '4px', color: '#1E1E1E' }}
-                >
-                    {title && <h2 className={`font-nunito font-extrabold ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                    {subtitle && <p className="font-pacifico text-3xl mt-4">{subtitle}</p>}
-                </div>
-            </div>
-            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
-        </div>
-    );
-};
-
-const LemonBrightViralTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
-    return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage} />
-                 {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-             <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage2} />
-                 {!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-            <div className="absolute inset-0 flex justify-center items-center p-8">
-                <div
-                    className="text-center p-8 shadow-2xl rounded-lg"
-                    style={{ backgroundColor: '#FFF7C2', borderColor: '#FFFFFF', borderWidth: '3px', color: '#0A2342' }}
-                >
-                    {title && <h2 className={`font-poppins font-black ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                    {subtitle && <p className="font-allura text-4xl mt-4">{subtitle}</p>}
-                </div>
-            </div>
-            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
-        </div>
-    );
-};
-
-const CreamGoldPremiumTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
-    return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage} />
-                 {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-             <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage2} />
-                 {!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-            <div className="absolute inset-0 flex justify-center items-center p-8">
-                <div
-                    className="text-center p-8 shadow-2xl rounded-lg"
-                    style={{ backgroundColor: '#F7F1E5', borderColor: '#D4AF37', borderWidth: '3px', color: '#4E2A1E' }}
-                >
-                    {title && <h2 className={`font-playfair font-bold ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                    {subtitle && <p className="font-montserrat font-normal text-sm mt-4 uppercase tracking-widest">{subtitle}</p>}
-                </div>
-            </div>
-            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
-        </div>
-    );
-};
-
-const WhiteStrawberryRedTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
-    return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage} />
-                 {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-             <div className="flex-1 relative">
-                <BackgroundImage imageUrl={backgroundImage2} />
-                 {!backgroundImage2 && <div className="absolute inset-0 bg-slate-200"></div>}
-            </div>
-            <div className="absolute inset-0 flex justify-center items-center p-8">
-                <div
-                    className="text-center p-8 shadow-2xl rounded-lg"
-                    style={{ backgroundColor: '#FFFFFF', borderColor: '#000000', borderWidth: '2px', color: '#D62828' }}
-                >
-                    {title && <h2 className={`font-anton uppercase ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                    {subtitle && <p className="font-dm-sans font-normal text-sm mt-4">{subtitle}</p>}
-                </div>
-            </div>
-            {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
-        </div>
-    );
-};
-
-
-const templateMap: { [key: string]: React.FC<{ data: TemplateData }> } = {
-    '1': ClassicTemplate,
-    '2': SplitTemplate,
-    '3': ModernTemplate,
-    '4': BrushStrokeTemplate,
-    '5': BorderTemplate,
-    '6': EditorialTemplate,
-    '7': CleanGridTemplate,
-    '8': MinimalistQuoteTemplate,
-    '9': TastyRecipeTemplate,
-    '10': DetailedRecipeTemplate,
-    '11': TrendyCollageTemplate,
-    '12': RetroVibesTemplate,
-    '13': ProductSpotlightTemplate,
-    '14': QuoteOverlayTemplate,
-    '15': ShopTheLookTemplate,
-    '16': BeforeAfterTemplate,
-    '17': ChecklistTemplate,
-    '18': NewArticleTemplate,
-    '19': MoodBoardTemplate,
-    '20': RecipeCardTemplate,
-    '21': GourmetCloseUpTemplate,
-    '22': StepByStepGuideTemplate,
-    '23': MinimalistIngredientsTemplate,
-    '24': ElegantRecipeCardTemplate,
-    '25': BoldTitleOverlayTemplate,
-    '26': GardeningTipsTemplate,
-    '27': HomeDecorInspoTemplate,
-    '28': AuthorQuoteTemplate,
-    '29': SplitImageFourBlockTemplate,
-    '30': SimpleProductTemplate,
-    '31': FoodieSplitTemplate,
-    '32': MinimalistLivingTemplate,
-    '33': BoldFoodieTemplate,
-    '34': BoldFoodieSplitTemplate2,
-    '35': VibrantFoodieSplitTemplate,
-    '36': ElegantFoodieSplitTemplate,
-    '37': ElegantFoodieSingleTemplate,
-    '38': AntonVerticalTemplate,
-    '39': MontserratVerticalTemplate,
-    '40': MontserratVerticalTemplateGreen,
-    '41': MontserratVerticalTemplateBrown,
-    '42': ThreePartVerticalTemplate,
-    '43': ThreePartVerticalTemplateDark,
-    '44': ComicBookTemplate,
-    '45': MinimalistPhotoFocusTemplate,
-    '46': DidYouKnowTemplate,
-    '47': ElegantTextBorderTemplate,
-    '48': FoodieSplitTemplate,
-    '49': BoldFoodieSplitTemplate2,
-    '50': VibrantFoodieSplitTemplate,
-    '51': ElegantFoodieSplitTemplate,
-    '52': ElegantFoodieSingleTemplate,
-    '53': BoldFoodieTemplate,
-    '54': SoftPeachDessertTemplate,
-    '55': FreshMintCleanTemplate,
-    '56': LemonBrightViralTemplate,
-    '57': CreamGoldPremiumTemplate,
-    '58': WhiteStrawberryRedTemplate,
-    '59': SoftLavenderTemplate,
-    '60': WarmCaramelTemplate,
-    '61': SkyBlueTemplate,
-    '62': BlushPinkTemplate,
-    '63': MochaCafeTemplate,
-    '64': PastelYellowTemplate,
-    '65': CoolGreyTemplate,
-    '66': SoftCoralTemplate,
-    '67': FreshLimeTemplate,
-    '68': VanillaRoseTemplate,
-};
-
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {
-  const { templateId, pinSize } = data;
-  const SelectedTemplate = templateMap[templateId] || ClassicTemplate;
-  
-  const sizeClasses = {
-    standard: 'aspect-[3/4]',
-    long: 'aspect-[9/16]',
-    extraLong: 'aspect-[5/12]'
-  };
-  
-  const selectedSizeClass = sizeClasses[pinSize] || sizeClasses.long;
+    const { templateId } = data;
 
-  return (
-    <div
-      ref={ref}
-      className={`w-full overflow-hidden bg-gray-200 shadow-lg rounded-2xl relative ${selectedSizeClass}`}
-    >
-      <SelectedTemplate data={data} />
-    </div>
-  );
+    const renderTemplate = () => {
+        switch (templateId) {
+            case '1': return <ClassicTemplate data={data} />;
+            case '2': return <SplitTemplate data={data} />;
+            case '3': return <ModernTemplate data={data} />;
+            case '4': return <BrushStrokeTemplate data={data} />;
+            case '5': return <BorderTemplate data={data} />;
+            case '6': return <EditorialTemplate data={data} />;
+            case '7': return <CleanGridTemplate data={data} />;
+            case '8': return <MinimalistQuoteTemplate data={data} />;
+            case '9': return <TastyRecipeTemplate data={data} />;
+            case '10': return <DetailedRecipeTemplate data={data} />;
+            case '11': return <TrendyCollageTemplate data={data} />;
+            case '12': return <RetroVibesTemplate data={data} />;
+            case '13': return <ProductSpotlightTemplate data={data} />;
+            case '14': return <QuoteOverlayTemplate data={data} />;
+            case '15': return <ShopTheLookTemplate data={data} />;
+            case '16': return <BeforeAfterTemplate data={data} />;
+            case '17': return <ChecklistTemplate data={data} />;
+            case '18': return <NewArticleTemplate data={data} />;
+            case '19': return <MoodBoardTemplate data={data} />;
+            case '20': return <RecipeCardTemplate data={data} />;
+            case '21': return <GourmetCloseUpTemplate data={data} />;
+            case '22': return <StepByStepGuideTemplate data={data} />;
+            case '23': return <MinimalistIngredientsTemplate data={data} />;
+            
+            case '24': return <ElegantRecipeCardTemplate data={data} />;
+            case '25': return <BoldTitleOverlayTemplate data={data} />;
+            case '26': return <GardeningTipsTemplate data={data} />;
+            case '27': return <HomeDecorInspoTemplate data={data} />;
+            case '28': return <AuthorQuoteTemplate data={data} />;
+            case '29': return <SplitImageFourBlockTemplate data={data} />;
+            case '30': return <SimpleProductTemplate data={data} />;
+            case '31': return <FoodieSplitTemplate data={data} />;
+            case '32': return <MinimalistLivingTemplate data={data} />;
+            case '33': return <BoldFoodieTemplate data={data} />;
+            case '34': return <BoldFoodieSplitTemplate2 data={data} />;
+            case '35': return <VibrantFoodieSplitTemplate data={data} />;
+            case '36': return <ElegantFoodieSplitTemplate data={data} />;
+            case '37': return <ElegantFoodieSingleTemplate data={data} />;
+            case '38': return <AntonVerticalTemplate data={data} />;
+            case '39': return <MontserratVerticalTemplate data={data} />;
+            case '40': return <MontserratVerticalTemplateGreen data={data} />;
+            case '41': return <MontserratVerticalTemplateBrown data={data} />;
+            case '42': return <ThreePartVerticalTemplate data={data} />;
+            case '43': return <ThreePartVerticalTemplateDark data={data} />;
+            case '44': return <ComicBookTemplate data={data} />;
+
+            case '59': return <SoftLavenderTemplate data={data} />;
+            case '60': return <WarmCaramelTemplate data={data} />;
+            case '61': return <SkyBlueTemplate data={data} />;
+            case '62': return <BlushPinkTemplate data={data} />;
+            case '63': return <MochaCafeTemplate data={data} />;
+            case '64': return <PastelYellowTemplate data={data} />;
+            case '65': return <CoolGreyTemplate data={data} />;
+            case '66': return <SoftCoralTemplate data={data} />;
+            case '67': return <FreshLimeTemplate data={data} />;
+            case '68': return <VanillaRoseTemplate data={data} />;
+            case '69': return <GreenGrungeTemplate data={data} />;
+
+            default: return <ClassicTemplate data={data} />;
+        }
+    };
+
+    const getAspectRatioClass = () => {
+        switch(data.pinSize) {
+            case 'standard': return 'aspect-[3/4]';
+            case 'long': return 'aspect-[9/16]';
+            case 'extraLong': return 'aspect-[1/2.4]';
+            default: return 'aspect-[2/3]';
+        }
+    };
+
+    return (
+        <div ref={ref} className={`w-full ${getAspectRatioClass()} bg-white shadow-xl overflow-hidden relative text-slate-800`}>
+            {renderTemplate()}
+        </div>
+    );
 });
 
 export default TemplatePreview;
