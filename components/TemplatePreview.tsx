@@ -1114,6 +1114,112 @@ const GreenGrungeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     );
 };
 
+const SmoothieStyleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-orange-100"></div>}
+            </div>
+            <div className="flex-1 relative overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-pink-100"></div>}
+            </div>
+
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-6">
+                <div 
+                    className="relative p-6 md:p-8 transform -rotate-1 max-w-[90%] text-center shadow-[4px_4px_0px_rgba(0,0,0,0.15)]"
+                    style={{
+                        backgroundColor: '#EF476F', // Smoothie Pink
+                        color: '#FFFFFF',
+                        clipPath: 'polygon(2% 0%, 98% 1%, 100% 98%, 0% 100%)' 
+                    }}
+                >
+                    <div className="border-2 border-dashed border-white/60 p-4 flex flex-col justify-center items-center h-full">
+                        {title && (
+                            <h2 
+                                className={`font-nunito font-extrabold ${titleFontSize} leading-[0.9] tracking-normal uppercase drop-shadow-sm`}
+                                style={{ wordBreak: 'break-word' }}
+                            >
+                                {title}
+                            </h2>
+                        )}
+                        {subtitle && (
+                            <p className="font-nunito font-bold text-lg sm:text-xl mt-3 text-[#FFE3E3] uppercase tracking-wide leading-tight">
+                                {subtitle}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {website && (
+                <div className="absolute bottom-4 right-4 transform rotate-2">
+                     <p className="text-xs font-extrabold tracking-[0.15em] text-[#EF476F] bg-white/95 px-3 py-1.5 uppercase font-nunito shadow-sm border border-[#EF476F]">
+                        {website}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const BlueberrySmoothieTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="flex-1 relative overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-purple-100"></div>}
+            </div>
+            <div className="flex-1 relative overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-blue-100"></div>}
+            </div>
+
+            <div className="absolute inset-0 flex flex-col justify-center items-center p-6">
+                <div 
+                    className="relative p-6 md:p-8 transform -rotate-1 max-w-[90%] text-center shadow-[4px_4px_0px_rgba(0,0,0,0.15)]"
+                    style={{
+                        backgroundColor: '#7209B7', // Vibrant Purple
+                        color: '#FFFFFF',
+                        clipPath: 'polygon(2% 0%, 98% 1%, 100% 98%, 0% 100%)' 
+                    }}
+                >
+                    <div className="border-2 border-dashed border-white/60 p-4 flex flex-col justify-center items-center h-full">
+                        {title && (
+                            <h2 
+                                className={`font-nunito font-extrabold ${titleFontSize} leading-[0.9] tracking-normal uppercase drop-shadow-sm`}
+                                style={{ wordBreak: 'break-word' }}
+                            >
+                                {title}
+                            </h2>
+                        )}
+                        {subtitle && (
+                            <p className="font-nunito font-bold text-lg sm:text-xl mt-3 text-[#E0AAFF] uppercase tracking-wide leading-tight">
+                                {subtitle}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {website && (
+                <div className="absolute bottom-4 right-4 transform rotate-2">
+                     <p className="text-xs font-extrabold tracking-[0.15em] text-[#7209B7] bg-white/95 px-3 py-1.5 uppercase font-nunito shadow-sm border border-[#7209B7]">
+                        {website}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // -- End New Templates --
 
 const ElegantRecipeCardTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
@@ -1942,6 +2048,8 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
             case '67': return <FreshLimeTemplate data={data} />;
             case '68': return <VanillaRoseTemplate data={data} />;
             case '69': return <GreenGrungeTemplate data={data} />;
+            case '70': return <SmoothieStyleTemplate data={data} />;
+            case '71': return <BlueberrySmoothieTemplate data={data} />;
 
             default: return <ClassicTemplate data={data} />;
         }

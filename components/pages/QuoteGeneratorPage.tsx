@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { generateViralQuotes, generateViralQuotesWithOpenRouter, generateImageWithUseApi, enhanceViralQuote, enhanceViralQuoteWithOpenRouter, generateSoraVideoPrompt, generateSoraVideoPromptWithOpenRouter } from '../../services/googleAi';
+import { generateViralQuotes, generateImageWithUseApi, enhanceViralQuote, generateSoraVideoPrompt } from '../../services/ai';
 import { ControlCard, ApiKeyInput } from '../Controls';
 import SettingsIcon from '../icons/SettingsIcon';
 import QuoteIcon from '../icons/QuoteIcon';
@@ -11,35 +11,14 @@ import DownloadIcon from '../icons/DownloadIcon';
 import VideoIcon from '../icons/VideoIcon';
 
 interface QuoteGeneratorPageProps {
-    userApiKey: string;
-    onSetUserApiKey: (key: string) => void;
-    useapiApiKey: string;
-    onSetUseapiApiKey: (key: string) => void;
     openRouterApiKey: string;
     onSetOpenRouterApiKey: (key: string) => void;
+    useapiApiKey: string;
+    onSetUseapiApiKey: (key: string) => void;
     textModel: string;
 }
 
-const ServiceToggleButton: React.FC<{
-    options: { id: 'google' | 'openrouter'; name: string }[];
-    selected: 'google' | 'openrouter';
-    onSelect: (id: 'google' | 'openrouter') => void;
-}> = ({ options, selected, onSelect }) => (
-    <div>
-        <label className="block text-sm font-medium text-slate-600 mb-2">Text Generation Service</label>
-        <div className="grid grid-cols-2 gap-2">
-            {options.map(option => (
-                <button
-                    key={option.id}
-                    onClick={() => onSelect(option.id)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 ${selected === option.id ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
-                >
-                    {option.name}
-                </button>
-            ))}
-        </div>
-    </div>
-);
+// Removed ServiceToggleButton as OpenRouter is now exclusive for text AI
 
 const CATEGORIES = [
     "Self Love", "Love", "Sad", "Life", "Motivation", "Success", "Friendship", "Funny", "Healing", "Glow Up"
@@ -55,13 +34,12 @@ const IMAGE_STYLES = [
     "Cinematic high-angle drone shot from the sky looking down at a solitary person walking alone on a winding mountain road"
 ];
 
-const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
-    userApiKey,
-    onSetUserApiKey,
-    useapiApiKey,
-    onSetUseapiApiKey,
+// FIX: Export QuoteGeneratorPage as a named export
+export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
     openRouterApiKey,
     onSetOpenRouterApiKey,
+    useapiApiKey,
+    onSetUseapiApiKey,
     textModel,
 }) => {
     const [activeTab, setActiveTab] = useState<'category' | 'custom'>('category');
@@ -82,11 +60,9 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
     const [videoPrompt, setVideoPrompt] = useState('');
     const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
 
-    const [service, setService] = useState<'google' | 'openrouter'>('google');
-    const [openRouterModel, setOpenRouterModel] = useState('google/gemini-2.5-flash');
+    // Default model for OpenRouter, previously it was set for Google AI
+    const [openRouterModel, setOpenRouterModel] = useState(textModel || 'google/gemini-2.5-flash'); 
 
-    const [googleApiKeyInput, setGoogleApiKeyInput] = useState(userApiKey);
-    useEffect(() => { setGoogleApiKeyInput(userApiKey); }, [userApiKey]);
     const [useapiApiKeyInput, setUseapiApiKeyInput] = useState(useapiApiKey);
     useEffect(() => { setUseapiApiKeyInput(useapiApiKey); }, [useapiApiKey]);
     const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
@@ -94,14 +70,11 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
 
     const previewRef = useRef<HTMLDivElement>(null);
 
-    const handleSaveGoogleKey = () => onSetUserApiKey(googleApiKeyInput.trim());
-    const handleClearGoogleKey = () => { setGoogleApiKeyInput(''); onSetUserApiKey(''); };
     const handleSaveUseapiKey = () => onSetUseapiApiKey(useapiApiKeyInput.trim());
     const handleClearUseapiKey = () => { setUseapiApiKeyInput(''); onSetUseapiApiKey(''); };
     const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
     const handleClearOpenRouterKey = () => { setOpenRouterApiKeyInput(''); onSetOpenRouterApiKey(''); };
 
-    const googleKeyIsConfigured = userApiKey && userApiKey.length > 5;
     const useapiKeyIsConfigured = useapiApiKey && useapiApiKey.length > 5;
     const openRouterKeyIsConfigured = openRouterApiKey && openRouterApiKey.length > 5;
 
@@ -115,11 +88,7 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
             return;
         }
 
-        if (service === 'google' && !googleKeyIsConfigured) {
-            setApiError("Please provide a Google AI API key.");
-            return;
-        }
-        if (service === 'openrouter' && !openRouterKeyIsConfigured) {
+        if (!openRouterKeyIsConfigured) {
             setApiError("Please provide an OpenRouter API key.");
             return;
         }
@@ -133,17 +102,11 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
         try {
             let result: string[] = [];
             if (activeTab === 'custom') {
-                 if (service === 'openrouter') {
-                    result = await enhanceViralQuoteWithOpenRouter(openRouterApiKey, openRouterModel, customQuote, quoteLength);
-                } else {
-                    result = await enhanceViralQuote(userApiKey, textModel, customQuote, quoteLength);
-                }
+                 // Correctly call the OpenRouter version of enhanceViralQuote
+                 result = await enhanceViralQuote(openRouterApiKey, openRouterModel, customQuote, quoteLength);
             } else {
-                if (service === 'openrouter') {
-                    result = await generateViralQuotesWithOpenRouter(openRouterApiKey, openRouterModel, selectedCategory, quoteLength);
-                } else {
-                    result = await generateViralQuotes(userApiKey, textModel, selectedCategory, quoteLength);
-                }
+                // Correctly call the OpenRouter version of generateViralQuotes
+                result = await generateViralQuotes(openRouterApiKey, openRouterModel, selectedCategory, quoteLength);
             }
             
             setQuotes(result);
@@ -177,6 +140,7 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
             
             const onProgress = (msg: string) => setImageGenerationMessage(msg);
             
+            // Call generateImageWithUseApi as it's the configured image generator here
             const imageUrls = await generateImageWithUseApi(
                 useapiApiKey,
                 prompt,
@@ -201,11 +165,7 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
             return;
         }
         
-        if (service === 'google' && !googleKeyIsConfigured) {
-             setApiError("Please provide a Google AI API key.");
-             return;
-        }
-        if (service === 'openrouter' && !openRouterKeyIsConfigured) {
+        if (!openRouterKeyIsConfigured) {
              setApiError("Please provide an OpenRouter API key.");
              return;
         }
@@ -214,12 +174,8 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
         setApiError(null);
 
         try {
-            let prompt = '';
-            if (service === 'openrouter') {
-                prompt = await generateSoraVideoPromptWithOpenRouter(openRouterApiKey, openRouterModel, selectedQuote);
-            } else {
-                prompt = await generateSoraVideoPrompt(userApiKey, textModel, selectedQuote);
-            }
+            // Correctly call the OpenRouter version of generateSoraVideoPrompt
+            const prompt = await generateSoraVideoPrompt(openRouterApiKey, openRouterModel, selectedQuote);
             setVideoPrompt(prompt);
         } catch (error: any) {
             setApiError(error.message || "Failed to generate video prompt.");
@@ -287,250 +243,204 @@ const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                                     id="category-select"
                                     value={selectedCategory}
                                     onChange={(e) => setSelectedCategory(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 mb-4"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
                                 >
-                                    {CATEGORIES.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                    {CATEGORIES.map(category => (
+                                        <option key={category} value={category}>{category}</option>
                                     ))}
                                 </select>
                             </div>
                         ) : (
-                             <div>
+                            <div>
                                 <label htmlFor="custom-quote" className="block text-sm font-medium text-slate-600 mb-1.5">Your Quote</label>
                                 <textarea
                                     id="custom-quote"
                                     value={customQuote}
                                     onChange={(e) => setCustomQuote(e.target.value)}
-                                    placeholder="Paste your quote here..."
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 min-h-[100px] mb-4"
+                                    rows={3}
+                                    placeholder="Enter the quote you want to enhance..."
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                                 />
                             </div>
                         )}
                         
-                        <div className="mb-4">
-                             <label className="block text-sm font-medium text-slate-600 mb-1.5">Quote Length</label>
-                             <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-600 mb-1.5">Quote Length</label>
+                            <div className="flex space-x-2">
                                 <button
                                     onClick={() => setQuoteLength('short')}
-                                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 border ${quoteLength === 'short' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${quoteLength === 'short' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                                 >
-                                    Short (Viral)
+                                    Short
                                 </button>
                                 <button
                                     onClick={() => setQuoteLength('long')}
-                                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 border ${quoteLength === 'long' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${quoteLength === 'long' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                                 >
-                                    Long (Deep)
+                                    Long
                                 </button>
-                             </div>
+                            </div>
                         </div>
 
                         <button
                             onClick={handleGenerateQuotes}
-                            disabled={isLoading}
+                            disabled={isLoading || !openRouterKeyIsConfigured}
                             className="w-full flex items-center justify-center px-4 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                         >
-                            {isLoading ? <><LoadingSpinner className="mr-2"/> Generating...</> : (activeTab === 'category' ? '✨ Generate Quotes' : '✨ Enhance Quote')}
+                            {isLoading ? <><LoadingSpinner className="mr-2"/> Generating Quotes...</> : '✨ Generate Quotes'}
+                        </button>
+                        
+                        {quotes.length > 0 && (
+                            <div className="space-y-3 pt-4 border-t border-slate-200">
+                                <label htmlFor="select-quote" className="block text-sm font-medium text-slate-600 mb-1.5">Select a Quote</label>
+                                <select
+                                    id="select-quote"
+                                    value={selectedQuote}
+                                    onChange={(e) => setSelectedQuote(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                                >
+                                    {quotes.map((q, i) => (
+                                        <option key={i} value={q}>{q}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                    </ControlCard>
+
+                    <ControlCard icon={<ImagesIcon />} title="2. Generate Image">
+                        <p className="text-sm text-slate-600 mb-3">Choose an AI to generate a cinematic background image for your quote.</p>
+                        <button
+                            onClick={handleGenerateImageForQuote}
+                            disabled={!selectedQuote || isGeneratingImage || !useapiKeyIsConfigured}
+                            title={!useapiKeyIsConfigured ? 'Add a useapi.net API key to use this generator' : 'Generate image with useapi.net'}
+                            className="w-full flex items-center justify-center px-4 py-2.5 bg-teal-500 text-white font-semibold rounded-lg shadow-md hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                        >
+                            {isGeneratingImage ? (
+                                <><LoadingSpinner className="mr-2"/> {imageGenerationMessage || 'Generating Image...'}</>
+                            ) : '🖼️ Generate Image with useapi.net'}
                         </button>
                     </ControlCard>
 
-                    {quotes.length > 0 && (
-                        <ControlCard icon={<SettingsIcon />} title="2. Select Quote">
-                             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                                {quotes.map((q, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => setSelectedQuote(q)}
-                                        className={`w-full text-left p-3 rounded-lg text-sm transition-colors border ${selectedQuote === q ? 'bg-pink-50 border-pink-300 text-pink-900' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
-                                    >
-                                        "{q}"
-                                    </button>
-                                ))}
-                             </div>
-                        </ControlCard>
-                    )}
-                    
-                     <ControlCard icon={<SettingsIcon />} title="AI Configuration">
-                        <div className="space-y-6">
-                            <ServiceToggleButton
-                                options={[
-                                    { id: 'google', name: 'Google AI' },
-                                    { id: 'openrouter', name: 'OpenRouter' }
-                                ]}
-                                selected={service}
-                                onSelect={setService}
-                            />
+                    <ControlCard icon={<VideoIcon />} title="3. Generate Video Prompt (Sora)">
+                        <p className="text-sm text-slate-600 mb-3">
+                            Generate a detailed video prompt for tools like OpenAI Sora based on your selected quote.
+                        </p>
+                        <button
+                            onClick={handleGenerateVideoPrompt}
+                            disabled={!selectedQuote || isGeneratingVideo || !openRouterKeyIsConfigured}
+                            className="w-full flex items-center justify-center px-4 py-2.5 bg-purple-500 text-white font-semibold rounded-lg shadow-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                        >
+                            {isGeneratingVideo ? <><LoadingSpinner className="mr-2"/> Generating...</> : '🎬 Generate Video Prompt'}
+                        </button>
+                        {videoPrompt && (
+                            <div className="mt-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                <p className="text-sm font-mono text-slate-700 whitespace-pre-wrap">{videoPrompt}</p>
+                                <button onClick={handleCopyVideoPrompt} className="mt-3 w-full text-sm bg-white border border-slate-300 text-slate-700 font-semibold py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                                    Copy to Clipboard
+                                </button>
+                            </div>
+                        )}
+                    </ControlCard>
 
-                            {service === 'google' && (
-                                <ApiKeyInput
-                                    label="Google AI API Key (for Text)"
-                                    value={googleApiKeyInput}
-                                    onChange={setGoogleApiKeyInput}
-                                    onSave={handleSaveGoogleKey}
-                                    onClear={handleClearGoogleKey}
-                                    placeholder="Enter your Google AI key"
-                                    getLink="https://aistudio.google.com/app/apikey"
-                                    getLinkText="Get a Google AI API Key"
-                                    statusMessage={
-                                        googleKeyIsConfigured ? (
-                                            <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
-                                        ) : (
-                                            <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for text.</p>
-                                        )
-                                    }
-                                />
-                            )}
-                             {service === 'openrouter' && (
-                                <>
-                                    <ApiKeyInput
-                                        label="OpenRouter.ai API Key"
-                                        value={openRouterApiKeyInput}
-                                        onChange={setOpenRouterApiKeyInput}
-                                        onSave={handleSaveOpenRouterKey}
-                                        onClear={handleClearOpenRouterKey}
-                                        placeholder="Enter your OpenRouter key"
-                                        getLink="https://openrouter.ai/keys"
-                                        getLinkText="Get an OpenRouter API Key"
-                                        statusMessage={
-                                            openRouterKeyIsConfigured ? (
-                                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
-                                            ) : (
-                                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for text.</p>
-                                            )
-                                        }
-                                    />
-                                    <div>
-                                        <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 mb-1.5">OpenRouter Model</label>
-                                        <input
-                                            type="text"
-                                            id="openrouter-model"
-                                            value={openRouterModel}
-                                            onChange={(e) => setOpenRouterModel(e.target.value)}
-                                            placeholder="e.g., google/gemini-2.5-flash"
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                        />
-                                    </div>
-                                </>
-                            )}
-                            <hr className="border-slate-200" />
-                            <ApiKeyInput
-                                label="useapi.net API Key (Midjourney)"
-                                value={useapiApiKeyInput}
-                                onChange={setUseapiApiKeyInput}
-                                onSave={handleSaveUseapiKey}
-                                onClear={handleClearUseapiKey}
-                                placeholder="Enter your useapi.net key"
-                                getLink="https://useapi.net/"
-                                getLinkText="Get a useapi.net API Key"
-                                statusMessage={
-                                    useapiKeyIsConfigured ? (
-                                        <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
-                                    ) : (
-                                        <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium">Optional (for background images).</p>
-                                    )
-                                }
+                    <ControlCard icon={<SettingsIcon />} title="AI Configuration">
+                        <ApiKeyInput
+                            label="OpenRouter.ai API Key"
+                            value={openRouterApiKeyInput}
+                            onChange={setOpenRouterApiKeyInput}
+                            onSave={handleSaveOpenRouterKey}
+                            onClear={handleClearOpenRouterKey}
+                            placeholder="Enter your OpenRouter key"
+                            getLink="https://openrouter.ai/keys"
+                            getLinkText="Get an OpenRouter API Key"
+                            statusMessage={
+                                openRouterKeyIsConfigured ? (
+                                    <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
+                                ) : (
+                                    <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for text generation.</p>
+                                )
+                            }
+                        />
+                         <div>
+                            <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 mb-1.5">OpenRouter Model</label>
+                            <input
+                                type="text"
+                                id="openrouter-model"
+                                value={openRouterModel}
+                                onChange={(e) => setOpenRouterModel(e.target.value)}
+                                placeholder="e.g., google/gemini-2.5-flash"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                             />
+                            <p className="text-xs text-slate-500 mt-1.5">
+                                Find models on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline text-pink-600">OpenRouter models page</a>.
+                            </p>
                         </div>
+                        <hr className="border-slate-200" />
+                        <ApiKeyInput
+                            label="useapi.net API Key (Midjourney V3)"
+                            value={useapiApiKeyInput}
+                            onChange={setUseapiApiKeyInput}
+                            onSave={handleSaveUseapiKey}
+                            onClear={handleClearUseapiKey}
+                            placeholder="Enter your useapi.net key"
+                            getLink="https://useapi.net/"
+                            getLinkText="Get a useapi.net API Key"
+                            statusMessage={
+                                useapiKeyIsConfigured ? (
+                                    <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your useapi.net key is saved.</p>
+                                ) : (
+                                    <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for image generation.</p>
+                                )
+                            }
+                        />
                     </ControlCard>
                 </div>
 
-                 <div className="lg:col-span-2 space-y-6">
-                    <ControlCard icon={<ImagesIcon />} title="3. Preview & Download">
-                         {apiError && (
+                <div className="lg:col-span-2">
+                    <ControlCard icon={<ImagesIcon />} title="4. Quote Card Preview">
+                        {apiError && (
                             <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start mb-4" role="alert">
                                 <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500 flex-shrink-0 mr-3" />
                                 <p className="text-sm">{apiError}</p>
                             </div>
                         )}
                         
-                        <div className="flex flex-col items-center">
-                            <div className="relative w-full max-w-[400px] aspect-[9/16] bg-slate-200 rounded-2xl overflow-hidden shadow-2xl">
-                                <div ref={previewRef} className="w-full h-full relative bg-slate-900 flex flex-col items-center justify-center">
-                                    {generatedImage ? (
-                                        <div className="absolute inset-0 bg-cover bg-center transition-opacity duration-500" style={{ backgroundImage: `url(${generatedImage})` }}></div>
-                                    ) : (
-                                        <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900"></div>
-                                    )}
-                                    
-                                    {/* Overlay Gradients */}
-                                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/40 z-10 mix-blend-multiply"></div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 to-transparent z-10 mix-blend-overlay"></div>
+                        {(isLoading || isGeneratingImage) && !generatedImage && (
+                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-500">
+                                <LoadingSpinner className="w-10 h-10" />
+                                <p className="mt-4 text-lg font-medium">{imageGenerationMessage || 'Generating content...'}</p>
+                            </div>
+                        )}
 
-                                    {/* Quote Text */}
-                                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center">
-                                        <div className="bg-black/40 backdrop-blur-md p-6 sm:p-8 rounded-xl border border-white/10 shadow-2xl max-w-[90%]">
-                                            <p 
-                                                className={`text-white leading-relaxed tracking-wide ${quoteLength === 'long' ? 'text-base sm:text-lg' : 'text-lg sm:text-xl md:text-2xl'}`}
-                                                style={{ 
-                                                    textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
-                                                    fontFamily: 'Georgia, serif'
-                                                }}
-                                            >
-                                                {selectedQuote || "YOUR QUOTE HERE"}
-                                            </p>
-                                        </div>
+                        {selectedQuote && generatedImage && (
+                            <div className="relative w-full aspect-[9/16] bg-slate-100 rounded-lg overflow-hidden shadow-xl border border-slate-200">
+                                <div
+                                    ref={previewRef}
+                                    className="w-full h-full bg-cover bg-center flex flex-col justify-center items-center p-8 text-center"
+                                    style={{ backgroundImage: `url(${generatedImage})` }}
+                                >
+                                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+                                    <div className="relative z-10 text-white font-playfair italic text-3xl leading-relaxed" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.7)' }}>
+                                        "{selectedQuote}"
                                     </div>
                                 </div>
-                                
-                                {/* Action Overlay (Not captured in download) */}
-                                <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
-                                     <button
-                                        onClick={handleDownload}
-                                        disabled={isDownloading}
-                                        className="bg-white/90 text-slate-800 p-2 rounded-full shadow-lg hover:bg-white transition-all focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                        title="Download Image"
-                                    >
-                                        {isDownloading ? <LoadingSpinner className="w-5 h-5" /> : <DownloadIcon className="w-5 h-5" />}
-                                    </button>
-                                </div>
-                                
-                                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 w-max">
-                                     <button
-                                        onClick={handleGenerateImageForQuote}
-                                        disabled={isGeneratingImage || !useapiKeyIsConfigured}
-                                        className="flex items-center gap-2 px-4 py-2 bg-black/60 backdrop-blur-md text-white text-sm font-semibold rounded-full hover:bg-black/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border border-white/10"
-                                        title={useapiKeyIsConfigured ? "Generate new background with AI" : "Add useapi.net key to generate background"}
-                                    >
-                                        {isGeneratingImage ? <LoadingSpinner className="w-4 h-4" /> : <ImagesIcon className="w-4 h-4" />}
-                                        {isGeneratingImage ? (imageGenerationMessage || "Generating...") : "New AI Background"}
-                                    </button>
-                                 </div>
+                                <button
+                                    onClick={handleDownload}
+                                    disabled={isDownloading}
+                                    className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm text-slate-800 p-2 rounded-full shadow-md hover:bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                                    title="Download Image"
+                                >
+                                    {isDownloading ? <LoadingSpinner className="w-5 h-5" /> : <DownloadIcon className="w-5 h-5" />}
+                                </button>
                             </div>
-                        </div>
-                    </ControlCard>
-
-                    <ControlCard icon={<VideoIcon />} title="4. Video Prompt (Sora)">
-                        <div className="flex flex-col space-y-4">
-                            <p className="text-sm text-slate-600">Generate a high-quality, cinematic video prompt based on your selected quote. Perfect for tools like OpenAI Sora.</p>
-                            <button
-                                onClick={handleGenerateVideoPrompt}
-                                disabled={isGeneratingVideo || !selectedQuote}
-                                className="w-full flex items-center justify-center px-4 py-2.5 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                            >
-                                {isGeneratingVideo ? <><LoadingSpinner className="mr-2"/> Creating Prompt...</> : '🎥 Generate Video Prompt'}
-                            </button>
-                            
-                            {videoPrompt && (
-                                <div className="relative mt-4">
-                                    <textarea
-                                        readOnly
-                                        value={videoPrompt}
-                                        className="w-full h-32 p-3 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                    />
-                                    <button
-                                        onClick={handleCopyVideoPrompt}
-                                        className="absolute top-2 right-2 bg-white text-slate-700 hover:text-purple-600 text-xs font-bold py-1 px-2 rounded border border-slate-200 shadow-sm"
-                                    >
-                                        Copy
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                        )}
+                         {!isLoading && !isGeneratingImage && (!selectedQuote || !generatedImage) && (
+                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-400">
+                                <p className="text-lg">Your generated quote card will appear here.</p>
+                            </div>
+                        )}
                     </ControlCard>
                 </div>
             </div>
         </div>
     );
 };
-
-export default QuoteGeneratorPage;

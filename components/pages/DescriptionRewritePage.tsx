@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { rewriteDescriptionWithOpenRouter } from '../../services/googleAi';
+import { rewriteDescription } from '../../services/ai';
 import type { AdminSettings } from '../../types';
 import CsvIcon from '../icons/CsvIcon';
 import LoadingSpinner from '../icons/LoadingSpinner';
@@ -159,7 +159,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
             setProgressMessage(`Rewriting row ${i + 1} of ${workingData.length}...`);
 
             try {
-                const result = await rewriteDescriptionWithOpenRouter(
+                const result = await rewriteDescription( // Changed function name
                     openRouterApiKey,
                     openRouterModel,
                     workingData[i].originalTitle,

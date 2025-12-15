@@ -203,7 +203,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
             const text = e.target?.result as string;
             const data = JSON.parse(text) as BackupData;
             // Basic validation
-            if (data.adminSettings && typeof data.googleAiApiKey !== 'undefined' && typeof data.falAiApiKey !== 'undefined' && typeof data.apiframeApiKey !== 'undefined') {
+            if (data.adminSettings && typeof data.openRouterApiKey !== 'undefined' && typeof data.falAiApiKey !== 'undefined' && typeof data.apiframeApiKey !== 'undefined') {
                 if (window.confirm("Are you sure you want to import settings? This will overwrite your current API keys and all admin settings.")) {
                     onImportSettings(data);
                     // Also update local state to reflect changes immediately

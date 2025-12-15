@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
 import Header from './components/Header';
@@ -7,7 +8,7 @@ import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './components/pages/TermsOfServicePage';
 import AdminPage from './components/pages/AdminPage';
 import AdBanner from './components/AdBanner';
-import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, DEFAULT_CONTENT_PROMPT, generateImageWithMidjourney, generateSafeImagePrompt, generateImageWithMidApiAi, generateImageWithImagineApi, generateImageWithUseApi } from './services/googleAi';
+import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, DEFAULT_CONTENT_PROMPT, generateImageWithMidjourney, generateSafeImagePrompt, generateImageWithMidApiAi, generateImageWithImagineApi, generateImageWithUseApi } from './services/ai';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useAnalytics } from './hooks/useAnalytics';
 import GeneratorInterface from './components/GeneratorInterface';
@@ -20,7 +21,8 @@ import DNRaterPage from './components/pages/DNRaterPage';
 import AuthorPage from './components/pages/AuthorPage';
 import FacebookPostGeneratorPage from './components/pages/FacebookPostGeneratorPage';
 import FacebookPageBuilderPage from './components/pages/FacebookPageBuilderPage';
-import QuoteGeneratorPage from './components/pages/QuoteGeneratorPage';
+// FIX: Change to named import for QuoteGeneratorPage
+import { QuoteGeneratorPage } from './components/pages/QuoteGeneratorPage';
 import DescriptionRewritePage from './components/pages/DescriptionRewritePage';
 
 // TypeScript declaration for the CDN-loaded libraries
@@ -59,7 +61,7 @@ const initialPersistedData: PersistedData = {
     pinsPerDayMax: 5,
     startDate: new Date().toISOString().split('T')[0],
     imageModel: 'fal-ai/recraft/v3/text-to-image',
-    textModel: 'gemini-2.5-flash',
+    textModel: 'google/gemini-2.5-flash', // Default for OpenRouter
 };
 
 const initialImageData = {
@@ -86,7 +88,6 @@ const App: React.FC = () => {
   const [imageData, setImageData] = useState(initialImageData);
   const templateData: TemplateData = { ...persistedData, ...imageData };
 
-  const [userApiKey, setUserApiKey] = useLocalStorage('googleAiApiKey', ''); // For Google AI (text)
   const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
   const [apiframeApiKey, setApiframeApiKey] = useLocalStorage('apiframeApiKey', ''); // For APIFrame.ai (Midjourney)
   const [midapiApiKey, setMidapiApiKey] = useLocalStorage('midapiApiKey', ''); // For midapi.ai (Midjourney 2)
@@ -535,8 +536,8 @@ const App: React.FC = () => {
 
     try {
         let newDescription: string;
-        if (userApiKey) {
-            newDescription = await generateDescription(userApiKey, templateData.textModel, title);
+        if (openRouterApiKey) {
+            newDescription = await generateDescription(openRouterApiKey, templateData.textModel, title);
         } else {
             newDescription = generatePlaceholderDescription(title);
         }
@@ -570,8 +571,8 @@ const App: React.FC = () => {
 
     try {
         let newKeywords: string;
-        if (userApiKey) {
-            newKeywords = await generateKeywords(userApiKey, textModel, title);
+        if (openRouterApiKey) {
+            newKeywords = await generateKeywords(openRouterApiKey, textModel, title);
         } else {
             newKeywords = generatePlaceholderKeywords(title);
         }
@@ -603,8 +604,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
     try {
         let newTitle: string;
-        if (userApiKey) {
-            newTitle = await generateShortTitle(userApiKey, templateData.textModel, title);
+        if (openRouterApiKey) {
+            newTitle = await generateShortTitle(openRouterApiKey, templateData.textModel, title);
         } else {
             // Fallback for when no API key is present
             newTitle = title.length > 35 ? title.substring(0, 32) + '...' : title;
@@ -745,15 +746,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       return;
     }
 
-    const googleApiKey = userApiKey;
+    const orApiKey = openRouterApiKey;
     const falApiKey = falAiApiKey;
     const mjApiKey = apiframeApiKey;
     const mj2ApiKey = midapiApiKey;
     const imgApiKey = imagineApiKey;
     const useApiKey = useapiApiKey;
 
-    if (!googleApiKey) {
-        if (!window.confirm("You are missing a Google AI API key. Only basic placeholder text will be created. Do you want to continue?")) {
+    if (!orApiKey) {
+        if (!window.confirm("You are missing an OpenRouter API key. Only basic placeholder text will be created. Do you want to continue?")) {
             return;
         }
     }
@@ -889,8 +890,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 setBulkMessage(`Row ${i + 1}: Generating description...`);
                 try {
                     let description: string;
-                    if (googleApiKey) {
-                        description = await generateDescription(googleApiKey, templateData.textModel, currentData.title);
+                    if (orApiKey) {
+                        description = await generateDescription(orApiKey, templateData.textModel, currentData.title);
                     } else {
                         description = generatePlaceholderDescription(currentData.title);
                     }
@@ -907,8 +908,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 setBulkMessage(`Row ${i + 1}: Generating keywords...`);
                 try {
                     let keywords: string;
-                    if (googleApiKey) {
-                        keywords = await generateKeywords(googleApiKey, templateData.textModel, currentData.title);
+                    if (orApiKey) {
+                        keywords = await generateKeywords(orApiKey, templateData.textModel, currentData.title);
                     } else {
                         keywords = generatePlaceholderKeywords(currentData.title);
                     }
@@ -928,7 +929,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
             if (prompt) {
                 try {
-                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69'].includes(templateData.templateId);
+                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(templateData.templateId);
                     const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
                     const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
                     
@@ -970,15 +971,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     
                     const isBannedWordsError = error.message && error.message.toLowerCase().includes('banned words');
 
-                    if (isBannedWordsError && googleApiKey) {
+                    if (isBannedWordsError && orApiKey) {
                         setBulkMessage(`Row ${i + 1}: Banned words detected. Regenerating prompt...`);
                         await sleep(100);
 
                         try {
-                            const newPrompt = await generateSafeImagePrompt(googleApiKey, templateData.textModel, currentData.title);
+                            const newPrompt = await generateSafeImagePrompt(orApiKey, templateData.textModel, currentData.title);
                             setBulkMessage(`Row ${i + 1}: Retrying with new prompt...`);
                             
-                            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69'].includes(templateData.templateId);
+                            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(templateData.templateId);
                             const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
                             const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
                             const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
@@ -1018,7 +1019,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             // Explicitly wait for images to load to prevent blank pins
             const { backgroundImage, backgroundImage2, backgroundImage3 } = imageData; // Get LATEST state
             await waitForImageLoad(backgroundImage);
-            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69'].includes(templateData.templateId)) {
+            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(templateData.templateId)) {
                 await waitForImageLoad(backgroundImage2);
             }
             if (['7', '15', '19', '22'].includes(templateData.templateId)) {
@@ -1145,8 +1146,9 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     if (data.adminSettings) {
         setAdminSettings(data.adminSettings);
     }
-    if (typeof data.googleAiApiKey === 'string') {
-        setUserApiKey(data.googleAiApiKey);
+    // Only import OpenRouter API key, others are image specific
+    if (typeof data.openRouterApiKey === 'string') {
+        setOpenRouterApiKey(data.openRouterApiKey);
     }
     if (typeof data.falAiApiKey === 'string') {
         setFalAiApiKey(data.falAiApiKey);
@@ -1163,9 +1165,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     if (typeof data.useapiApiKey === 'string') {
         setUseapiApiKey(data.useapiApiKey);
     }
-    if (typeof data.openRouterApiKey === 'string') {
-        setOpenRouterApiKey(data.openRouterApiKey);
-    }
     if (Array.isArray(data.pinterestAccounts)) {
         setPinterestAccounts(data.pinterestAccounts);
     }
@@ -1174,11 +1173,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const allData: BackupData = {
     adminSettings,
-    googleAiApiKey: userApiKey,
+    openRouterApiKey,
     falAiApiKey,
     apiframeApiKey,
     midapiApiKey,
-    openRouterApiKey,
     imagineApiKey,
     useapiApiKey,
     pinterestAccounts,
@@ -1219,8 +1217,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
     lastCompletedRowIndex: lastCompletedRowIndex,
     onResetBulkGeneration: handleResetBulkGeneration,
-    onSetUserApiKey: setUserApiKey,
-    userApiKey: userApiKey,
     onSetFalAiApiKey: setFalAiApiKey,
     falAiApiKey: falAiApiKey,
     apiframeApiKey: apiframeApiKey,
@@ -1232,6 +1228,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
     useapiApiKey: useapiApiKey,
     onSetUseapiApiKey: setUseapiApiKey,
     bulkJobType: bulkJobType,
+    openRouterApiKey: openRouterApiKey, // Pass OpenRouter key for text AI
+    onSetOpenRouterApiKey: setOpenRouterApiKey, // Pass setter for OpenRouter key
   };
   
   const renderPage = () => {
@@ -1248,8 +1246,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <ContactPage content={adminSettings.contactPageContent} />;
         case 'content-generator':
             return <ContentGeneratorPage
-                        userApiKey={userApiKey}
-                        onSetUserApiKey={setUserApiKey}
                         openRouterApiKey={openRouterApiKey}
                         onSetOpenRouterApiKey={setOpenRouterApiKey}
                         textModel={templateData.textModel}
@@ -1259,7 +1255,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
              return <AssistantPage
                         accounts={pinterestAccounts}
                         setAccounts={setPinterestAccounts}
-                        userApiKey={userApiKey}
+                        openRouterApiKey={openRouterApiKey}
                         textModel={templateData.textModel}
                     />;
         case 'domain-suggestor':
@@ -1268,18 +1264,16 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             return <AuthorPage />;
         case 'facebook-page-builder':
             return <FacebookPageBuilderPage
-                        userApiKey={userApiKey}
-                        onSetUserApiKey={setUserApiKey}
+                        openRouterApiKey={openRouterApiKey}
+                        onSetOpenRouterApiKey={setOpenRouterApiKey}
                         textModel={templateData.textModel}
                     />;
         case 'quote-generator':
             return <QuoteGeneratorPage
-                        userApiKey={userApiKey}
-                        onSetUserApiKey={setUserApiKey}
-                        useapiApiKey={useapiApiKey}
-                        onSetUseapiApiKey={setUseapiApiKey}
                         openRouterApiKey={openRouterApiKey}
                         onSetOpenRouterApiKey={setOpenRouterApiKey}
+                        useapiApiKey={useapiApiKey}
+                        onSetUseapiApiKey={setUseapiApiKey}
                         textModel={templateData.textModel}
                     />;
         case 'admin':
@@ -1295,8 +1289,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
              return <HomePage />;
         case 'facebook-post-generator':
             return <FacebookPostGeneratorPage
-                        userApiKey={userApiKey}
-                        onSetUserApiKey={setUserApiKey}
                         falAiApiKey={falAiApiKey}
                         onSetFalAiApiKey={setFalAiApiKey}
                         useapiApiKey={useapiApiKey}

@@ -1,4 +1,3 @@
-
 export type TemplateId = `${number}`;
 
 export type PinSize = 'standard' | 'long' | 'extraLong';
@@ -80,11 +79,10 @@ export type PinterestAccount = {
 
 export interface BackupData {
   adminSettings: AdminSettings;
-  googleAiApiKey: string;
   falAiApiKey: string;
   apiframeApiKey: string;
   midapiApiKey: string;
-  openRouterApiKey: string;
+  openRouterApiKey: string; // OpenRouter is now the primary text AI key
   imagineApiKey: string;
   useapiApiKey: string;
   pinterestAccounts: PinterestAccount[];
