@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { generateFacebookPost, generateImage, generateImageWithUseApi } from '../../services/ai';
 import type { FacebookPost } from '../../types';
@@ -22,7 +23,7 @@ interface FacebookPostGeneratorPageProps {
 // Removed ServiceToggleButton as OpenRouter is now exclusive for text AI
 
 
-const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps> = ({
+export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps> = ({
     falAiApiKey,
     onSetFalAiApiKey,
     useapiApiKey,
@@ -55,7 +56,9 @@ const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps> = ({
 
     const handleSaveFalKey = () => onSetFalAiApiKey(falAiApiKeyInput.trim());
     const handleClearFalKey = () => { setFalAiApiKeyInput(''); onSetFalAiApiKey(''); };
+    // FIX: Corrected casing for onSetUseapiApiKey
     const handleSaveUseapiKey = () => onSetUseapiApiKey(useapiApiKeyInput.trim());
+    // FIX: Corrected casing for onSetUseapiApiKey
     const handleClearUseapiKey = () => { setUseapiApiKeyInput(''); onSetUseapiApiKey(''); };
     const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
     const handleClearOpenRouterKey = () => { setOpenRouterApiKeyInput(''); onSetOpenRouterApiKey(''); };
@@ -135,7 +138,7 @@ const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps> = ({
             if (imageUrls.length > 0) {
                 setGeneratedImage(imageUrls[0]);
             } else {
-                throw new Error("The AI model did not return a valid image.");
+                throw new Error("The AI model did not return any valid image.");
             }
 
         } catch (error: any) {
@@ -273,7 +276,7 @@ const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps> = ({
                                 statusMessage={
                                     useapiKeyIsConfigured ? (
                                         <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your useapi.net key is saved.</p>
-                                    ) : (
+                                ) : (
                                         <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for this image generator.</p>
                                     )
                                 }
@@ -370,5 +373,3 @@ const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps> = ({
         </div>
     );
 };
-
-export default FacebookPostGeneratorPage;

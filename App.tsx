@@ -19,11 +19,13 @@ import AssistantPage from './components/pages/AssistantPage';
 import HomePage from './components/pages/HomePage';
 import DNRaterPage from './components/pages/DNRaterPage';
 import AuthorPage from './components/pages/AuthorPage';
-import FacebookPostGeneratorPage from './components/pages/FacebookPostGeneratorPage';
-import FacebookPageBuilderPage from './components/pages/FacebookPageBuilderPage';
+// FIX: Change to named import for FacebookPostGeneratorPage
+import { FacebookPostGeneratorPage } from './components/pages/FacebookPostGeneratorPage';
 // FIX: Change to named import for QuoteGeneratorPage
 import { QuoteGeneratorPage } from './components/pages/QuoteGeneratorPage';
 import DescriptionRewritePage from './components/pages/DescriptionRewritePage';
+// FIX: Add named import for FacebookPageBuilderPage
+import { FacebookPageBuilderPage } from './components/pages/FacebookPageBuilderPage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {

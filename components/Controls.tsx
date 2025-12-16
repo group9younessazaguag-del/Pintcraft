@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { TemplateData, TemplateId, PinSize, CsvRow, ImageAspectRatio } from '../types';
 import DownloadIcon from './icons/DownloadIcon';
@@ -298,25 +299,27 @@ export const ApiKeyInput: React.FC<{
     );
 };
 
-export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, openRouterApiKey, onSetOpenRouterApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey, imagineApiKey, onSetImagineApiKey, useapiApiKey, onSetUseapiApiKey }) => {
-    const templateCount = 71;
-    const templateOptions = Array.from({ length: templateCount }, (_, i) => ({
-        id: `${i + 1}`,
-        name: `${i + 1}`
-    }));
+// Moved outside component as it's a static configuration
+const CANVAS_OPTIONS = {
+    sizes: [
+      { id: 'standard', name: 'Standard Pin (3:4)' },
+      { id: 'long', name: 'Long Pin (9:16)' },
+      { id: 'extraLong', name: 'Tall Pin (5:12)' },
+    ],
+    aspectRatios: [
+        { id: '1:1', name: 'Square (1:1)' },
+        { id: '3:4', name: 'Portrait (3:4)' },
+        { id: '9:16', name: 'Long (9:16)' },
+    ],
+};
 
-    const options = {
-        sizes: [
-          { id: 'standard', name: 'Standard Pin (3:4)' },
-          { id: 'long', name: 'Long Pin (9:16)' },
-          { id: 'extraLong', name: 'Tall Pin (5:12)' },
-        ],
-        aspectRatios: [
-            { id: '1:1', name: 'Square (1:1)' },
-            { id: '3:4', name: 'Portrait (3:4)' },
-            { id: '9:16', name: 'Long (9:16)' },
-        ],
-      };
+export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, openRouterApiKey, onSetOpenRouterApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey, imagineApiKey, onSetImagineApiKey, useapiApiKey, onSetUseapiApiKey }) => {
+    // FIX: Update templateCount and templateOptions to reflect only existing templates
+    const templateIds = [
+        ...Array.from({ length: 23 }, (_, i) => `${i + 1}`), // Templates 1-23
+        ...Array.from({ length: 20 }, (_, i) => `${i + 59}`), // Templates 59-78
+    ];
+    const templateOptions = templateIds.map(id => ({ id, name: id }));
       
     const [falAiApiKeyInput, setFalAiApiKeyInput] = useState(falAiApiKey);
     const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
@@ -342,7 +345,9 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     const handleClearMidapiKey = () => { setMidapiApiKeyInput(''); onSetMidapiApiKey(''); };
     const handleSaveImagineKey = () => onSetImagineApiKey(imagineApiKeyInput.trim());
     const handleClearImagineKey = () => { setImagineApiKeyInput(''); onSetImagineApiKey(''); };
+    // FIX: Corrected casing for onSetUseapiApiKey
     const handleSaveUseapiKey = () => onSetUseapiApiKey(useapiApiKeyInput.trim());
+    // FIX: Corrected casing for onSetUseapiApiKey
     const handleClearUseapiKey = () => { setUseapiApiKeyInput(''); onSetUseapiApiKey(''); };
 
 
@@ -365,14 +370,14 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                 />
                 <ToggleButtonGrid 
                     label="Pin Canvas Size"
-                    options={options.sizes}
+                    options={CANVAS_OPTIONS.sizes}
                     selected={data.pinSize}
                     onSelect={(id) => onFieldChange('pinSize', id as PinSize)}
                     gridCols="grid-cols-3"
                 />
                  <ToggleButtonGrid 
                     label="AI Image Aspect Ratio"
-                    options={options.aspectRatios}
+                    options={CANVAS_OPTIONS.aspectRatios}
                     selected={data.imageAspectRatio}
                     onSelect={(id) => onFieldChange('imageAspectRatio', id as ImageAspectRatio)}
                     gridCols="grid-cols-3"
@@ -536,7 +541,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                         title={!openRouterKeyIsConfigured ? "Add an OpenRouter API key to enable" : titleLength <= TITLE_RECOMMENDED_MAX_LENGTH ? "Title is already a good length" : "Use AI to shorten the title"}
                         className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 disabled:text-slate-300 disabled:cursor-not-allowed rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500 transition-colors"
                     >
-                        {isGeneratingShortTitle ? <LoadingSpinner className="w-4 h-4" /> : '✨'}
+                        {isGeneratingShortTitle ? <LoadingSpinner className="mr-2" /> : '✨'}
                     </button>
                 </div>
                 <div className="text-xs text-right mt-1.5">
@@ -639,7 +644,8 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
         }
     };
 
-    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(data.templateId);
+    // FIX: Update needsImage2 array to remove templates 24-44
+    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78'].includes(data.templateId);
     const needsImage3 = ['7', '15', '19', '22'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;

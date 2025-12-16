@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { generateFacebookPageStrategy } from '../../services/ai';
 import type { FacebookPageStrategy } from '../../types';
@@ -33,7 +34,7 @@ const StrategySection: React.FC<{ icon: React.ReactNode; title: string; children
 );
 
 
-const FacebookPageBuilderPage: React.FC<FacebookPageBuilderPageProps> = ({
+export const FacebookPageBuilderPage: React.FC<FacebookPageBuilderPageProps> = ({
     openRouterApiKey,
     onSetOpenRouterApiKey,
     textModel,
@@ -239,5 +240,3 @@ const FacebookPageBuilderPage: React.FC<FacebookPageBuilderPageProps> = ({
         </div>
     );
 };
-
-export default FacebookPageBuilderPage;

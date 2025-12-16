@@ -70,7 +70,9 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
 
     const previewRef = useRef<HTMLDivElement>(null);
 
+    // FIX: Corrected casing for onSetUseapiApiKey
     const handleSaveUseapiKey = () => onSetUseapiApiKey(useapiApiKeyInput.trim());
+    // FIX: Corrected casing for onSetUseapiApiKey
     const handleClearUseapiKey = () => { setUseapiApiKeyInput(''); onSetUseapiApiKey(''); };
     const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
     const handleClearOpenRouterKey = () => { setOpenRouterApiKeyInput(''); onSetOpenRouterApiKey(''); };
