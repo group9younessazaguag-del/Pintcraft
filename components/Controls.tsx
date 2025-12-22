@@ -98,7 +98,7 @@ const SelectField: React.FC<{ value: string; onChange: (value: string) => void; 
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 appearance-none bg-no-repeat bg-right pr-8 transition-colors duration-200"
-            style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.5em 1.5em'}}
+            style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.5em 1.5em'}}
         >
            {children}
         </select>
@@ -317,7 +317,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     // FIX: Update templateCount and templateOptions to reflect only existing templates
     const templateIds = [
         ...Array.from({ length: 23 }, (_, i) => `${i + 1}`), // Templates 1-23
-        ...Array.from({ length: 20 }, (_, i) => `${i + 59}`), // Templates 59-78
+        ...Array.from({ length: 32 }, (_, i) => `${i + 59}`), // Templates 59-90
     ];
     const templateOptions = templateIds.map(id => ({ id, name: id }));
       
@@ -340,7 +340,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     const handleSaveOpenRouterKey = () => onSetOpenRouterApiKey(openRouterApiKeyInput.trim());
     const handleClearOpenRouterKey = () => { setOpenRouterApiKeyInput(''); onSetOpenRouterApiKey(''); };
     const handleSaveApiframeKey = () => onSetApiframeApiKey(apiframeApiKeyInput.trim());
-    const handleClearApiframeKey = () => { setApiframeApiKeyInput(''); onSetApiframeApiKey(''); };
+    const handleClearApiframeKey = () => { setOpenRouterApiKeyInput(''); onSetOpenRouterApiKey(''); };
     const handleSaveMidapiKey = () => onSetMidapiApiKey(midapiApiKeyInput.trim());
     const handleClearMidapiKey = () => { setMidapiApiKeyInput(''); onSetMidapiApiKey(''); };
     const handleSaveImagineKey = () => onSetImagineApiKey(imagineApiKeyInput.trim());
@@ -644,8 +644,8 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
         }
     };
 
-    // FIX: Update needsImage2 array to remove templates 24-44
-    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78'].includes(data.templateId);
+    // FIX: Update needsImage2 array to include templates 79-90
+    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90'].includes(data.templateId);
     const needsImage3 = ['7', '15', '19', '22'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;
@@ -699,7 +699,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                         aria-label="Next Row"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1-0 01-1.414 0z" clipRule="evenodd" />
                         </svg>
                     </button>
                 </div>

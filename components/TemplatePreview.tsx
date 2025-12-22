@@ -1,6 +1,8 @@
 
 import React, { forwardRef } from 'react';
 import type { TemplateData } from '../types';
+// FIX: Import StarIcon component
+import StarIcon from './icons/StarIcon';
 
 interface TemplatePreviewProps {
   data: TemplateData;
@@ -72,15 +74,12 @@ const SplitTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins text-gray-800">
-            {/* Backgrounds */}
             <div className="flex-1 relative">
                 <BackgroundImage imageUrl={backgroundImage} />
             </div>
             <div className="flex-1 relative">
                 <BackgroundImage imageUrl={backgroundImage2} />
             </div>
-
-            {/* Content Overlay */}
             <div className="absolute inset-0 z-10 flex flex-col justify-center items-center p-8">
                 <div className="w-full max-w-md bg-white/95 backdrop-blur-sm border border-black/5 p-8 shadow-2xl text-center text-[#4E443A]">
                      {subtitle && (
@@ -111,8 +110,6 @@ const ModernTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
         <div className="w-full h-full flex flex-col justify-end items-center relative font-poppins text-white p-6">
             <BackgroundImage imageUrl={backgroundImage} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-
-            {/* Content Box */}
             <div className="relative z-10 w-full flex flex-col justify-center text-left p-4">
                 {subtitle && (
                     <p 
@@ -148,14 +145,11 @@ const BrushStrokeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl md:text-3xl', 'text-3xl md:text-4xl', 'text-4xl md:text-5xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            {/* Top Background */}
             <div className="flex-1 relative p-4 bg-white">
                 <div className="w-full h-full relative">
                     <BackgroundImage imageUrl={backgroundImage} />
                 </div>
             </div>
-
-            {/* Content Band */}
             <div 
                 className="bg-[#FDF4E3] py-2 px-12 text-center shadow-lg text-[#4E443A]"
                 style={{
@@ -183,8 +177,6 @@ const BrushStrokeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
                     </p>
                 )}
             </div>
-
-            {/* Bottom Background */}
             <div className="flex-1 relative p-4 bg-white">
                  <div className="w-full h-full relative">
                     <BackgroundImage imageUrl={backgroundImage2} />
@@ -232,14 +224,11 @@ const EditorialTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
-        <div className="w-full h-full grid grid-rows-3 relative font-poppins bg-white">
-            {/* Image section - takes top 2/3 */}
-            <div className="row-span-2 relative">
+        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
+            <div className="h-2/3 relative">
                 <BackgroundImage imageUrl={backgroundImage} />
             </div>
-
-            {/* Text section - takes bottom 1/3 */}
-            <div className="row-span-1 flex flex-col justify-center items-start p-6 text-left text-[#4E443A]">
+            <div className="h-1/3 flex flex-col justify-center items-start p-6 text-left text-[#4E443A]">
                 {subtitle && (
                     <p className="text-sm font-semibold tracking-wide text-[#4E443A]/70 mb-2">
                         {subtitle}
@@ -267,25 +256,18 @@ const CleanGridTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2, backgroundImage3 } = data;
     return (
         <div className="w-full h-full grid grid-cols-2 grid-rows-3 gap-2 p-2 bg-gray-100 font-poppins">
-            {/* Main Image */}
             <div className="col-span-1 row-span-3 relative rounded-lg overflow-hidden">
                 <BackgroundImage imageUrl={backgroundImage} />
                 <div className="absolute inset-0 bg-gray-200 -z-10"></div>
             </div>
-
-            {/* Top Right Image */}
             <div className="col-span-1 row-span-1 relative rounded-lg overflow-hidden">
                 <BackgroundImage imageUrl={backgroundImage2} />
                  <div className="absolute inset-0 bg-gray-200 -z-10"></div>
             </div>
-            
-            {/* Bottom Right Image */}
             <div className="col-span-1 row-span-1 relative rounded-lg overflow-hidden">
                 <BackgroundImage imageUrl={backgroundImage3} />
                  <div className="absolute inset-0 bg-gray-200 -z-10"></div>
             </div>
-
-            {/* Text Box */}
             <div className="col-span-1 row-span-1 bg-white rounded-lg flex flex-col justify-center items-center p-4 text-center text-[#4E443A] shadow-md">
                 {subtitle && (
                     <p className="text-xs font-semibold tracking-wide mb-1 text-[#4E443A]/70 uppercase">
@@ -381,14 +363,11 @@ const DetailedRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-[#F7F2EE] text-[#4E443A]">
-            {/* Image Section */}
             <div className="w-full h-[60%] relative">
                 <BackgroundImage imageUrl={backgroundImage} />
                 {!backgroundImage && <div className="absolute inset-0 bg-slate-300"></div>}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#F7F2EE] to-transparent"></div>
             </div>
-
-            {/* Content Section */}
             <div className="w-full h-[40%] p-6 flex flex-col justify-center items-center text-center">
                 {title && (
                     <h2 className={`font-playfair ${titleFontSize} font-bold leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>
@@ -437,12 +416,10 @@ const TrendyCollageTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins p-6 bg-[#F4EFEA] overflow-hidden">
-             {/* Image 1 */}
             <div className="absolute w-3/4 h-1/2 top-8 left-4 transform -rotate-6 shadow-2xl rounded-md border-8 border-white box-border">
                 <BackgroundImage imageUrl={backgroundImage} />
                 <div className="absolute inset-0 bg-gray-200 -z-10"></div>
             </div>
-            {/* Image 2 */}
             <div className="absolute w-1/2 h-1/2 bottom-8 right-4 transform rotate-3 shadow-2xl rounded-md border-8 border-white box-border">
                 <BackgroundImage imageUrl={backgroundImage2} />
                  <div className="absolute inset-0 bg-gray-200 -z-10"></div>
@@ -478,7 +455,6 @@ const RetroVibesTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
     return (
         <div className="w-full h-full flex flex-col justify-between relative font-poppins p-8 bg-[#F0EAD6] text-[#4E443A] overflow-hidden">
-            {/* Film grain effect */}
             <div 
                 className="absolute inset-0 opacity-10 pointer-events-none" 
                 style={{
@@ -513,12 +489,9 @@ const ProductSpotlightTemplate: React.FC<{ data: TemplateData }> = ({ data }) =>
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     return (
         <div className="w-full h-full flex flex-col justify-end relative font-poppins p-4 sm:p-5 bg-slate-200">
-             {/* The main background image fills the pin, behind the white card */}
             <BackgroundImage imageUrl={backgroundImage} />
-            {/* Adds a subtle dark overlay if an image is present, to help the card stand out */}
             {backgroundImage && <div className="absolute inset-0 bg-black/10"></div>}
 
-            {/* White Content Card */}
             <div className="relative z-10 bg-white w-full rounded-2xl p-4 shadow-lg flex items-end text-[#4E443A]">
                 <div className="flex-1 pr-3">
                     {title && (
@@ -605,20 +578,17 @@ const BeforeAfterTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex relative font-poppins text-white">
-            {/* Left side (Before) */}
             <div className="w-1/2 h-full relative">
                 <BackgroundImage imageUrl={backgroundImage} />
                 <div className="absolute inset-0 bg-black/30"></div>
                 <div className="absolute top-4 left-4 bg-white/80 text-black text-xs font-bold uppercase px-2 py-1 rounded">BEFORE</div>
             </div>
-            {/* Right side (After) */}
             <div className="w-1/2 h-full relative">
                  <BackgroundImage imageUrl={backgroundImage2} />
                  <div className="absolute inset-0 bg-black/10"></div>
                  <div className="absolute top-4 right-4 bg-white text-black text-xs font-bold uppercase px-2 py-1 rounded">AFTER</div>
             </div>
 
-            {/* Center Content */}
             <div className="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-10">
                 <div className="bg-black/40 backdrop-blur-sm p-6 rounded-lg">
                     {title && <h2 className={`font-playfair font-bold ${titleFontSize} leading-tight tracking-tight`} style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)', wordBreak: 'break-word' }}>{title}</h2>}
@@ -719,17 +689,14 @@ const MoodBoardTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
     return (
         <div className="w-full h-full flex flex-col justify-center items-center relative font-poppins p-6 bg-[#EAE6E1] overflow-hidden">
-             {/* Image 3 - bottom layer */}
             <div className="absolute w-2/3 h-1/3 bottom-12 right-[-10%] transform rotate-12 shadow-2xl rounded-lg border-8 border-white box-border">
                 <BackgroundImage imageUrl={backgroundImage3} />
                 <div className="absolute inset-0 bg-gray-300 -z-10"></div>
             </div>
-             {/* Image 1 - middle layer */}
             <div className="absolute w-3/4 h-1/2 top-4 left-[-10%] transform -rotate-8 shadow-2xl rounded-lg border-8 border-white box-border">
                 <BackgroundImage imageUrl={backgroundImage} />
                 <div className="absolute inset-0 bg-gray-300 -z-10"></div>
             </div>
-            {/* Image 2 - top layer */}
             <div className="absolute w-1/2 h-2/5 bottom-4 left-[10%] transform rotate-3 shadow-2xl rounded-lg border-8 border-white box-border">
                 <BackgroundImage imageUrl={backgroundImage2} />
                  <div className="absolute inset-0 bg-gray-300 -z-10"></div>
@@ -815,7 +782,6 @@ const StepByStepGuideTemplate: React.FC<{ data: TemplateData }> = ({ data }) => 
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white text-gray-800">
-            {/* Hero Image */}
             <div className="h-1/2 w-full relative">
                 <BackgroundImage imageUrl={backgroundImage} />
                 {!backgroundImage && <div className="absolute inset-0 bg-slate-200"></div>}
@@ -824,7 +790,6 @@ const StepByStepGuideTemplate: React.FC<{ data: TemplateData }> = ({ data }) => 
                     {title && <h2 className={`font-playfair ${titleFontSize} font-bold leading-tight`} style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.6)', wordBreak: 'break-word' }}>{title}</h2>}
                 </div>
             </div>
-            {/* Steps Section */}
             <div className="h-1/2 w-full flex flex-col p-4">
                 <div className="flex-grow grid grid-cols-2 gap-4">
                     <div className="relative rounded-lg overflow-hidden">
@@ -876,8 +841,6 @@ const MinimalistIngredientsTemplate: React.FC<{ data: TemplateData }> = ({ data 
         </div>
     );
 };
-
-// -- New Templates 59-68 --
 
 const SoftLavenderTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
@@ -1051,7 +1014,7 @@ const VanillaRoseTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
             <div className="absolute inset-0 flex justify-center items-center p-8">
                 <div className="text-center p-8 shadow-2xl rounded-lg border-2" style={{ backgroundColor: '#FBF7F2', borderColor: '#D7AFA6', color: '#6D3F36' }}>
                     {title && <h2 className={`font-playfair font-black ${titleFontSize} leading-tight tracking-tight`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                    {subtitle && <p className="font-montserrat font-light text-sm uppercase tracking-widest mt-3">{subtitle}</p>}
+                    {subtitle && <p className="font-montserrat font-light text-sm uppercase tracking-widest mt-2">{subtitle}</p>}
                 </div>
             </div>
             {website && <p className="absolute bottom-4 left-4 text-xs font-bold tracking-[0.15em] text-black/50 bg-white/50 px-2 py-1 rounded uppercase">{website}</p>}
@@ -1062,7 +1025,6 @@ const VanillaRoseTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 const GreenGrungeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
-    
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
             <div className="flex-1 relative overflow-hidden">
@@ -1080,11 +1042,9 @@ const GreenGrungeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
                     style={{
                         backgroundColor: '#4F6F3A',
                         color: '#FFFFFF',
-                        // Creating a rough edge look with clip-path
                         clipPath: 'polygon(2% 0%, 98% 1%, 100% 98%, 0% 100%)' 
                     }}
                 >
-                    {/* Inner dashed border to mimic stitching/patch */}
                     <div className="border-2 border-dashed border-white/40 p-4 flex flex-col justify-center items-center h-full">
                         {title && (
                             <h2 
@@ -1117,7 +1077,6 @@ const GreenGrungeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 const SmoothieStyleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
-    
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
             <div className="flex-1 relative overflow-hidden">
@@ -1133,7 +1092,7 @@ const SmoothieStyleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
                 <div 
                     className="relative p-6 md:p-8 transform -rotate-1 max-w-[90%] text-center shadow-[4px_4px_0px_rgba(0,0,0,0.15)]"
                     style={{
-                        backgroundColor: '#EF476F', // Smoothie Pink
+                        backgroundColor: '#EF476F',
                         color: '#FFFFFF',
                         clipPath: 'polygon(2% 0%, 98% 1%, 100% 98%, 0% 100%)' 
                     }}
@@ -1170,7 +1129,6 @@ const SmoothieStyleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
 const BlueberrySmoothieTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
-    
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
             <div className="flex-1 relative overflow-hidden">
@@ -1186,7 +1144,7 @@ const BlueberrySmoothieTemplate: React.FC<{ data: TemplateData }> = ({ data }) =
                 <div 
                     className="relative p-6 md:p-8 transform -rotate-1 max-w-[90%] text-center shadow-[4px_4px_0px_rgba(0,0,0,0.15)]"
                     style={{
-                        backgroundColor: '#7209B7', // Vibrant Purple
+                        backgroundColor: '#7209B7',
                         color: '#FFFFFF',
                         clipPath: 'polygon(2% 0%, 98% 1%, 100% 98%, 0% 100%)' 
                     }}
@@ -1220,205 +1178,159 @@ const BlueberrySmoothieTemplate: React.FC<{ data: TemplateData }> = ({ data }) =
     );
 };
 
-// Base distressed banner template structure
-const DistressedBannerTemplate: React.FC<{
-    data: TemplateData;
-    mainBgColor: string;
-    mainTextColor: string;
-    subtitleColor: string;
-    websiteTagBgColor: string;
-    websiteTagTextColor: string;
-    websiteTagBorderColor: string;
-    lightBgImage?: string;
-    darkBgImage?: string;
-    mainClipPath?: string;
-    mainRotation?: string;
-    websiteTagClipPath?: string;
-    websiteTagRotation?: string;
-    websiteTagTransform?: string;
-}> = ({
-    data,
-    mainBgColor,
-    mainTextColor,
-    subtitleColor,
-    websiteTagBgColor,
-    websiteTagTextColor,
-    websiteTagBorderColor,
-    lightBgImage,
-    darkBgImage,
-    mainClipPath = 'polygon(0% 5%, 3% 0%, 97% 1%, 100% 5%, 100% 95%, 97% 100%, 3% 99%, 0% 95%)',
-    mainRotation = '-rotate-2',
-    websiteTagClipPath = 'polygon(2% 0%, 100% 8%, 98% 100%, 0% 92%)',
-    websiteTagRotation = 'rotate-0.5',
-    websiteTagTransform = 'translate-x-[-5px] translate-y-[5px]',
-}) => {
-    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
-    
+// FIX: Added missing template component AestheticGourmetEleganceTemplate
+const AestheticGourmetEleganceTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-4xl', 'text-5xl', 'text-6xl');
     return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="flex-1 relative overflow-hidden">
-                <BackgroundImage imageUrl={backgroundImage} />
-                {!backgroundImage && <div className="absolute inset-0" style={{backgroundColor: lightBgImage || 'bg-emerald-50'}}></div>} {/* Light green */}
-            </div>
-            <div className="flex-1 relative overflow-hidden">
-                <BackgroundImage imageUrl={backgroundImage2} />
-                {!backgroundImage2 && <div className="absolute inset-0" style={{backgroundColor: darkBgImage || 'bg-emerald-100'}}></div>} {/* Slightly darker green */}
-            </div>
-
-            <div className="absolute inset-0 flex flex-col justify-center items-center p-6">
-                <div 
-                    className={`relative p-6 md:p-8 transform ${mainRotation} max-w-[90%] text-center shadow-[10px_10px_15px_rgba(0,0,0,0.3)]`} // Stronger, diffused shadow
-                    style={{
-                        backgroundColor: mainBgColor, // Main color
-                        color: mainTextColor, // Main text color
-                        clipPath: mainClipPath,
-                        // Prominent noise texture
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E")`
-                    }}
-                >
-                    <div className="p-0 flex flex-col justify-center items-center h-full"> 
-                        {title && (
-                            <h2 
-                                className={`font-anton font-extrabold ${titleFontSize} leading-[0.9] tracking-normal uppercase drop-shadow-md`} // Anton font for bold impact
-                                style={{ wordBreak: 'break-word', textShadow: '4px 4px 8px rgba(0,0,0,0.8)' }} // Even more pronounced text shadow
-                            >
-                                {title}
-                            </h2>
-                        )}
-                        {subtitle && (
-                            <p className="font-nunito font-bold text-lg sm:text-xl mt-3 uppercase tracking-wide leading-tight drop-shadow-lg" // White subtitle, stronger drop shadow
-                                style={{color: subtitleColor, textShadow: '2px 2px 4px rgba(0,0,0,0.6)'}}
-                            > 
-                                {subtitle}
-                            </p>
-                        )}
-                    </div>
+        <div className="w-full h-full flex flex-col relative font-poppins overflow-hidden bg-[#1A1A1A]">
+            <BackgroundImage imageUrl={backgroundImage} className="opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80"></div>
+            <div className="relative z-10 h-full flex flex-col justify-end p-10 text-center">
+                 <div className="mb-6 border-b border-white/30 pb-6">
+                    {subtitle && (
+                        <p className="text-pink-400 text-xs font-bold uppercase tracking-[0.4em] mb-3">
+                            {subtitle}
+                        </p>
+                    )}
+                    {title && (
+                        <h2 className={`font-playfair font-black ${titleFontSize} leading-tight text-white uppercase italic`} style={{ wordBreak: 'break-word' }}>
+                            {title}
+                        </h2>
+                    )}
                 </div>
-            </div>
-
-            {website && (
-                <div className={`absolute bottom-6 right-6 transform ${websiteTagRotation} ${websiteTagTransform}`}> {/* Subtle rotation and offset */}
-                     <p 
-                        className="text-xs font-extrabold tracking-[0.15em] px-4 py-2 uppercase font-nunito shadow-md" // Lighter green background, darker green text, md shadow
-                        style={{
-                            color: websiteTagTextColor,
-                            backgroundColor: websiteTagBgColor,
-                            border: `2px solid ${websiteTagBorderColor}`,
-                            clipPath: websiteTagClipPath,
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.2'/%3E%3C/svg%3E")` // Subtle noise texture
-                        }}
-                     >
+                {website && (
+                    <p className="text-white/60 text-[10px] font-bold tracking-[0.3em] uppercase">
                         {website}
                     </p>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
 
+// FIX: Added missing template component AestheticFreshDuoTemplate
+const AestheticFreshDuoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#F9F9F9] p-4">
+            <div className="flex-1 flex gap-4 mb-4">
+                <div className="flex-1 relative rounded-2xl overflow-hidden shadow-md">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                </div>
+                <div className="flex-1 relative rounded-2xl overflow-hidden shadow-md">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                </div>
+            </div>
+            <div className="h-1/3 bg-white rounded-3xl p-6 shadow-xl flex flex-col justify-center items-center text-center">
+                {subtitle && <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-widest mb-2">{subtitle}</p>}
+                {title && <h2 className={`font-playfair font-bold ${titleFontSize} leading-tight text-slate-800`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                {website && <p className="mt-4 text-[9px] text-slate-400 font-bold tracking-widest uppercase">{website}</p>}
+            </div>
+        </div>
+    );
+};
 
-const EarthyGreenSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
-    <DistressedBannerTemplate
-        {...props}
-        mainBgColor="#388E3C" // Richer Green
-        mainTextColor="#FFFFFF"
-        subtitleColor="#FFFFFF" 
-        websiteTagBgColor="#81C784" // Lighter green
-        websiteTagTextColor="#2E7D32" // Darker green text
-        websiteTagBorderColor="#2E7D32" // Darker green border
-        lightBgImage="bg-emerald-50"
-        darkBgImage="bg-emerald-100"
-    />
-);
+// FIX: Added missing template component AestheticPastelDessertDuoTemplate
+const AestheticPastelDessertDuoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#FFF5F7]">
+            <div className="h-1/2 relative flex">
+                <div className="w-1/2 h-full relative border-r-4 border-white">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                </div>
+                <div className="w-1/2 h-full relative">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                </div>
+            </div>
+            <div className="h-1/2 flex flex-col justify-center items-center p-8 text-center">
+                <div className="relative">
+                    <div className="absolute -top-6 -left-6 w-12 h-12 bg-pink-100 rounded-full -z-10 opacity-50"></div>
+                    {title && <h2 className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-pink-900 tracking-tight mb-4`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+                </div>
+                {subtitle && <p className="text-pink-500/80 font-medium italic text-lg mb-6">{subtitle}</p>}
+                <div className="w-16 h-1 bg-pink-200 mb-6"></div>
+                {website && <p className="text-pink-300 text-[10px] font-bold tracking-[0.2em] uppercase">{website}</p>}
+            </div>
+        </div>
+    );
+};
 
-const OceanBlueSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
-    <DistressedBannerTemplate
-        {...props}
-        mainBgColor="#1D3557" // Deep Ocean Blue
-        mainTextColor="#FFFFFF"
-        subtitleColor="#A8DADC" // Light blue
-        websiteTagBgColor="#457B9D" // Medium blue
-        websiteTagTextColor="#1D3557" // Darker blue
-        websiteTagBorderColor="#1D3557" // Darker blue
-        lightBgImage="bg-blue-50"
-        darkBgImage="bg-blue-100"
-    />
-);
+const AestheticLuxuryMagazineDuoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins overflow-hidden bg-gradient-to-br from-[#FFFDF0] to-[#FDF5E6]">
+            {/* Top Half */}
+            <div className="relative h-1/2 w-full overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} className="scale-110 shadow-lg" />
+                {!backgroundImage && (
+                    <div className="absolute inset-0 bg-[#043927]/10 flex items-center justify-center text-[#043927]/40 font-bold uppercase tracking-widest text-xs">Dish One</div>
+                )}
+            </div>
 
-const SunsetOrangeSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
-    <DistressedBannerTemplate
-        {...props}
-        mainBgColor="#E63946" // Warm Orange/Red
-        mainTextColor="#FFFFFF"
-        subtitleColor="#F1FAEE" // Light yellow/orange
-        websiteTagBgColor="#F4A261" // Medium orange
-        websiteTagTextColor="#E63946" // Darker orange/red
-        websiteTagBorderColor="#E63946" // Darker orange/red
-        lightBgImage="bg-orange-50"
-        darkBgImage="bg-orange-100"
-    />
-);
+            {/* Bottom Half */}
+            <div className="relative h-1/2 w-full overflow-hidden border-t-2 border-[#B76E79]/30">
+                <BackgroundImage imageUrl={backgroundImage2} className="scale-125" />
+                {!backgroundImage2 && (
+                    <div className="absolute inset-0 bg-[#B76E79]/5 flex items-center justify-center text-[#B76E79]/40 font-bold uppercase tracking-widest text-xs">Dish Two</div>
+                )}
+                <div className="absolute inset-0 bg-black/10"></div>
+            </div>
 
-const ForestGreenSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
-    <DistressedBannerTemplate
-        {...props}
-        mainBgColor="#2F4F4F" // Darker, rich forest green
-        mainTextColor="#F8F8F8" // Creamy white
-        subtitleColor="#A9D0A9" // Soft green
-        websiteTagBgColor="#6B8E23" // Lighter green
-        websiteTagTextColor="#2F4F4F" // Darker green
-        websiteTagBorderColor="#2F4F4F" // Darker green
-        lightBgImage="bg-green-50"
-        darkBgImage="bg-green-100"
-    />
-);
+            {/* Rose Gold Metallic Divider */}
+            <div className="absolute top-1/2 left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-transparent via-[#B76E79] to-transparent z-20 -translate-y-1/2 shadow-[0_2px_4px_rgba(0,0,0,0.1)]"></div>
 
-const LavenderDreamSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
-    <DistressedBannerTemplate
-        {...props}
-        mainBgColor="#8A89A5" // Muted Lavender
-        mainTextColor="#FFFFFF"
-        subtitleColor="#D8BFD8" // Light greyish purple
-        websiteTagBgColor="#C3B1E1" // Pale lavender
-        websiteTagTextColor="#5F4B8B" // Dark purple
-        websiteTagBorderColor="#5F4B8B" // Dark purple
-        lightBgImage="bg-purple-50"
-        darkBgImage="bg-purple-100"
-    />
-);
+            {/* Centered Floating Content Card */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[88%]">
+                <div className="bg-white/80 backdrop-blur-md p-6 sm:p-10 border border-[#B76E79]/20 shadow-[0_20px_40px_rgba(0,0,0,0.1)] text-center relative">
+                    {/* Decorative Elements */}
+                    <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-[#B76E79]/30"></div>
+                    <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-[#B76E79]/30"></div>
 
-const EarthyBrownSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
-    <DistressedBannerTemplate
-        {...props}
-        mainBgColor="#5A3E2B" // Rich Chocolate Brown
-        mainTextColor="#F5F5DC" // Creamy white
-        subtitleColor="#D4B89B" // Light tan
-        websiteTagBgColor="#A0785A" // Medium brown
-        websiteTagTextColor="#5A3E2B" // Dark brown
-        websiteTagBorderColor="#5A3E2B" // Dark brown
-        lightBgImage="bg-stone-50"
-        darkBgImage="bg-stone-100"
-    />
-);
+                    {/* Main Title - Elegant Serif */}
+                    {title && (
+                        <h2 className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-slate-900 tracking-tight mb-3 uppercase`} style={{ wordBreak: 'break-word' }}>
+                            {title}
+                        </h2>
+                    )}
 
-const UrbanGrungeTemplate: React.FC<{ data: TemplateData }> = (props) => (
-    <DistressedBannerTemplate
-        {...props}
-        mainBgColor="#2F2F2F" // Dark Charcoal
-        mainTextColor="#E0E0E0" // Off-white
-        subtitleColor="#00FFFF" // Vibrant Cyan
-        websiteTagBgColor="#8B0000" // Dark Red
-        websiteTagTextColor="#FFFFFF" // White
-        websiteTagBorderColor="#A0A0A0" // Light Grey
-        lightBgImage="#424242" // Dark Grey
-        darkBgImage="#212121" // Almost Black
-        mainRotation="-rotate-1" // Subtle rotation
-        websiteTagRotation="rotate-1" // Slight rotation for tag
-        websiteTagTransform="translate-x-0 translate-y-0" // Reset transform for different placement
-    />
-);
+                    {/* Subtitle - Clean tracked-out Sans */}
+                    {subtitle && (
+                        <p className="text-[#043927] text-[10px] font-bold uppercase tracking-[0.4em] leading-none mb-1">
+                            {subtitle}
+                        </p>
+                    )}
+                </div>
+            </div>
 
+            {/* Visual CTA Button at Bottom */}
+            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-40">
+                <div className="bg-gradient-to-br from-[#B76E79] to-[#8E5A63] text-white px-10 py-2.5 rounded-sm shadow-xl transform hover:scale-105 transition-transform cursor-pointer border-b-2 border-black/10">
+                    <p className="text-[11px] font-black tracking-[0.25em] uppercase whitespace-nowrap">
+                        GET THE RECIPE
+                    </p>
+                </div>
+            </div>
+
+            {/* Small Branding (Bottom Right) */}
+            {website && (
+                <div className="absolute bottom-5 right-8 z-40">
+                    <p className="text-[#B76E79] text-[10px] font-bold tracking-[0.3em] uppercase italic opacity-80">
+                        {website}
+                    </p>
+                </div>
+            )}
+            
+            {/* Emerald Geometric Accent */}
+            <div className="absolute top-8 left-8 w-12 h-12 rounded-sm border border-[#043927]/10 z-20 pointer-events-none rotate-45"></div>
+        </div>
+    );
+};
 
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {
     const { templateId } = data;
@@ -1449,29 +1361,6 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
             case '22': return <StepByStepGuideTemplate data={data} />;
             case '23': return <MinimalistIngredientsTemplate data={data} />;
             
-            // Removed undefined templates 24-44
-            // case '24': return <ElegantRecipeCardTemplate data={data} />;
-            // case '25': return <BoldTitleOverlayTemplate data={data} />;
-            // case '26': return <GardeningTipsTemplate data={data} />;
-            // case '27': return <HomeDecorInspoTemplate data={data} />;
-            // case '28': return <AuthorQuoteTemplate data={data} />;
-            // case '29': return <SplitImageFourBlockTemplate data={data} />;
-            // case '30': return <SimpleProductTemplate data={data} />;
-            // case '31': return <FoodieSplitTemplate data={data} />;
-            // case '32': return <MinimalistLivingTemplate data={data} />;
-            // case '33': return <BoldFoodieTemplate data={data} />;
-            // case '34': return <BoldFoodieSplitTemplate2 data={data} />;
-            // case '35': return <VibrantFoodieSplitTemplate data={data} />;
-            // case '36': return <ElegantFoodieSplitTemplate data={data} />;
-            // case '37': return <ElegantFoodieSingleTemplate data={data} />;
-            // case '38': return <AntonVerticalTemplate data={data} />;
-            // case '39': return <MontserratVerticalTemplate data={data} />;
-            // case '40': return <MontserratVerticalTemplateGreen data={data} />;
-            // case '41': return <MontserratVerticalTemplateBrown data={data} />;
-            // case '42': return <ThreePartVerticalTemplate data={data} />;
-            // case '43': return <ThreePartVerticalTemplateDark data={data} />;
-            // case '44': return <ComicBookTemplate data={data} />;
-
             case '59': return <SoftLavenderTemplate data={data} />;
             case '60': return <WarmCaramelTemplate data={data} />;
             case '61': return <SkyBlueTemplate data={data} />;
@@ -1485,13 +1374,10 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
             case '69': return <GreenGrungeTemplate data={data} />;
             case '70': return <SmoothieStyleTemplate data={data} />;
             case '71': return <BlueberrySmoothieTemplate data={data} />;
-            case '72': return <EarthyGreenSmoothieTemplate data={data} />;
-            case '73': return <OceanBlueSmoothieTemplate data={data} />;
-            case '74': return <SunsetOrangeSmoothieTemplate data={data} />;
-            case '75': return <ForestGreenSmoothieTemplate data={data} />;
-            case '76': return <LavenderDreamSmoothieTemplate data={data} />;
-            case '77': return <EarthyBrownSmoothieTemplate data={data} />;
-            case '78': return <UrbanGrungeTemplate data={data} />; // New Template
+            case '86': return <AestheticGourmetEleganceTemplate data={data} />;
+            case '87': return <AestheticFreshDuoTemplate data={data} />;
+            case '88': return <AestheticPastelDessertDuoTemplate data={data} />;
+            case '90': return <AestheticLuxuryMagazineDuoTemplate data={data} />; // New Template
 
             default: return <ClassicTemplate data={data} />;
         }
