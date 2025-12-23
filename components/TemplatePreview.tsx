@@ -1022,40 +1022,73 @@ const VanillaRoseTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     );
 };
 
-const GreenGrungeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+const DistressedBannerTemplate: React.FC<{
+    data: TemplateData;
+    mainBgColor: string;
+    mainTextColor: string;
+    subtitleColor: string;
+    websiteTagBgColor: string;
+    websiteTagTextColor: string;
+    websiteTagBorderColor: string;
+    lightBgImage?: string;
+    darkBgImage?: string;
+    mainClipPath?: string;
+    mainRotation?: string;
+    websiteTagClipPath?: string;
+    websiteTagRotation?: string;
+    websiteTagTransform?: string;
+}> = ({
+    data,
+    mainBgColor,
+    mainTextColor,
+    subtitleColor,
+    websiteTagBgColor,
+    websiteTagTextColor,
+    websiteTagBorderColor,
+    lightBgImage,
+    darkBgImage,
+    mainClipPath = 'polygon(0% 5%, 3% 0%, 97% 1%, 100% 5%, 100% 95%, 97% 100%, 3% 99%, 0% 95%)',
+    mainRotation = '-rotate-2',
+    websiteTagClipPath = 'polygon(2% 0%, 100% 8%, 98% 100%, 0% 92%)',
+    websiteTagRotation = 'rotate-0.5',
+    websiteTagTransform = 'translate-x-[-5px] translate-y-[5px]',
+}) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
     return (
         <div className="w-full h-full flex flex-col relative font-poppins bg-white">
             <div className="flex-1 relative overflow-hidden">
                 <BackgroundImage imageUrl={backgroundImage} />
-                {!backgroundImage && <div className="absolute inset-0 bg-stone-300"></div>}
+                {!backgroundImage && <div className="absolute inset-0" style={{backgroundColor: lightBgImage || 'bg-emerald-50'}}></div>}
             </div>
             <div className="flex-1 relative overflow-hidden">
                 <BackgroundImage imageUrl={backgroundImage2} />
-                {!backgroundImage2 && <div className="absolute inset-0 bg-stone-400"></div>}
+                {!backgroundImage2 && <div className="absolute inset-0" style={{backgroundColor: darkBgImage || 'bg-emerald-100'}}></div>}
             </div>
 
             <div className="absolute inset-0 flex flex-col justify-center items-center p-6">
                 <div 
-                    className="relative p-6 md:p-8 transform -rotate-1 max-w-[90%] text-center shadow-[4px_4px_0px_rgba(0,0,0,0.25)]"
+                    className={`relative p-6 md:p-8 transform ${mainRotation} max-w-[90%] text-center shadow-[10px_10px_15px_rgba(0,0,0,0.3)]`}
                     style={{
-                        backgroundColor: '#4F6F3A',
-                        color: '#FFFFFF',
-                        clipPath: 'polygon(2% 0%, 98% 1%, 100% 98%, 0% 100%)' 
+                        backgroundColor: mainBgColor,
+                        color: mainTextColor,
+                        clipPath: mainClipPath,
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3Cfilter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E")`
                     }}
                 >
-                    <div className="border-2 border-dashed border-white/40 p-4 flex flex-col justify-center items-center h-full">
+                    <div className="p-0 flex flex-col justify-center items-center h-full"> 
                         {title && (
                             <h2 
-                                className={`font-nunito font-extrabold ${titleFontSize} leading-[0.9] tracking-normal uppercase drop-shadow-md`}
-                                style={{ wordBreak: 'break-word' }}
+                                className={`font-anton font-extrabold ${titleFontSize} leading-[0.9] tracking-normal uppercase drop-shadow-md`}
+                                style={{ wordBreak: 'break-word', textShadow: '4px 4px 8px rgba(0,0,0,0.8)' }}
                             >
                                 {title}
                             </h2>
                         )}
                         {subtitle && (
-                            <p className="font-nunito font-bold text-lg sm:text-xl mt-3 text-[#E0F2D5] uppercase tracking-wide leading-tight">
+                            <p className="font-nunito font-bold text-lg sm:text-xl mt-3 uppercase tracking-wide leading-tight drop-shadow-lg"
+                                style={{color: subtitleColor, textShadow: '2px 2px 4px rgba(0,0,0,0.6)'}}
+                            > 
                                 {subtitle}
                             </p>
                         )}
@@ -1064,8 +1097,17 @@ const GreenGrungeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
             </div>
 
             {website && (
-                <div className="absolute bottom-4 right-4 transform rotate-2">
-                     <p className="text-xs font-extrabold tracking-[0.15em] text-[#4F6F3A] bg-white/90 px-3 py-1.5 uppercase font-nunito shadow-sm border border-[#4F6F3A]">
+                <div className={`absolute bottom-6 right-6 transform ${websiteTagRotation} ${websiteTagTransform}`}>
+                     <p 
+                        className="text-xs font-extrabold tracking-[0.15em] px-4 py-2 uppercase font-nunito shadow-md"
+                        style={{
+                            color: websiteTagTextColor,
+                            backgroundColor: websiteTagBgColor,
+                            border: `2px solid ${websiteTagBorderColor}`,
+                            clipPath: websiteTagClipPath,
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 50 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/%3E%3Cfilter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.2'/%3E%3C/svg%3E")`
+                        }}
+                     >
                         {website}
                     </p>
                 </div>
@@ -1074,133 +1116,216 @@ const GreenGrungeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     );
 };
 
-const SmoothieStyleTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
-    return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="flex-1 relative overflow-hidden">
-                <BackgroundImage imageUrl={backgroundImage} />
-                {!backgroundImage && <div className="absolute inset-0 bg-orange-100"></div>}
-            </div>
-            <div className="flex-1 relative overflow-hidden">
-                <BackgroundImage imageUrl={backgroundImage2} />
-                {!backgroundImage2 && <div className="absolute inset-0 bg-pink-100"></div>}
-            </div>
+/* Fix: Added missing GreenGrungeTemplate definition */
+const GreenGrungeTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#2D5A27"
+        mainTextColor="#F0F0F0"
+        subtitleColor="#A4C639"
+        websiteTagBgColor="#1A3317"
+        websiteTagTextColor="#FFFFFF"
+        websiteTagBorderColor="#A4C639"
+        mainRotation="rotate-1"
+    />
+);
 
-            <div className="absolute inset-0 flex flex-col justify-center items-center p-6">
-                <div 
-                    className="relative p-6 md:p-8 transform -rotate-1 max-w-[90%] text-center shadow-[4px_4px_0px_rgba(0,0,0,0.15)]"
-                    style={{
-                        backgroundColor: '#EF476F',
-                        color: '#FFFFFF',
-                        clipPath: 'polygon(2% 0%, 98% 1%, 100% 98%, 0% 100%)' 
-                    }}
-                >
-                    <div className="border-2 border-dashed border-white/60 p-4 flex flex-col justify-center items-center h-full">
-                        {title && (
-                            <h2 
-                                className={`font-nunito font-extrabold ${titleFontSize} leading-[0.9] tracking-normal uppercase drop-shadow-sm`}
-                                style={{ wordBreak: 'break-word' }}
-                            >
-                                {title}
-                            </h2>
-                        )}
-                        {subtitle && (
-                            <p className="font-nunito font-bold text-lg sm:text-xl mt-3 text-[#FFE3E3] uppercase tracking-wide leading-tight">
-                                {subtitle}
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </div>
+/* Fix: Added missing SmoothieStyleTemplate definition */
+const SmoothieStyleTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#FF6B6B"
+        mainTextColor="#FFFFFF"
+        subtitleColor="#FFE66D"
+        websiteTagBgColor="#4ECDC4"
+        websiteTagTextColor="#FFFFFF"
+        websiteTagBorderColor="#FFFFFF"
+    />
+);
 
-            {website && (
-                <div className="absolute bottom-4 right-4 transform rotate-2">
-                     <p className="text-xs font-extrabold tracking-[0.15em] text-[#EF476F] bg-white/95 px-3 py-1.5 uppercase font-nunito shadow-sm border border-[#EF476F]">
-                        {website}
-                    </p>
-                </div>
-            )}
-        </div>
-    );
-};
+/* Fix: Added missing BlueberrySmoothieTemplate definition */
+const BlueberrySmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#4B0082"
+        mainTextColor="#FFFFFF"
+        subtitleColor="#E6E6FA"
+        websiteTagBgColor="#8A2BE2"
+        websiteTagTextColor="#FFFFFF"
+        websiteTagBorderColor="#E6E6FA"
+    />
+);
 
-const BlueberrySmoothieTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
-    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
-    return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-white">
-            <div className="flex-1 relative overflow-hidden">
-                <BackgroundImage imageUrl={backgroundImage} />
-                {!backgroundImage && <div className="absolute inset-0 bg-purple-100"></div>}
-            </div>
-            <div className="flex-1 relative overflow-hidden">
-                <BackgroundImage imageUrl={backgroundImage2} />
-                {!backgroundImage2 && <div className="absolute inset-0 bg-blue-100"></div>}
-            </div>
+const EarthyGreenSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#388E3C"
+        mainTextColor="#FFFFFF"
+        subtitleColor="#FFFFFF" 
+        websiteTagBgColor="#81C784"
+        websiteTagTextColor="#2E7D32"
+        websiteTagBorderColor="#2E7D32"
+    />
+);
 
-            <div className="absolute inset-0 flex flex-col justify-center items-center p-6">
-                <div 
-                    className="relative p-6 md:p-8 transform -rotate-1 max-w-[90%] text-center shadow-[4px_4px_0px_rgba(0,0,0,0.15)]"
-                    style={{
-                        backgroundColor: '#7209B7',
-                        color: '#FFFFFF',
-                        clipPath: 'polygon(2% 0%, 98% 1%, 100% 98%, 0% 100%)' 
-                    }}
-                >
-                    <div className="border-2 border-dashed border-white/60 p-4 flex flex-col justify-center items-center h-full">
-                        {title && (
-                            <h2 
-                                className={`font-nunito font-extrabold ${titleFontSize} leading-[0.9] tracking-normal uppercase drop-shadow-sm`}
-                                style={{ wordBreak: 'break-word' }}
-                            >
-                                {title}
-                            </h2>
-                        )}
-                        {subtitle && (
-                            <p className="font-nunito font-bold text-lg sm:text-xl mt-3 text-[#E0AAFF] uppercase tracking-wide leading-tight">
-                                {subtitle}
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </div>
+const OceanBlueSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#1D3557"
+        mainTextColor="#FFFFFF"
+        subtitleColor="#A8DADC"
+        websiteTagBgColor="#457B9D"
+        websiteTagTextColor="#1D3557"
+        websiteTagBorderColor="#1D3557"
+    />
+);
 
-            {website && (
-                <div className="absolute bottom-4 right-4 transform rotate-2">
-                     <p className="text-xs font-extrabold tracking-[0.15em] text-[#7209B7] bg-white/95 px-3 py-1.5 uppercase font-nunito shadow-sm border border-[#7209B7]">
-                        {website}
-                    </p>
-                </div>
-            )}
-        </div>
-    );
-};
+const SunsetOrangeSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#E63946"
+        mainTextColor="#FFFFFF"
+        subtitleColor="#F1FAEE"
+        websiteTagBgColor="#F4A261"
+        websiteTagTextColor="#E63946"
+        websiteTagBorderColor="#E63946"
+    />
+);
 
-// FIX: Added missing template component AestheticGourmetEleganceTemplate
-const AestheticGourmetEleganceTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+const ForestGreenSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#2F4F4F"
+        mainTextColor="#F8F8F8"
+        subtitleColor="#A9D0A9"
+        websiteTagBgColor="#6B8E23"
+        websiteTagTextColor="#2F4F4F"
+        websiteTagBorderColor="#2F4F4F"
+    />
+);
+
+const LavenderDreamSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#8A89A5"
+        mainTextColor="#FFFFFF"
+        subtitleColor="#D8BFD8"
+        websiteTagBgColor="#C3B1E1"
+        websiteTagTextColor="#5F4B8B"
+        websiteTagBorderColor="#5F4B8B"
+    />
+);
+
+const EarthyBrownSmoothieTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#5A3E2B"
+        mainTextColor="#F5F5DC"
+        subtitleColor="#D4B89B"
+        websiteTagBgColor="#A0785A"
+        websiteTagTextColor="#5A3E2B"
+        websiteTagBorderColor="#5A3E2B"
+    />
+);
+
+const UrbanGrungeTemplate: React.FC<{ data: TemplateData }> = (props) => (
+    <DistressedBannerTemplate
+        {...props}
+        mainBgColor="#2F2F2F"
+        mainTextColor="#E0E0E0"
+        subtitleColor="#00FFFF"
+        websiteTagBgColor="#8B0000"
+        websiteTagTextColor="#FFFFFF"
+        websiteTagBorderColor="#A0A0A0"
+        lightBgImage="#424242"
+        darkBgImage="#212121"
+        mainRotation="-rotate-1"
+        websiteTagRotation="rotate-1"
+        websiteTagTransform="translate-x-0 translate-y-0"
+    />
+);
+
+const AestheticFoodRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-4xl', 'text-5xl', 'text-6xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
     return (
-        <div className="w-full h-full flex flex-col relative font-poppins overflow-hidden bg-[#1A1A1A]">
-            <BackgroundImage imageUrl={backgroundImage} className="opacity-80" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80"></div>
-            <div className="relative z-10 h-full flex flex-col justify-end p-10 text-center">
-                 <div className="mb-6 border-b border-white/30 pb-6">
-                    {subtitle && (
-                        <p className="text-pink-400 text-xs font-bold uppercase tracking-[0.4em] mb-3">
-                            {subtitle}
-                        </p>
-                    )}
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#F9F6F2] p-8 overflow-hidden">
+            <div className="absolute inset-4 border border-[#87A96B]/20 rounded-[2.5rem] pointer-events-none"></div>
+            <div className="relative w-full h-[65%] mb-4 group">
+                <div className="absolute -inset-2 bg-[#87A96B]/10 rounded-[2.2rem] blur-lg transition-all"></div>
+                <div className="w-full h-full relative rounded-[2rem] overflow-hidden shadow-sm border-4 border-white">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                    {!backgroundImage && <div className="absolute inset-0 bg-[#E8E1D9] flex items-center justify-center text-[#87A96B]/40 font-bold uppercase tracking-widest">Main Image</div>}
+                </div>
+                <div className="absolute top-4 right-4 bg-[#E2725B] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg tracking-wide transform transition-transform hover:scale-110">
+                    SAVE FOR LATER
+                </div>
+            </div>
+            <div className="relative flex-grow flex flex-col items-center justify-center text-center">
+                {subtitle && (
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="w-4 h-px bg-[#87A96B]"></span>
+                        <p className="text-[#87A96B] text-[10px] font-bold uppercase tracking-[0.2em]">{subtitle}</p>
+                        <span className="w-4 h-px bg-[#87A96B]"></span>
+                    </div>
+                )}
+                <div className="px-4 py-2">
                     {title && (
-                        <h2 className={`font-playfair font-black ${titleFontSize} leading-tight text-white uppercase italic`} style={{ wordBreak: 'break-word' }}>
+                        <h2 className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-[#3A2E4A] tracking-tight drop-shadow-sm`} style={{ wordBreak: 'break-word' }}>
                             {title}
                         </h2>
                     )}
                 </div>
                 {website && (
-                    <p className="text-white/60 text-[10px] font-bold tracking-[0.3em] uppercase">
+                    <div className="mt-auto">
+                        <p className="text-[#3A2E4A]/40 text-[10px] font-bold tracking-[0.3em] uppercase italic">
+                            {website}
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const AestheticDualFoodTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#FAF9F6] overflow-hidden">
+            <div className="relative h-1/2 w-full">
+                <BackgroundImage imageUrl={backgroundImage} />
+                {!backgroundImage && <div className="absolute inset-0 bg-slate-200 flex items-center justify-center text-slate-400 font-bold uppercase text-xs">Hero Image</div>}
+            </div>
+            <div className="relative h-1/2 w-full">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-[#FAF9F6] z-20 shadow-sm"></div>
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-300 font-bold uppercase text-xs">Detail Image</div>}
+            </div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[88%] max-w-[90%]">
+                <div className="bg-white/95 backdrop-blur-md p-6 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 rounded-sm text-center transform transition-transform duration-500">
+                    {subtitle && (
+                        <div className="flex items-center justify-center gap-3 mb-3">
+                            <div className="h-[1px] w-6 bg-[#87A96B]"></div>
+                            <p className="text-[#87A96B] text-[10px] font-bold tracking-[0.25em] uppercase whitespace-nowrap">
+                                {subtitle}
+                            </p>
+                            <div className="h-[1px] w-6 bg-[#87A96B]"></div>
+                        </div>
+                    )}
+                    {title && (
+                        <h2 className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-[#2C2420] tracking-tight mb-4`} style={{ wordBreak: 'break-word' }}>
+                            {title}
+                        </h2>
+                    )}
+                    <div className="inline-block bg-[#87A96B] text-white px-5 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase shadow-sm">
+                        SAVE RECIPE
+                    </div>
+                </div>
+            </div>
+            <div className="absolute bottom-4 w-full text-center z-40">
+                {website && (
+                    <p className="text-white/80 font-bold text-[9px] tracking-[0.4em] uppercase italic" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                         {website}
                     </p>
                 )}
@@ -1209,52 +1334,468 @@ const AestheticGourmetEleganceTemplate: React.FC<{ data: TemplateData }> = ({ da
     );
 };
 
-// FIX: Added missing template component AestheticFreshDuoTemplate
-const AestheticFreshDuoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+const AestheticRecipeTwoImagesTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
-    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-3xl', 'text-4xl');
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
     return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-[#F9F9F9] p-4">
-            <div className="flex-1 flex gap-4 mb-4">
-                <div className="flex-1 relative rounded-2xl overflow-hidden shadow-md">
-                    <BackgroundImage imageUrl={backgroundImage} />
-                </div>
-                <div className="flex-1 relative rounded-2xl overflow-hidden shadow-md">
-                    <BackgroundImage imageUrl={backgroundImage2} />
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#FAF9F6] p-0 overflow-hidden">
+            <div className="relative w-full h-[60%] overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} className="group-hover:scale-105 transition-transform duration-700" />
+                {!backgroundImage && (
+                    <div className="absolute inset-0 bg-[#E8E1D9] flex items-center justify-center text-[#87A96B]/40 font-bold uppercase tracking-[0.3em] text-sm">
+                        Main Food Shot
+                    </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent h-1/4"></div>
+            </div>
+            <div className="relative w-full h-[25%] overflow-hidden border-t-4 border-[#FAF9F6] shadow-inner">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && (
+                    <div className="absolute inset-0 bg-[#F2EDE7] flex items-center justify-center text-[#87A96B]/30 font-bold uppercase tracking-[0.2em] text-xs">
+                        Texture / Steps
+                    </div>
+                )}
+            </div>
+            <div className="absolute top-[48%] left-1/2 -translate-x-1/2 z-30 w-[88%] max-w-[90%] pointer-events-none">
+                <div className="bg-white/95 backdrop-blur-sm p-6 sm:p-8 rounded-sm shadow-2xl border-t-2 border-[#87A96B]/10 text-center pointer-events-auto">
+                    {subtitle && (
+                        <div className="flex flex-col items-center mb-3">
+                            <p className="text-[#87A96B] text-[10px] font-bold tracking-[0.4em] uppercase mb-1">{subtitle}</p>
+                            <div className="w-12 h-[1.5px] bg-[#E2725B]/40"></div>
+                        </div>
+                    )}
+                    {title && (
+                        <h2 className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-[#1A1A1A] tracking-tight mb-5`} style={{ wordBreak: 'break-word' }}>
+                            {title}
+                        </h2>
+                    )}
+                    <div className="inline-block bg-[#E2725B] hover:bg-[#d15f4a] text-white px-6 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase shadow-lg transition-colors cursor-pointer">
+                        TRY THIS RECIPE
+                    </div>
                 </div>
             </div>
-            <div className="h-1/3 bg-white rounded-3xl p-6 shadow-xl flex flex-col justify-center items-center text-center">
-                {subtitle && <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-widest mb-2">{subtitle}</p>}
-                {title && <h2 className={`font-playfair font-bold ${titleFontSize} leading-tight text-slate-800`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
-                {website && <p className="mt-4 text-[9px] text-slate-400 font-bold tracking-widest uppercase">{website}</p>}
+            <div className="relative flex-grow flex flex-col items-center justify-end pb-6 px-8 text-center">
+                 {website && (
+                    <p className="text-[#4E443A]/60 text-[9px] font-bold tracking-[0.5em] uppercase italic bg-[#FAF9F6]/80 px-4 py-1 rounded-full">
+                        {website}
+                    </p>
+                )}
+            </div>
+            <div className="absolute inset-4 border border-[#87A96B]/5 rounded-sm pointer-events-none"></div>
+        </div>
+    );
+};
+
+const AestheticFreshColorfulTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#FCFBF9] overflow-hidden">
+            <div className="relative h-[60%] w-full overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} className="transition-transform duration-1000" />
+                {!backgroundImage && <div className="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-300 font-bold uppercase tracking-widest text-xs">Hero Shot</div>}
+                <div className="absolute bottom-0 left-0 w-full h-[6px] bg-[#919970] z-20 shadow-sm"></div>
+            </div>
+            <div className="relative z-30 flex justify-center -mt-8">
+                <div className="bg-[#F4B69C] w-[88%] p-6 shadow-xl border-b-4 border-[#E2725B]/20 text-center">
+                    {subtitle && (
+                        <p className="text-[#919970] text-[10px] font-black uppercase tracking-[0.3em] mb-2 leading-none">
+                            {subtitle}
+                        </p>
+                    )}
+                    {title && (
+                        <h2 className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-[#2C415A] tracking-tight`} style={{ wordBreak: 'break-word' }}>
+                            {title}
+                        </h2>
+                    )}
+                </div>
+            </div>
+            <div className="relative flex-grow w-full mt-4 overflow-hidden border-t border-[#FCFBF9]">
+                <BackgroundImage imageUrl={backgroundImage2} />
+                {!backgroundImage2 && <div className="absolute inset-0 bg-[#F2EDE7] flex items-center justify-center text-[#9BB7D4]/40 font-bold uppercase text-[10px]">Process Shot</div>}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent"></div>
+            </div>
+            <div className="absolute bottom-4 left-0 w-full flex flex-col items-center gap-3 z-40">
+                <div className="bg-white/95 backdrop-blur-sm text-[#9BB7D4] px-4 py-1.5 rounded-full text-[10px] font-bold tracking-[0.2em] shadow-md border border-[#9BB7D4]/10 uppercase">
+                    TRY THIS TONIGHT
+                </div>
+                {website && (
+                    <p className="text-white text-[9px] font-bold tracking-[0.4em] uppercase italic opacity-90 drop-shadow-md">
+                        {website}
+                    </p>
+                )}
+            </div>
+            <div className="absolute inset-2 border border-[#919970]/10 pointer-events-none rounded-sm"></div>
+        </div>
+    );
+};
+
+const AestheticWhimsicalKitchenTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#FFFDF0] overflow-hidden">
+            <div className="relative w-full h-[60%] overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} className="scale-105" />
+                {!backgroundImage && (
+                    <div className="absolute inset-0 bg-slate-200 flex items-center justify-center text-slate-400 font-bold uppercase tracking-[0.2em] text-xs">
+                        Hero Dish
+                    </div>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="bg-[#FFD700] w-64 h-64 sm:w-80 sm:h-80 rounded-[40%_60%_70%_30%/50%_40%_60%_50%] shadow-xl transform translate-y-12 border-4 border-white opacity-95"></div>
+                </div>
+            </div>
+            <div className="absolute top-[48%] left-1/2 -translate-x-1/2 z-30 w-full flex flex-col items-center text-center px-8">
+                {subtitle && (
+                    <p className="text-[#FF7F50] text-[10px] font-black uppercase tracking-[0.4em] mb-2 bg-[#FFFDF0]/90 px-3 py-1 rounded-sm shadow-sm">
+                        {subtitle}
+                    </p>
+                )}
+                {title && (
+                    <h2 
+                        className={`font-permanent-marker ${titleFontSize} leading-[1] text-[#2C2420] tracking-normal mb-4 drop-shadow-sm`}
+                        style={{ wordBreak: 'break-word', transform: 'rotate(-1deg)' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+            </div>
+            <div className="w-full h-0 border-t-2 border-dashed border-[#FF7F50]/40 z-20 mt-16"></div>
+            <div className="relative flex-grow w-full flex items-center justify-center p-6 mt-4">
+                <div className="relative w-[70%] aspect-square bg-[#BDFCC9] p-2 shadow-lg transform rotate-2">
+                    <div className="w-full h-full relative bg-white overflow-hidden">
+                        <BackgroundImage imageUrl={backgroundImage2} />
+                        {!backgroundImage2 && (
+                            <div className="absolute inset-0 flex items-center justify-center text-[#FF7F50]/30 font-bold text-[10px] uppercase">Detail View</div>
+                        )}
+                    </div>
+                    <div className="absolute -top-3 -right-3 bg-[#FF7F50] text-[#FFFDF0] px-3 py-1 text-[8px] font-black tracking-widest uppercase shadow-md -rotate-6">
+                        YUM!
+                    </div>
+                </div>
+            </div>
+            <div className="absolute bottom-4 left-0 w-full flex flex-col items-center gap-2 z-40">
+                <div className="bg-white text-[#FF7F50] px-5 py-1.5 rounded-full text-[9px] font-black tracking-widest shadow-md border border-[#FF7F50]/10 uppercase transition-transform hover:scale-110">
+                    SAVE RECIPE
+                </div>
+                {website && (
+                    <p className="text-[#2C2420]/40 text-[9px] font-bold tracking-[0.4em] uppercase italic">
+                        {website}
+                    </p>
+                )}
+            </div>
+            <div className="absolute top-10 left-10 text-[#FFD700] opacity-50">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0l3 9h9l-7 5 3 10-8-6-8 6 3-10-7-5h9z" />
+                </svg>
+            </div>
+            <div className="absolute bottom-20 right-12 text-[#FF7F50] opacity-30 transform scale-75">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0l3 9h9l-7 5 3 10-8-6-8 6 3-10-7-5h9z" />
+                </svg>
             </div>
         </div>
     );
 };
 
-// FIX: Added missing template component AestheticPastelDessertDuoTemplate
+const AestheticDuoFinishedDishTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#FFFDF9] overflow-hidden">
+            <div className="relative h-1/2 w-full overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} className="hover:scale-105 transition-transform duration-1000" />
+                {!backgroundImage && (
+                    <div className="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-300 font-bold uppercase tracking-widest text-xs">Dish One</div>
+                )}
+            </div>
+            <div className="relative h-1/2 w-full overflow-hidden border-t-2 border-white shadow-inner">
+                <BackgroundImage imageUrl={backgroundImage2} className="hover:scale-105 transition-transform duration-1000" />
+                {!backgroundImage2 && (
+                    <div className="absolute inset-0 bg-slate-50 flex items-center justify-center text-slate-200 font-bold uppercase tracking-widest text-xs">Dish Two</div>
+                )}
+            </div>
+            <div className="absolute top-1/2 left-0 w-full h-[4px] bg-[#FF7F50] z-20 -translate-y-1/2 shadow-sm"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[85%] max-w-[90%]">
+                <div 
+                    className="p-6 sm:p-8 shadow-[0_15px_45px_rgba(0,0,0,0.18)] border border-white/20 text-center"
+                    style={{ backgroundColor: '#FF7A61' }}
+                >
+                    {subtitle && (
+                        <p className="text-white text-[10px] font-black uppercase tracking-[0.3em] mb-3 leading-none italic opacity-90">
+                            {subtitle}
+                        </p>
+                    )}
+                    {title && (
+                        <h2 className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-white tracking-tight`} style={{ wordBreak: 'break-word' }}>
+                            {title}
+                        </h2>
+                    )}
+                </div>
+            </div>
+            <div className="absolute bottom-6 left-6 z-40 bg-black/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-[9px] font-bold tracking-widest uppercase border border-white/20 shadow-lg">
+                SAVE FOR LATER
+            </div>
+            {website && (
+                <div className="absolute bottom-6 right-6 z-40">
+                    <p className="text-white text-[9px] font-bold tracking-[0.4em] uppercase italic opacity-90 drop-shadow-md" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                        {website}
+                    </p>
+                </div>
+            )}
+            <div className="absolute top-4 right-4 text-white opacity-20 transform rotate-12">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C8,6.45 7,6.7 6,7C5.19,7.36 4.41,7.77 3.69,8.25C3.33,8.5 3.05,8.82 2.85,9.21C2.35,10.2 2,11.3 2,12C2,16.5 10.5,20 10.5,20C10.5,20 7,15.5 7,12C7,11.3 7.35,10.2 7.85,9.21C8.05,8.82 8.33,8.5 8.69,8.25C9.41,7.77 10.19,7.36 11,7C12,6.7 13,6.45 14,6.25C19,5.25 21,5 22,3C22,3 19,20 8,20C7.64,20 7.14,19.87 6.66,19.7L5.71,22L3.82,21.34C5.9,16.17 8,10 17,8Z" />
+                </svg>
+            </div>
+        </div>
+    );
+};
+
+const AestheticDynamicDuoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#E0F2FE] overflow-hidden">
+            <div 
+                className="relative h-1/2 w-full overflow-hidden z-10"
+                style={{ clipPath: 'polygon(0 0, 100% 0, 100% 85%, 0 100%)' }}
+            >
+                <BackgroundImage imageUrl={backgroundImage} className="scale-110" />
+                {!backgroundImage && (
+                    <div className="absolute inset-0 bg-slate-200 flex items-center justify-center text-slate-400 font-bold uppercase tracking-widest text-xs">Recipe One</div>
+                )}
+                <div className="absolute top-6 right-6 z-20">
+                     <p className="text-white text-[9px] font-bold tracking-[0.2em] uppercase bg-black/20 backdrop-blur-sm px-2 py-1 rounded-sm shadow-sm">
+                        {website}
+                    </p>
+                </div>
+            </div>
+            <div className="relative h-1/2 w-full overflow-hidden -mt-4 bg-[#E0F2FE]">
+                <BackgroundImage imageUrl={backgroundImage2} className="scale-110" />
+                {!backgroundImage2 && (
+                    <div className="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-300 font-bold uppercase tracking-widest text-xs">Recipe Two</div>
+                )}
+                
+                <div className="absolute bottom-6 left-6 z-20 bg-[#FDBA74] text-[#1E3A8A] px-4 py-1.5 rounded-sm font-black text-[10px] tracking-widest uppercase shadow-md transform -rotate-3 border-b-2 border-[#1E3A8A]/20">
+                    TRY BOTH!
+                </div>
+            </div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[90%] max-w-[92%] flex flex-col items-center">
+                <div className="bg-[#FDE047] p-6 shadow-[0_15px_35px_rgba(0,0,0,0.2)] border-2 border-white transform rotate-1">
+                    {title && (
+                        <h2 className={`font-permanent-marker ${titleFontSize} leading-[1] text-[#1E3A8A] text-center`} style={{ wordBreak: 'break-word' }}>
+                            {title}
+                        </h2>
+                    )}
+                    {subtitle && (
+                        <div className="mt-3 flex items-center justify-center gap-2">
+                             <div className="h-[2px] w-4 bg-[#1E3A8A]/30"></div>
+                             <p className="text-[#1E3A8A] text-[10px] font-black uppercase tracking-[0.25em] leading-none">
+                                {subtitle}
+                            </p>
+                             <div className="h-[2px] w-4 bg-[#1E3A8A]/30"></div>
+                        </div>
+                    )}
+                </div>
+            </div>
+            <div className="absolute top-[10%] left-[8%] z-20 text-[#FDE047] opacity-60 drop-shadow-md transform -rotate-12">
+                <StarIcon className="w-8 h-8" />
+            </div>
+             <div className="absolute bottom-[10%] right-[8%] z-20 text-[#FDBA74] opacity-80 drop-shadow-md transform rotate-12">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+            </div>
+        </div>
+    );
+};
+
+const AestheticGourmetEleganceTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#121212] overflow-hidden">
+            <div className="relative h-1/2 w-full overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} className="scale-105 opacity-90 transition-opacity hover:opacity-100 duration-500" />
+                {!backgroundImage && (
+                    <div className="absolute inset-0 bg-slate-900 flex items-center justify-center text-slate-700 font-bold uppercase tracking-[0.3em] text-sm">Exquisite Main</div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/10"></div>
+            </div>
+
+            <div className="relative h-1/2 w-full overflow-hidden border-t-2 border-[#D4AF37]/30">
+                <BackgroundImage imageUrl={backgroundImage2} className="scale-105 opacity-90 transition-opacity hover:opacity-100 duration-500" />
+                {!backgroundImage2 && (
+                    <div className="absolute inset-0 bg-[#0f0f0f] flex items-center justify-center text-slate-800 font-bold uppercase tracking-[0.3em] text-xs">Elegant Side</div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+            </div>
+
+            <div className="absolute top-1/2 left-[10%] right-[10%] h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent z-20 -translate-y-1/2 shadow-[0_0_10px_rgba(212,175,55,0.5)]"></div>
+
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[88%] max-w-[92%]">
+                <div className="bg-[#121212]/90 backdrop-blur-md p-6 sm:p-10 border border-[#D4AF37]/40 shadow-[0_25px_50px_rgba(0,0,0,0.5)] text-center relative overflow-hidden">
+                    <div className="absolute top-2 left-2 text-[#D4AF37] opacity-40">
+                         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l3 9h9l-7 5 3 10-8-6-8 6 3-10-7-5h9z" /></svg>
+                    </div>
+                    <div className="absolute bottom-2 right-2 text-[#D4AF37] opacity-40">
+                         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0l3 9h9l-7 5 3 10-8-6-8 6 3-10-7-5h9z" /></svg>
+                    </div>
+
+                    {title && (
+                        <h2 
+                            className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-[#F9E79F] tracking-tight mb-4`} 
+                            style={{ wordBreak: 'break-word', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
+                        >
+                            {title}
+                        </h2>
+                    )}
+
+                    {subtitle && (
+                        <p className="text-[#F5F5DC]/70 text-[9px] font-bold uppercase tracking-[0.4em] leading-none italic">
+                            {subtitle}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {website && (
+                <div className="absolute bottom-6 right-8 z-40">
+                    <p className="text-[#D4AF37] text-[10px] font-bold tracking-[0.3em] uppercase italic opacity-80">
+                        {website}
+                    </p>
+                </div>
+            )}
+
+            <div className="absolute top-8 left-8 w-12 h-12 border-t-2 border-l-2 border-[#D4AF37]/20 z-10 pointer-events-none"></div>
+            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-[#D4AF37]/20 z-10 pointer-events-none"></div>
+        </div>
+    );
+};
+
+const AestheticFreshDuoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col relative font-poppins bg-[#E0F2F1] overflow-hidden">
+            <div className="relative h-1/2 w-full overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} className="scale-105" />
+                {!backgroundImage && (
+                    <div className="absolute inset-0 bg-[#B2DFDB] flex items-center justify-center text-teal-800/40 font-bold uppercase tracking-widest text-xs">Recipe Hero</div>
+                )}
+            </div>
+
+            <div className="relative h-1/2 w-full overflow-hidden border-t-4 border-white shadow-inner">
+                <BackgroundImage imageUrl={backgroundImage2} className="scale-105" />
+                {!backgroundImage2 && (
+                    <div className="absolute inset-0 bg-[#E0F2F1] flex items-center justify-center text-teal-700/30 font-bold uppercase tracking-widest text-xs">Recipe Duo</div>
+                )}
+            </div>
+
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[90%]">
+                <div className="bg-white/90 backdrop-blur-md p-6 sm:p-8 shadow-2xl rounded-sm border-t-4 border-[#FF7F50] text-center">
+                    {title && (
+                        <h2 
+                            className={`font-permanent-marker ${titleFontSize} leading-[1] text-[#004D40] tracking-tight mb-3`} 
+                            style={{ wordBreak: 'break-word', transform: 'rotate(-0.5deg)' }}
+                        >
+                            {title}
+                        </h2>
+                    )}
+
+                    {subtitle && (
+                        <p className="text-[#004D40]/60 text-[10px] font-black uppercase tracking-[0.3em] mb-1 leading-none italic">
+                            {subtitle}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40">
+                <div className="bg-[#FF7F50] text-white px-8 py-2.5 rounded-sm shadow-[0_5px_15px_rgba(255,127,80,0.4)] transform hover:scale-105 transition-transform cursor-pointer border-b-4 border-black/10">
+                    <p className="text-[11px] font-black tracking-[0.2em] uppercase whitespace-nowrap">
+                        GET THE RECIPE
+                    </p>
+                </div>
+            </div>
+
+            {website && (
+                <div className="absolute bottom-4 right-6 z-40 opacity-50">
+                    <p className="text-[#004D40] text-[9px] font-bold tracking-[0.4em] uppercase italic">
+                        {website}
+                    </p>
+                </div>
+            )}
+            
+            <div className="absolute top-6 left-6 w-16 h-16 rounded-full border-2 border-dashed border-[#FF7F50]/30 z-20 pointer-events-none"></div>
+            <div className="absolute bottom-[20%] right-[-5%] w-24 h-24 rounded-full bg-[#FFF176]/20 z-20 pointer-events-none blur-xl"></div>
+        </div>
+    );
+};
+
 const AestheticPastelDessertDuoTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     const { title, subtitle, website, backgroundImage, backgroundImage2 } = data;
     const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-3xl', 'text-4xl', 'text-5xl');
+    
     return (
-        <div className="w-full h-full flex flex-col relative font-poppins bg-[#FFF5F7]">
-            <div className="h-1/2 relative flex">
-                <div className="w-1/2 h-full relative border-r-4 border-white">
-                    <BackgroundImage imageUrl={backgroundImage} />
-                </div>
-                <div className="w-1/2 h-full relative">
-                    <BackgroundImage imageUrl={backgroundImage2} />
+        <div className="w-full h-full flex flex-col relative font-poppins overflow-hidden" style={{ background: 'linear-gradient(135deg, #E9D5FF 0%, #FCE7F3 100%)' }}>
+            <div className="relative h-1/2 w-full overflow-hidden">
+                <BackgroundImage imageUrl={backgroundImage} className="scale-105" />
+                {!backgroundImage && (
+                    <div className="absolute inset-0 bg-white/20 flex items-center justify-center text-[#4E443A]/40 font-bold uppercase tracking-widest text-xs">Dessert One</div>
+                )}
+            </div>
+
+            <div className="relative h-1/2 w-full overflow-hidden border-t-2 border-white/50">
+                <BackgroundImage imageUrl={backgroundImage2} className="scale-105" />
+                {!backgroundImage2 && (
+                    <div className="absolute inset-0 bg-white/10 flex items-center justify-center text-[#4E443A]/40 font-bold uppercase tracking-widest text-xs">Dessert Two</div>
+                )}
+            </div>
+
+            <div className="absolute top-1/2 left-[15%] right-[15%] h-[1px] bg-[#D4AF37]/40 z-20 -translate-y-1/2"></div>
+
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[88%]">
+                <div className="bg-white/95 backdrop-blur-md p-6 sm:p-8 shadow-xl rounded-sm border-l-4 border-[#D4AF37] text-center">
+                    {title && (
+                        <h2 className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-[#4E443A] tracking-tight mb-2`} style={{ wordBreak: 'break-word' }}>
+                            {title}
+                        </h2>
+                    )}
+                    {subtitle && (
+                        <p className="text-[#87A96B] text-[10px] font-black uppercase tracking-[0.35em] leading-none mb-1">
+                            {subtitle}
+                        </p>
+                    )}
                 </div>
             </div>
-            <div className="h-1/2 flex flex-col justify-center items-center p-8 text-center">
-                <div className="relative">
-                    <div className="absolute -top-6 -left-6 w-12 h-12 bg-pink-100 rounded-full -z-10 opacity-50"></div>
-                    {title && <h2 className={`font-playfair font-black ${titleFontSize} leading-[1.1] text-pink-900 tracking-tight mb-4`} style={{ wordBreak: 'break-word' }}>{title}</h2>}
+
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40">
+                <div className="bg-[#D4AF37] text-white px-8 py-2.5 rounded-sm shadow-lg transform hover:scale-105 transition-transform cursor-pointer border-b-2 border-black/10">
+                    <p className="text-[11px] font-black tracking-[0.2em] uppercase whitespace-nowrap">
+                        GET THE RECIPE
+                    </p>
                 </div>
-                {subtitle && <p className="text-pink-500/80 font-medium italic text-lg mb-6">{subtitle}</p>}
-                <div className="w-16 h-1 bg-pink-200 mb-6"></div>
-                {website && <p className="text-pink-300 text-[10px] font-bold tracking-[0.2em] uppercase">{website}</p>}
             </div>
+
+            {website && (
+                <div className="absolute bottom-4 right-6 z-40">
+                    <p className="text-[#D4AF37] text-[9px] font-bold tracking-[0.3em] uppercase italic">
+                        {website}
+                    </p>
+                </div>
+            )}
+
+            <div className="absolute top-6 right-6 w-12 h-12 rounded-full border border-white/40 z-20 pointer-events-none"></div>
+            <div className="absolute bottom-1/4 left-[-2rem] w-24 h-24 rounded-full bg-white/20 z-10 pointer-events-none blur-2xl"></div>
         </div>
     );
 };
@@ -1267,7 +1808,7 @@ const AestheticLuxuryMagazineDuoTemplate: React.FC<{ data: TemplateData }> = ({ 
         <div className="w-full h-full flex flex-col relative font-poppins overflow-hidden bg-gradient-to-br from-[#FFFDF0] to-[#FDF5E6]">
             {/* Top Half */}
             <div className="relative h-1/2 w-full overflow-hidden">
-                <BackgroundImage imageUrl={backgroundImage} className="scale-110 shadow-lg" />
+                <BackgroundImage imageUrl={backgroundImage} className="scale-110 shadow-lg brightness-105" />
                 {!backgroundImage && (
                     <div className="absolute inset-0 bg-[#043927]/10 flex items-center justify-center text-[#043927]/40 font-bold uppercase tracking-widest text-xs">Dish One</div>
                 )}
@@ -1374,10 +1915,24 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
             case '69': return <GreenGrungeTemplate data={data} />;
             case '70': return <SmoothieStyleTemplate data={data} />;
             case '71': return <BlueberrySmoothieTemplate data={data} />;
+            case '72': return <EarthyGreenSmoothieTemplate data={data} />;
+            case '73': return <OceanBlueSmoothieTemplate data={data} />;
+            case '74': return <SunsetOrangeSmoothieTemplate data={data} />;
+            case '75': return <ForestGreenSmoothieTemplate data={data} />;
+            case '76': return <LavenderDreamSmoothieTemplate data={data} />;
+            case '77': return <EarthyBrownSmoothieTemplate data={data} />;
+            case '78': return <UrbanGrungeTemplate data={data} />;
+            case '79': return <AestheticFoodRecipeTemplate data={data} />;
+            case '80': return <AestheticDualFoodTemplate data={data} />;
+            case '81': return <AestheticRecipeTwoImagesTemplate data={data} />;
+            case '82': return <AestheticFreshColorfulTemplate data={data} />;
+            case '83': return <AestheticWhimsicalKitchenTemplate data={data} />;
+            case '84': return <AestheticDuoFinishedDishTemplate data={data} />; 
+            case '85': return <AestheticDynamicDuoTemplate data={data} />;
             case '86': return <AestheticGourmetEleganceTemplate data={data} />;
             case '87': return <AestheticFreshDuoTemplate data={data} />;
             case '88': return <AestheticPastelDessertDuoTemplate data={data} />;
-            case '90': return <AestheticLuxuryMagazineDuoTemplate data={data} />; // New Template
+            case '90': return <AestheticLuxuryMagazineDuoTemplate data={data} />;
 
             default: return <ClassicTemplate data={data} />;
         }

@@ -314,7 +314,7 @@ const CANVAS_OPTIONS = {
 };
 
 export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, onFieldChange, onSetFalAiApiKey, falAiApiKey, openRouterApiKey, onSetOpenRouterApiKey, apiframeApiKey, onSetApiframeApiKey, midapiApiKey, onSetMidapiApiKey, imagineApiKey, onSetImagineApiKey, useapiApiKey, onSetUseapiApiKey }) => {
-    // FIX: Update templateCount and templateOptions to reflect only existing templates
+    // FIX: Update templateCount and templateOptions to reflect all templates (including restored 72-85 and 86-90)
     const templateIds = [
         ...Array.from({ length: 23 }, (_, i) => `${i + 1}`), // Templates 1-23
         ...Array.from({ length: 32 }, (_, i) => `${i + 59}`), // Templates 59-90
@@ -345,9 +345,7 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     const handleClearMidapiKey = () => { setMidapiApiKeyInput(''); onSetMidapiApiKey(''); };
     const handleSaveImagineKey = () => onSetImagineApiKey(imagineApiKeyInput.trim());
     const handleClearImagineKey = () => { setImagineApiKeyInput(''); onSetImagineApiKey(''); };
-    // FIX: Corrected casing for onSetUseapiApiKey
     const handleSaveUseapiKey = () => onSetUseapiApiKey(useapiApiKeyInput.trim());
-    // FIX: Corrected casing for onSetUseapiApiKey
     const handleClearUseapiKey = () => { setUseapiApiKeyInput(''); onSetUseapiApiKey(''); };
 
 
@@ -644,7 +642,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
         }
     };
 
-    // FIX: Update needsImage2 array to include templates 79-90
+    // FIX: Ensure all split-layout templates are accounted for in multi-image logic (restored missing ranges)
     const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90'].includes(data.templateId);
     const needsImage3 = ['7', '15', '19', '22'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
@@ -686,7 +684,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                         aria-label="Previous Row"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1-0 011.414 0z" clipRule="evenodd" />
                         </svg>
                     </button>
                     <span className="text-sm font-medium text-slate-800">
@@ -699,7 +697,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                         aria-label="Next Row"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1-0 01-1.414 0z" clipRule="evenodd" />
+                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1-0 01-1.414 0z" clipRule="evenodd" />
                         </svg>
                     </button>
                 </div>
