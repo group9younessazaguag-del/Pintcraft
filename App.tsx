@@ -19,15 +19,11 @@ import AssistantPage from './components/pages/AssistantPage';
 import HomePage from './components/pages/HomePage';
 import DNRaterPage from './components/pages/DNRaterPage';
 import AuthorPage from './components/pages/AuthorPage';
-// FIX: Change to named import for FacebookPostGeneratorPage
 import { FacebookPostGeneratorPage } from './components/pages/FacebookPostGeneratorPage';
-// FIX: Change to named import for QuoteGeneratorPage
 import { QuoteGeneratorPage } from './components/pages/QuoteGeneratorPage';
 import DescriptionRewritePage from './components/pages/DescriptionRewritePage';
-// FIX: Add named import for FacebookPageBuilderPage
 import { FacebookPageBuilderPage } from './components/pages/FacebookPageBuilderPage';
 
-// TypeScript declaration for the CDN-loaded libraries
 declare global {
   interface Window {
     htmlToImage: {
@@ -39,11 +35,9 @@ declare global {
 }
 
 const getCurrentPage = () => {
-  // Get hash, remove leading '#', remove leading/trailing slashes
   const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');
   return hash || 'pin-generator';
 };
-
 
 type PersistedData = Omit<TemplateData, 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3'>;
 
@@ -63,7 +57,7 @@ const initialPersistedData: PersistedData = {
     pinsPerDayMax: 5,
     startDate: new Date().toISOString().split('T')[0],
     imageModel: 'fal-ai/recraft/v3/text-to-image',
-    textModel: 'google/gemini-2.5-flash', // Default for OpenRouter
+    textModel: 'google/gemini-2.5-flash',
 };
 
 const initialImageData = {
@@ -84,28 +78,23 @@ const initialAdminSettings: AdminSettings = {
     contentPrompt: DEFAULT_CONTENT_PROMPT,
 };
 
-
 const App: React.FC = () => {
   const [persistedData, setPersistedData] = useLocalStorage<PersistedData>('templateData', initialPersistedData);
   const [imageData, setImageData] = useState(initialImageData);
   const templateData: TemplateData = { ...persistedData, ...imageData };
 
-  const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', ''); // For Fal.ai (images)
-  const [apiframeApiKey, setApiframeApiKey] = useLocalStorage('apiframeApiKey', ''); // For APIFrame.ai (Midjourney)
-  const [midapiApiKey, setMidapiApiKey] = useLocalStorage('midapiApiKey', ''); // For midapi.ai (Midjourney 2)
-  const [openRouterApiKey, setOpenRouterApiKey] = useLocalStorage('openRouterApiKey', ''); // For OpenRouter.ai (text)
-  const [imagineApiKey, setImagineApiKey] = useLocalStorage('imagineApiKey', ''); // For ImagineAPI
-  const [useapiApiKey, setUseapiApiKey] = useLocalStorage('useapiApiKey', ''); // For useapi.net
+  const [falAiApiKey, setFalAiApiKey] = useLocalStorage('falAiApiKey', '');
+  const [apiframeApiKey, setApiframeApiKey] = useLocalStorage('apiframeApiKey', '');
+  const [midapiApiKey, setMidapiApiKey] = useLocalStorage('midapiApiKey', '');
+  const [openRouterApiKey, setOpenRouterApiKey] = useLocalStorage('openRouterApiKey', '');
+  const [imagineApiKey, setImagineApiKey] = useLocalStorage('imagineApiKey', '');
+  const [useapiApiKey, setUseapiApiKey] = useLocalStorage('useapiApiKey', '');
 
-
-  // Admin and Analytics State
   const [adminSettings, setAdminSettings] = useLocalStorage<AdminSettings>('adminSettings', initialAdminSettings);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useLocalStorage<boolean>('isAdminLoggedIn', false);
   useAnalytics(adminSettings.analyticsId);
 
-  // Assistant Page State
   const [pinterestAccounts, setPinterestAccounts] = useLocalStorage<PinterestAccount[]>('pinterestAccounts', []);
-
 
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState<{ [key: number]: boolean }>({});
@@ -120,7 +109,6 @@ const App: React.FC = () => {
   const [currentRowIndex, setCurrentRowIndex] = useState<number | null>(null);
   const [apiError, setApiError] = useState<{ type: string; message: string; helpLink?: string } | null>(null);
   
-  // State for bulk generation
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
   const [bulkMessage, setBulkMessage] = useState('');
   const [originalCsvHeaders, setOriginalCsvHeaders] = useState<string[]>([]);
@@ -151,24 +139,16 @@ const App: React.FC = () => {
       handleResetBulkGeneration();
       setBulkMessage("Settings changed. Please start a new bulk generation.");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateData.templateId, templateData.pinSize, templateData.website, templateData.mediaUrlPrefix, csvData]);
-
+  }, [templateData.templateId, templateData.pinSize, templateData.website, templateData.mediaUrlPrefix, csvData, handleResetBulkGeneration]);
 
   useEffect(() => {
-    // This handles navigation via browser back/forward buttons and direct hash links
     const handleHashChange = () => {
         setPage(getCurrentPage());
         window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', handleHashChange);
-    
-    // Set the initial page based on the hash
     handleHashChange();
-
-    return () => {
-        window.removeEventListener('hashchange', handleHashChange);
-    };
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   useEffect(() => {
@@ -187,8 +167,7 @@ const App: React.FC = () => {
         backgroundImage3: null,
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentRowIndex, csvData]);
+  }, [currentRowIndex, csvData, setPersistedData]);
 
   const handleFieldChange = (field: keyof TemplateData, value: any) => {
     if (apiError) setApiError(null);
@@ -224,22 +203,17 @@ const App: React.FC = () => {
                 resolve();
             } else {
                 img.onload = () => resolve();
-                img.onerror = () => resolve(); // Resolve even on error to prevent hanging
+                img.onerror = () => resolve();
             }
         });
   };
 
   const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
-    // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
-    
     if (!userPrompt && currentRowIndex !== null && csvData[currentRowIndex]) {
-         // Prioritize CSV data over state to avoid race conditions
          userPrompt = csvData[currentRowIndex].title;
     }
-    
     if (!userPrompt) userPrompt = templateData.title;
-
     if (!userPrompt) {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
@@ -249,56 +223,32 @@ const App: React.FC = () => {
 
     setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: true }));
     setApiError(null);
-
-    const apiKey = falAiApiKey; // Use Fal.ai key for image generation
+    const apiKey = falAiApiKey;
     const aspectRatio = templateData.imageAspectRatio;
 
     try {
         let imageUrl: string;
         if (apiKey && apiKey.length > 5) {
-            // Use Fal.ai generation if key is available
-            imageUrl = await generateImage(
-                apiKey,
-                templateData.imageModel,
-                userPrompt,
-                aspectRatio
-            );
+            imageUrl = await generateImage(apiKey, templateData.imageModel, userPrompt, aspectRatio);
         } else {
-            // Fallback to placeholder generation
-            imageUrl = await generatePlaceholderImage(
-                userPrompt,
-                aspectRatio
-            );
+            imageUrl = await generatePlaceholderImage(userPrompt, aspectRatio);
         }
-        
         const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
         setImageData(prev => ({ ...prev, [field]: imageUrl }));
     } catch (error: any) {
-        console.error(`Error generating image:`, error);
-        if (throwOnError) {
-            throw error; // Re-throw for bulk processor
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate image.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
     }
   };
 
   const handleGenerateImageWithMidjourney = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
-    // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
-    
     if (!userPrompt && currentRowIndex !== null && csvData[currentRowIndex]) {
-         // Prioritize CSV data over state to avoid race conditions
          userPrompt = csvData[currentRowIndex].title;
     }
-    
     if (!userPrompt) userPrompt = templateData.title;
-
     if (!userPrompt) {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
@@ -316,16 +266,8 @@ const App: React.FC = () => {
     setIsGeneratingMidjourneyImage({ 1: true, 2: true, 3: true });
     setApiError(null);
 
-    const aspectRatio = templateData.imageAspectRatio;
-
     try {
-        const imageUrls = await generateImageWithMidjourney(
-            apiframeApiKey,
-            userPrompt,
-            aspectRatio
-        );
-        
-        // Populate up to 3 image slots from the returned array
+        const imageUrls = await generateImageWithMidjourney(apiframeApiKey, userPrompt, templateData.imageAspectRatio);
         setImageData(prev => ({
             ...prev,
             backgroundImage: imageUrls[0] || prev.backgroundImage,
@@ -333,58 +275,35 @@ const App: React.FC = () => {
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
     } catch (error: any) {
-        console.error(`Error generating image with Midjourney:`, error);
-        if (throwOnError) {
-            throw error; // Re-throw for bulk processor
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image with Midjourney.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate image with Midjourney.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingMidjourneyImage({ 1: false, 2: false, 3: false });
     }
   };
 
   const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
-    // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
-    
     if (!userPrompt && currentRowIndex !== null && csvData[currentRowIndex]) {
          userPrompt = csvData[currentRowIndex].title;
     }
-    
     if (!userPrompt) userPrompt = templateData.title;
-
     if (!userPrompt) {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
     }
-
     if (!midapiApiKey || midapiApiKey.length < 5) {
         const msg = 'Please enter a midapi.ai API key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
     }
-
     setIsGeneratingMidjourney2Image({ 1: true, 2: true, 3: true });
     setApiError(null);
-
-    const aspectRatio = templateData.imageAspectRatio;
-
     try {
-        const imageUrls = await generateImageWithMidApiAi(
-            midapiApiKey,
-            userPrompt,
-            aspectRatio,
-            onProgressUpdate
-        );
-        
-        // Populate up to 3 image slots from the returned array
+        const imageUrls = await generateImageWithMidApiAi(midapiApiKey, userPrompt, templateData.imageAspectRatio, onProgressUpdate);
         setImageData(prev => ({
             ...prev,
             backgroundImage: imageUrls[0] || prev.backgroundImage,
@@ -392,58 +311,35 @@ const App: React.FC = () => {
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
     } catch (error: any) {
-        console.error(`Error generating image with midapi.ai:`, error);
-        if (throwOnError) {
-            throw error; // Re-throw for bulk processor
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image with midapi.ai.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate image with midapi.ai.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingMidjourney2Image({ 1: false, 2: false, 3: false });
     }
   };
 
   const handleGenerateImageWithImagineApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
-    // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
-    
     if (!userPrompt && currentRowIndex !== null && csvData[currentRowIndex]) {
          userPrompt = csvData[currentRowIndex].title;
     }
-    
     if (!userPrompt) userPrompt = templateData.title;
-
     if (!userPrompt) {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
     }
-
     if (!imagineApiKey || imagineApiKey.length < 5) {
         const msg = 'Please enter an ImagineAPI key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
     }
-
     setIsGeneratingImagineImage({ 1: true, 2: true, 3: true });
     setApiError(null);
-
-    const aspectRatio = templateData.imageAspectRatio;
-
     try {
-        const imageUrls = await generateImageWithImagineApi(
-            imagineApiKey,
-            userPrompt,
-            aspectRatio,
-            onProgressUpdate
-        );
-        
-        // Populate up to 3 image slots from the returned array
+        const imageUrls = await generateImageWithImagineApi(imagineApiKey, userPrompt, templateData.imageAspectRatio, onProgressUpdate);
         setImageData(prev => ({
             ...prev,
             backgroundImage: imageUrls[0] || prev.backgroundImage,
@@ -451,58 +347,35 @@ const App: React.FC = () => {
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
     } catch (error: any) {
-        console.error(`Error generating image with ImagineAPI:`, error);
-        if (throwOnError) {
-            throw error; // Re-throw for bulk processor
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image with ImagineAPI.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate image with ImagineAPI.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingImagineImage({ 1: false, 2: false, 3: false });
     }
   };
 
   const handleGenerateImageWithUseApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
-    // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
-    
     if (!userPrompt && currentRowIndex !== null && csvData[currentRowIndex]) {
          userPrompt = csvData[currentRowIndex].title;
     }
-    
     if (!userPrompt) userPrompt = templateData.title;
-
     if (!userPrompt) {
         const msg = 'Please enter a Title to generate an image.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
     }
-
     if (!useapiApiKey || useapiApiKey.length < 5) {
         const msg = 'Please enter a useapi.net API key in the AI Configuration settings to use this generator.';
         if (throwOnError) throw new Error(msg);
         setApiError({ type: 'generic', message: msg });
         return;
     }
-
     setIsGeneratingUseApiImage({ 1: true, 2: true, 3: true });
     setApiError(null);
-
-    const aspectRatio = templateData.imageAspectRatio;
-
     try {
-        const imageUrls = await generateImageWithUseApi(
-            useapiApiKey,
-            userPrompt,
-            aspectRatio,
-            onProgressUpdate
-        );
-        
-        // Populate up to 3 image slots from the returned array
+        const imageUrls = await generateImageWithUseApi(useapiApiKey, userPrompt, templateData.imageAspectRatio, onProgressUpdate);
         setImageData(prev => ({
             ...prev,
             backgroundImage: imageUrls[0] || prev.backgroundImage,
@@ -510,15 +383,8 @@ const App: React.FC = () => {
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
         }));
     } catch (error: any) {
-        console.error(`Error generating image with useapi.net:`, error);
-        if (throwOnError) {
-            throw error; // Re-throw for bulk processor
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image with useapi.net.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate image with useapi.net.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingUseApiImage({ 1: false, 2: false, 3: false });
     }
@@ -532,10 +398,8 @@ const App: React.FC = () => {
         setApiError({ type: 'generic', message: msg });
         return;
     }
-
     setIsGeneratingDescription(true);
     setApiError(null);
-
     try {
         let newDescription: string;
         if (openRouterApiKey) {
@@ -545,15 +409,8 @@ const App: React.FC = () => {
         }
         handleFieldChange('description', newDescription);
     } catch (error: any) {
-        console.error(`Error generating description:`, error);
-        if (throwOnError) {
-            throw error;
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate description.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate description.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingDescription(false);
     }
@@ -567,10 +424,8 @@ const App: React.FC = () => {
         setApiError({ type: 'generic', message: msg });
         return;
     }
-
     setIsGeneratingKeywords(true);
     setApiError(null);
-
     try {
         let newKeywords: string;
         if (openRouterApiKey) {
@@ -580,60 +435,44 @@ const App: React.FC = () => {
         }
         handleFieldChange('keywords', newKeywords);
     } catch (error: any) {
-        console.error(`Error generating keywords:`, error);
-        if (throwOnError) {
-            throw error;
-        }
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate keywords.',
-            helpLink: error.helpLink
-        });
+        if (throwOnError) throw error;
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to generate keywords.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingKeywords(false);
     }
-};
+  };
 
-const handleGenerateShortTitle = async (): Promise<void> => {
+  const handleGenerateShortTitle = async (): Promise<void> => {
     const title = templateData.title;
     if (!title) {
         setApiError({ type: 'generic', message: 'Please enter a Title first.' });
         return;
     }
-
     setIsGeneratingShortTitle(true);
     setApiError(null);
-
     try {
         let newTitle: string;
         if (openRouterApiKey) {
             newTitle = await generateShortTitle(openRouterApiKey, templateData.textModel, title);
         } else {
-            // Fallback for when no API key is present
             newTitle = title.length > 35 ? title.substring(0, 32) + '...' : title;
         }
         handleFieldChange('title', newTitle);
     } catch (error: any) {
-        console.error(`Error generating short title:`, error);
-        setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to shorten title.',
-            helpLink: error.helpLink
-        });
+        setApiError({ type: error.type || 'generic', message: error.message || 'Failed to shorten title.', helpLink: error.helpLink });
     } finally {
         setIsGeneratingShortTitle(false);
     }
-};
+  };
 
   const handleDownload = useCallback(() => {
     if (previewRef.current === null) return;
     setIsLoading(true);
-
     window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2, fetchRequestInit: { mode: 'cors' }})
       .then((dataUrl) => {
         const link = document.createElement('a');
         const safeTitle = templateData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const fileName = currentRowIndex !== null ? `pin_${currentRowIndex + 1}_${safeTitle}.png` : 'pinterest-pin.png';
+        const fileName = safeTitle ? `${safeTitle}.png` : 'pinterest-pin.png';
         link.download = fileName;
         link.href = dataUrl;
         link.click();
@@ -643,7 +482,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         setApiError({ type: 'generic', message: 'Could not generate image. Please try again.'});
       })
       .finally(() => setIsLoading(false));
-  }, [previewRef, templateData.title, currentRowIndex]);
+  }, [previewRef, templateData.title]);
 
   const parseCsvLine = (line: string): string[] => {
     const result: string[] = [];
@@ -679,10 +518,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         setApiError({ type: 'generic', message: "CSV must have a header row and at least one data row."});
         return;
       }
-
       const headers = parseCsvLine(lines[0]).map(h => h.trim());
       setOriginalCsvHeaders(headers);
-      
       const headerMap: { [key: string]: { original: string; index: number } } = {};
       headers.forEach((h, i) => {
         const lowerH = h.toLowerCase().trim();
@@ -692,13 +529,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         if (lowerH.includes('prompt')) headerMap['imagePrompt'] = { original: h, index: i };
         if (lowerH.includes('board')) headerMap['board'] = { original: h, index: i };
       });
-
-
       if (!headerMap['title']) {
         setApiError({ type: 'generic', message: "CSV must contain a column with 'Title' in its header."});
         return;
       }
-
       const fullData = lines.slice(1).map(line => {
         const values = parseCsvLine(line);
         const rowObject: { [key: string]: string } = {};
@@ -707,10 +541,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         });
         return rowObject;
       });
-
       const simpleData: CsvRow[] = fullData.map(row => {
           const title = row[headerMap['title'].original] || '';
-          
           return {
               title: title,
               website: '',
@@ -720,7 +552,6 @@ const handleGenerateShortTitle = async (): Promise<void> => {
               imagePrompt: headerMap['imagePrompt'] ? row[headerMap['imagePrompt'].original] || '' : '',
           };
       });
-      
       setFullCsvData(fullData);
       setCsvData(simpleData);
       setCurrentRowIndex(simpleData.length > 0 ? 0 : null);
@@ -736,7 +567,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex + 1);
+      setCurrentRowIndex(currentRowIndex - 1);
     }
   };
 
@@ -747,131 +578,75 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       setApiError({ type: 'generic', message: 'Please upload a CSV file first.'});
       return;
     }
-
     const orApiKey = openRouterApiKey;
-    const falApiKey = falAiApiKey;
-    const mjApiKey = apiframeApiKey;
-    const mj2ApiKey = midapiApiKey;
-    const imgApiKey = imagineApiKey;
-    const useApiKey = useapiApiKey;
-
-    if (!orApiKey) {
-        if (!window.confirm("You are missing an OpenRouter API key. Only basic placeholder text will be created. Do you want to continue?")) {
-            return;
-        }
-    }
-
-    if (imageGenerator === 'fal' && !falApiKey) {
-        if (!window.confirm("You are missing a Fal.ai API key. Only basic placeholder images will be created. Do you want to continue?")) {
-            return;
-        }
-    }
-    
-    if (imageGenerator === 'midjourney' && !mjApiKey) {
-        if (!window.confirm("You are missing an APIFrame.ai API key for Midjourney. No images will be generated. Do you want to continue?")) {
-            return;
-        }
-    }
-
-    if (imageGenerator === 'midjourney2' && !mj2ApiKey) {
-        if (!window.confirm("You are missing a midapi.ai API key. No images will be generated. Do you want to continue?")) {
-            return;
-        }
-    }
-    
-    if (imageGenerator === 'imagine' && !imgApiKey) {
-        if (!window.confirm("You are missing an ImagineAPI key. No images will be generated. Do you want to continue?")) {
-            return;
-        }
-    }
-
-    if (imageGenerator === 'useapi' && !useApiKey) {
-        if (!window.confirm("You are missing a useapi.net API key. No images will be generated. Do you want to continue?")) {
-            return;
-        }
-    }
+    if (!orApiKey && !window.confirm("You are missing an OpenRouter API key. Only basic placeholder text will be created. Continue?")) return;
+    if (imageGenerator === 'fal' && !falAiApiKey && !window.confirm("You are missing a Fal.ai key. Only placeholders will be created. Continue?")) return;
+    if (imageGenerator === 'midjourney' && !apiframeApiKey && !window.confirm("You are missing an APIFrame.ai key. No images will be generated. Continue?")) return;
+    if (imageGenerator === 'midjourney2' && !midapiApiKey && !window.confirm("You are missing a midapi.ai key. No images will be generated. Continue?")) return;
+    if (imageGenerator === 'imagine' && !imagineApiKey && !window.confirm("You are missing an ImagineAPI key. No images will be generated. Continue?")) return;
+    if (imageGenerator === 'useapi' && !useapiApiKey && !window.confirm("You are missing a useapi.net key. No images will be generated. Continue?")) return;
 
     const dataForGeneration = [...csvData];
     const fullDataForGeneration = JSON.parse(JSON.stringify(fullCsvData));
     const generationErrors: string[] = [];
-    
     setIsBulkGenerating(true);
     const startIndex = resume && lastCompletedRowIndex !== null ? lastCompletedRowIndex + 1 : 0;
     
     let currentRunCsvData;
-
     if (startIndex === 0) {
         setBulkMessage('Starting bulk generation...');
         zipRef.current = new window.JSZip();
         setInProgressCsvData(fullDataForGeneration);
         setLastCompletedRowIndex(null);
-        if (!resume) {
-          setBulkJobType(imageGenerator);
-        }
-        currentRunCsvData = fullDataForGeneration; // Use the snapshot directly for this run
+        if (!resume) setBulkJobType(imageGenerator);
+        currentRunCsvData = fullDataForGeneration;
     } else {
         setBulkMessage(`Resuming from row ${startIndex + 1}...`);
-        currentRunCsvData = [...inProgressCsvData]; // For a resumed run, we MUST use the state
+        currentRunCsvData = [...inProgressCsvData];
     }
-
     const zip = zipRef.current;
     
     const { pinsPerDay, startDate, useRandomPinsPerDay, pinsPerDayMin, pinsPerDayMax } = templateData;
     const pinsPerDayNum = Math.max(1, parseInt(pinsPerDay.toString(), 10) || 1);
     const minPins = Math.max(1, parseInt(pinsPerDayMin.toString(), 10) || 1);
     const maxPins = Math.max(minPins, parseInt(pinsPerDayMax.toString(), 10) || 1);
-
     const start = new Date(startDate);
     if (isNaN(start.getTime())) {
-        setApiError({ type: 'generic', message: 'Invalid start date. Please select a valid date.'});
+        setApiError({ type: 'generic', message: 'Invalid start date.'});
         setIsBulkGenerating(false);
         return;
     }
     start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
-
     const mediaUrlHeaderKey = 'Media URL';
     const publishDateHeaderKey = 'Publish date';
     const descriptionHeaderKey = Object.keys(currentRunCsvData[0] || {}).find(k => k.toLowerCase().trim() === 'description') || 'Description';
     const keywordsHeaderKey = Object.keys(currentRunCsvData[0] || {}).find(k => k.toLowerCase().trim() === 'keywords' || k.toLowerCase().trim() === 'interest used') || 'Keywords';
 
-    // Pre-calculate scheduling for ALL rows to ensure consistency, even if we only process from startIndex
     const schedule: { date: string }[] = [];
     let currentDate = new Date(start);
     let currentDayPinCount = 0;
-    let targetPinsForDay = useRandomPinsPerDay 
-        ? Math.floor(Math.random() * (maxPins - minPins + 1)) + minPins
-        : pinsPerDayNum;
+    let targetPinsForDay = useRandomPinsPerDay ? Math.floor(Math.random() * (maxPins - minPins + 1)) + minPins : pinsPerDayNum;
 
     for (let k = 0; k < dataForGeneration.length; k++) {
         const startHour = 9;
-        const endHour = 17;
-        const totalHoursInWindow = endHour - startHour;
-        
-        // Calculate time based on the specific count for THIS day
+        const totalHoursInWindow = 8;
         const hourIncrement = targetPinsForDay > 1 ? totalHoursInWindow / (targetPinsForDay - 1) : 0;
         const publishHourFloat = startHour + (currentDayPinCount * hourIncrement);
-        
         const publishDate = new Date(currentDate);
         const publishHour = Math.floor(publishHourFloat);
         const publishMinute = Math.round((publishHourFloat - publishHour) * 60);
-        
         publishDate.setHours(publishHour, publishMinute, 0, 0);
-        
         const year = publishDate.getFullYear();
         const month = (publishDate.getMonth() + 1).toString().padStart(2, '0');
         const day = publishDate.getDate().toString().padStart(2, '0');
         const hourStr = publishDate.getHours().toString().padStart(2, '0');
         const minuteStr = publishDate.getMinutes().toString().padStart(2, '0');
-        
         schedule.push({ date: `${year}-${month}-${day} ${hourStr}:${minuteStr}:00` });
-
         currentDayPinCount++;
         if (currentDayPinCount >= targetPinsForDay) {
             currentDate.setDate(currentDate.getDate() + 1);
             currentDayPinCount = 0;
-            targetPinsForDay = useRandomPinsPerDay 
-                ? Math.floor(Math.random() * (maxPins - minPins + 1)) + minPins
-                : pinsPerDayNum;
+            targetPinsForDay = useRandomPinsPerDay ? Math.floor(Math.random() * (maxPins - minPins + 1)) + minPins : pinsPerDayNum;
         }
     }
 
@@ -882,241 +657,105 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             setBulkMessage(`Processing row ${i + 1} of ${dataForGeneration.length}: ${currentData.title}`);
             setCurrentRowIndex(i);
             await sleep(100);
-
-            if (!currentRunCsvData[i]) {
-                throw new Error(`Data mismatch error at row ${i + 1}. Please restart the bulk generation.`);
-            }
+            if (!currentRunCsvData[i]) throw new Error(`Data mismatch at row ${i + 1}.`);
             
-            // Generate description if missing
             if (!currentRunCsvData[i][descriptionHeaderKey]) {
-                setBulkMessage(`Row ${i + 1}: Generating description...`);
                 try {
-                    let description: string;
-                    if (orApiKey) {
-                        description = await generateDescription(orApiKey, templateData.textModel, currentData.title);
-                    } else {
-                        description = generatePlaceholderDescription(currentData.title);
-                    }
+                    let description = orApiKey ? await generateDescription(orApiKey, templateData.textModel, currentData.title) : generatePlaceholderDescription(currentData.title);
                     currentRunCsvData[i][descriptionHeaderKey] = description;
                 } catch (error: any) {
-                    console.warn(`Skipping description for row ${i + 1} due to error:`, error);
                     if (error.type === 'quota') throw error;
                     generationErrors.push(`Row ${i + 1}: Failed description - ${error.message}`);
                 }
             }
-
-            // Generate keywords if missing
             if (!currentRunCsvData[i][keywordsHeaderKey]) {
-                setBulkMessage(`Row ${i + 1}: Generating keywords...`);
                 try {
-                    let keywords: string;
-                    if (orApiKey) {
-                        keywords = await generateKeywords(orApiKey, templateData.textModel, currentData.title);
-                    } else {
-                        keywords = generatePlaceholderKeywords(currentData.title);
-                    }
+                    let keywords = orApiKey ? await generateKeywords(orApiKey, templateData.textModel, currentData.title) : generatePlaceholderKeywords(currentData.title);
                     currentRunCsvData[i][keywordsHeaderKey] = keywords;
                 } catch (error: any) {
-                    console.warn(`Skipping keywords for row ${i + 1} due to error:`, error);
                     if (error.type === 'quota') throw error;
                     generationErrors.push(`Row ${i + 1}: Failed keywords - ${error.message}`);
                 }
             }
 
-            const generatorName = imageGenerator === 'midjourney' ? 'Midjourney' : imageGenerator === 'midjourney2' ? 'midapi.ai' : imageGenerator === 'imagine' ? 'ImagineAPI' : imageGenerator === 'useapi' ? 'useapi.net' : 'Fal.ai';
-            setBulkMessage(`Row ${i + 1}: Generating images with ${generatorName}...`);
-
             const prompt = currentData.title;
             let imageGenerated = false;
-
             if (prompt) {
                 try {
-                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(templateData.templateId);
-                    const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
-                    const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
-                    
-                    // Determine if we should use batch processing (call API once) or loop (call API multiple times)
+                    const multiImageTemplates = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90'];
+                    const tripleImageTemplates = ['7', '15', '19', '22'];
+                    const imagesNeeded = 1 + (multiImageTemplates.includes(templateData.templateId) ? 1 : 0) + (tripleImageTemplates.includes(templateData.templateId) ? 1 : 0);
                     const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
 
                     if (isMultiImageGenerator) {
-                        // For batch generators, call ONCE. The handler functions populate all image slots.
-                        if (imageGenerator === 'midjourney' && mjApiKey) {
-                            await handleGenerateImageWithMidjourney(1, true, prompt);
-                            await sleep(500);
-                        } else if (imageGenerator === 'midjourney2' && mj2ApiKey) {
-                            const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            await handleGenerateImageWithMidApiAi(1, true, prompt, onProgress);
-                            await sleep(500);
-                        } else if (imageGenerator === 'imagine' && imgApiKey) {
-                            const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            await handleGenerateImageWithImagineApi(1, true, prompt, onProgress);
-                            await sleep(500);
-                        } else if (imageGenerator === 'useapi' && useApiKey) {
-                            const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`);
-                            await handleGenerateImageWithUseApi(1, true, prompt, onProgress);
-                            await sleep(500);
-                        }
+                        if (imageGenerator === 'midjourney' && apiframeApiKey) await handleGenerateImageWithMidjourney(1, true, prompt);
+                        else if (imageGenerator === 'midjourney2' && midapiApiKey) await handleGenerateImageWithMidApiAi(1, true, prompt);
+                        else if (imageGenerator === 'imagine' && imagineApiKey) await handleGenerateImageWithImagineApi(1, true, prompt);
+                        else if (imageGenerator === 'useapi' && useapiApiKey) await handleGenerateImageWithUseApi(1, true, prompt);
                     } else {
-                        // For single image generators (Fal.ai, or placeholder), loop through required slots
                         for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
                             await handleGenerateImage(imgIdx as 1 | 2 | 3, true, prompt);
                         }
                     }
-                    
                     imageGenerated = true;
-
                 } catch (error: any) {
-                    console.warn(`Original image generation failed for row ${i + 1}:`, error);
-                    if (error.type === 'quota') {
-                        throw error; // Re-throw critical quota errors
-                    }
-                    
-                    const isBannedWordsError = error.message && error.message.toLowerCase().includes('banned words');
-
-                    if (isBannedWordsError && orApiKey) {
-                        setBulkMessage(`Row ${i + 1}: Banned words detected. Regenerating prompt...`);
-                        await sleep(100);
-
-                        try {
-                            const newPrompt = await generateSafeImagePrompt(orApiKey, templateData.textModel, currentData.title);
-                            setBulkMessage(`Row ${i + 1}: Retrying with new prompt...`);
-                            
-                            const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(templateData.templateId);
-                            const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
-                            const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
-                            const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
-
-                            if (isMultiImageGenerator) {
-                                // Batch retry
-                                if (imageGenerator === 'midjourney' && mjApiKey) { await handleGenerateImageWithMidjourney(1, true, newPrompt); await sleep(500); }
-                                else if (imageGenerator === 'midjourney2' && mj2ApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithMidApiAi(1, true, newPrompt, onProgress); await sleep(500); }
-                                else if (imageGenerator === 'imagine' && imgApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithImagineApi(1, true, newPrompt, onProgress); await sleep(500); }
-                                else if (imageGenerator === 'useapi' && useApiKey) { const onProgress = (msg: string) => setBulkMessage(`Row ${i + 1}: ${msg}`); await handleGenerateImageWithUseApi(1, true, newPrompt, onProgress); await sleep(500); }
-                            } else {
-                                // Single loop retry
-                                for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
-                                    await handleGenerateImage(imgIdx as 1 | 2 | 3, true, newPrompt);
-                                }
-                            }
-                            
-                            imageGenerated = true;
-                            console.log(`Row ${i + 1}: Image generation succeeded on retry.`);
-
-                        } catch (retryError: any) {
-                             console.warn(`Retry failed for row ${i + 1}:`, retryError);
-                             const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
-                             generationErrors.push(`Row ${i + 1} (${shortTitle}): Banned words, retry failed: ${retryError.message}`);
-                             imageGenerated = false;
-                        }
-                    } else {
-                        const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
-                        generationErrors.push(`Row ${i + 1} (${shortTitle}): ${error.message}`);
-                        imageGenerated = false;
-                    }
+                    if (error.type === 'quota') throw error;
+                    generationErrors.push(`Row ${i + 1}: Image error - ${error.message}`);
+                    imageGenerated = false;
                 }
             }
 
-            await sleep(2000); // Wait for rendering
-            
-            // Explicitly wait for images to load to prevent blank pins
-            const { backgroundImage, backgroundImage2, backgroundImage3 } = imageData; // Get LATEST state
-            await waitForImageLoad(backgroundImage);
-            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(templateData.templateId)) {
-                await waitForImageLoad(backgroundImage2);
-            }
-            if (['7', '15', '19', '22'].includes(templateData.templateId)) {
-                await waitForImageLoad(backgroundImage3);
-            }
+            await sleep(2000);
+            await waitForImageLoad(imageData.backgroundImage);
+            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90'].includes(templateData.templateId)) await waitForImageLoad(imageData.backgroundImage2);
+            if (['7', '15', '19', '22'].includes(templateData.templateId)) await waitForImageLoad(imageData.backgroundImage3);
 
             if (imageGenerated && previewRef.current) {
                 const dataUrl = await window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2, fetchRequestInit: { mode: 'cors' }});
-                const safeTitle = currentData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                const filename = `pin_${i + 1}_${safeTitle}.png`;
+                const safeTitle = currentData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'unnamed';
+                
+                let filename = `${safeTitle}.png`;
+                let counter = 1;
+                while (zip.file(filename)) {
+                    filename = `${safeTitle}_${counter}.png`;
+                    counter++;
+                }
 
                 const base64Data = dataUrl.substring(dataUrl.indexOf(',') + 1);
                 zip.file(filename, base64Data, { base64: true });
-
                 const prefix = templateData.mediaUrlPrefix.endsWith('/') ? templateData.mediaUrlPrefix : `${templateData.mediaUrlPrefix}/`;
-                const imageUrl = `${prefix}${filename}`;
-                currentRunCsvData[i][mediaUrlHeaderKey] = imageUrl;
+                currentRunCsvData[i][mediaUrlHeaderKey] = `${prefix}${filename}`;
             }
-
-            // Assign pre-calculated date
             currentRunCsvData[i][publishDateHeaderKey] = schedule[i] ? schedule[i].date : '';
-            
             setInProgressCsvData([...currentRunCsvData]);
             setLastCompletedRowIndex(i);
             await sleep(100);
         }
-
-        let finalMessage = 'Generation complete! Your files are ready to download.';
-        if (generationErrors.length > 0) {
-            finalMessage = `Generation completed with ${generationErrors.length} error(s). Some content may be missing. Files are ready.`;
-            const errorDetails = `Bulk generation finished, but some rows had issues:\n\n${generationErrors.slice(0, 5).join('\n')}${generationErrors.length > 5 ? `\n...and ${generationErrors.length - 5} more.` : ''}`;
-            setApiError({ type: 'generic', message: errorDetails });
-        } else {
-            setApiError(null);
-        }
-
-        setBulkMessage(finalMessage);
-        
+        setBulkMessage('Generation complete! Files ready to download.');
         const outputHeaders = ['Title', 'Media URL', 'Pinterest board', 'Description', 'Link', 'Publish date', 'Keywords'];
-
-        const getOriginalHeader = (canonicalName: string): string | undefined => {
-            const lowerCanonical = canonicalName.toLowerCase();
-            return originalCsvHeaders.find(h => {
-                const lowerH = h.toLowerCase().trim();
-                if (lowerCanonical === 'title') return lowerH.startsWith('title');
-                if (lowerCanonical === 'pinterest board') return lowerH === 'pinterest board' || lowerH === 'board';
-                if (lowerCanonical === 'link') return lowerH === 'link' || lowerH === 'website' || lowerH === 'site';
-                return lowerH === lowerCanonical;
-            });
-        };
-        
-        const escapeCsvCell = (cell: any): string => {
-            const value = cell ? String(cell) : '';
-            if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
-                return `"${value.replace(/"/g, '""')}"`;
-            }
-            return value;
-        };
-        
         const csvHeaderString = outputHeaders.join(',');
         const csvRowStrings = currentRunCsvData.map(row => {
-            const values = outputHeaders.map(header => {
+            return outputHeaders.map(header => {
                 let value = '';
                 if (header === 'Media URL') value = row[mediaUrlHeaderKey] || '';
                 else if (header === 'Publish date') value = row[publishDateHeaderKey] || '';
                 else if (header === 'Link') value = templateData.website;
                 else if (header === 'Keywords') value = row[keywordsHeaderKey] || '';
                 else {
-                    const originalHeader = getOriginalHeader(header);
-                    if (originalHeader) value = row[originalHeader] || '';
+                    const origH = originalCsvHeaders.find(h => h.toLowerCase().trim().includes(header.toLowerCase()));
+                    if (origH) value = row[origH] || '';
                 }
-                return escapeCsvCell(value);
-            });
-            return values.join(',');
+                const cell = String(value);
+                return (cell.includes(',') || cell.includes('"') || cell.includes('\n')) ? `"${cell.replace(/"/g, '""')}"` : cell;
+            }).join(',');
         });
-
-        const csvString = [csvHeaderString, ...csvRowStrings].join('\r\n');
-        const csvBlob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' });
+        const csvBlob = new Blob(['\uFEFF' + [csvHeaderString, ...csvRowStrings].join('\r\n')], { type: 'text/csv;charset=utf-8;' });
         const zipContent = await zip.generateAsync({ type: 'blob' });
-
         setGeneratedAssets({ zip: zipContent, csv: csvBlob });
-
     } catch (e: any) {
         console.error('Bulk generation failed:', e);
-        const rowIndex = i + 1;
-        
-        let message: string;
-        if (e.type === 'quota') {
-            message = `API Quota Exceeded on row ${rowIndex}. Bulk generation has been paused.`;
-        } else {
-            message = `An error occurred on row ${rowIndex}: ${e.message}. Bulk generation stopped.`;
-        }
-        
-        setApiError({ type: e.type || 'generic', message: message, helpLink: e.helpLink });
-        setBulkMessage(message);
+        setApiError({ type: e.type || 'generic', message: `Error on row ${i + 1}: ${e.message}`, helpLink: e.helpLink });
+        setBulkMessage(`Error on row ${i + 1}: ${e.message}`);
     } finally {
         setIsBulkGenerating(false);
     }
@@ -1124,193 +763,66 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handleDownloadGeneratedAssets = () => {
     if (!generatedAssets) return;
-
     const zipLink = document.createElement('a');
     zipLink.href = URL.createObjectURL(generatedAssets.zip);
     zipLink.download = 'pinterest_pins.zip';
-    document.body.appendChild(zipLink);
     zipLink.click();
-    document.body.removeChild(zipLink);
-    URL.revokeObjectURL(zipLink.href);
-
     const csvLink = document.createElement('a');
     csvLink.href = URL.createObjectURL(generatedAssets.csv);
-    csvLink.setAttribute('download', 'pinterest_bulk_with_media_urls.csv');
-    document.body.appendChild(csvLink);
+    csvLink.download = 'pinterest_bulk_upload.csv';
     csvLink.click();
-    document.body.removeChild(csvLink);
-    URL.revokeObjectURL(csvLink.href);
-
     handleResetBulkGeneration();
   };
   
   const handleImportSettings = (data: BackupData) => {
-    if (data.adminSettings) {
-        setAdminSettings(data.adminSettings);
-    }
-    // Only import OpenRouter API key, others are image specific
-    if (typeof data.openRouterApiKey === 'string') {
-        setOpenRouterApiKey(data.openRouterApiKey);
-    }
-    if (typeof data.falAiApiKey === 'string') {
-        setFalAiApiKey(data.falAiApiKey);
-    }
-    if (typeof data.apiframeApiKey === 'string') {
-        setApiframeApiKey(data.apiframeApiKey);
-    }
-    if (typeof data.midapiApiKey === 'string') {
-        setMidapiApiKey(data.midapiApiKey);
-    }
-    if (typeof data.imagineApiKey === 'string') {
-        setImagineApiKey(data.imagineApiKey);
-    }
-    if (typeof data.useapiApiKey === 'string') {
-        setUseapiApiKey(data.useapiApiKey);
-    }
-    if (Array.isArray(data.pinterestAccounts)) {
-        setPinterestAccounts(data.pinterestAccounts);
-    }
-    alert('Settings imported successfully!');
+    if (data.adminSettings) setAdminSettings(data.adminSettings);
+    if (data.openRouterApiKey) setOpenRouterApiKey(data.openRouterApiKey);
+    if (data.falAiApiKey) setFalAiApiKey(data.falAiApiKey);
+    if (data.apiframeApiKey) setApiframeApiKey(data.apiframeApiKey);
+    if (data.midapiApiKey) setMidapiApiKey(data.midapiApiKey);
+    if (data.imagineApiKey) setImagineApiKey(data.imagineApiKey);
+    if (data.useapiApiKey) setUseapiApiKey(data.useapiApiKey);
+    if (Array.isArray(data.pinterestAccounts)) setPinterestAccounts(data.pinterestAccounts);
+    alert('Settings imported!');
   };
 
-  const allData: BackupData = {
-    adminSettings,
-    openRouterApiKey,
-    falAiApiKey,
-    apiframeApiKey,
-    midapiApiKey,
-    imagineApiKey,
-    useapiApiKey,
-    pinterestAccounts,
-  };
+  const allData: BackupData = { adminSettings, openRouterApiKey, falAiApiKey, apiframeApiKey, midapiApiKey, imagineApiKey, useapiApiKey, pinterestAccounts };
 
   const controlProps = {
-    data: templateData,
-    onFieldChange: handleFieldChange,
-    onImageUpload: handleImageUpload,
-    onGenerateImage: handleGenerateImage,
-    onGenerateImageWithMidjourney: handleGenerateImageWithMidjourney,
-    onGenerateImageWithMidApiAi: handleGenerateImageWithMidApiAi,
-    onGenerateImageWithImagineApi: handleGenerateImageWithImagineApi,
-    onGenerateImageWithUseApi: handleGenerateImageWithUseApi,
-    onGenerateDescription: handleGenerateDescription,
-    onGenerateKeywords: handleGenerateKeywords,
-    onGenerateShortTitle: handleGenerateShortTitle,
-    onDownload: handleDownload,
-    isLoading: isLoading,
-    isGeneratingImage: isGeneratingImage,
-    isGeneratingMidjourneyImage: isGeneratingMidjourneyImage,
-    isGeneratingMidjourney2Image: isGeneratingMidjourney2Image,
-    isGeneratingImagineImage: isGeneratingImagineImage,
-    isGeneratingUseApiImage: isGeneratingUseApiImage,
-    isGeneratingDescription: isGeneratingDescription,
-    isGeneratingKeywords: isGeneratingKeywords,
-    isGeneratingShortTitle: isGeneratingShortTitle,
-    onCsvUpload: handleCsvUpload,
-    onNextRow: handleNextRow,
-    onPrevRow: handlePrevRow,
-    csvData: csvData,
-    currentRowIndex: currentRowIndex,
-    onBulkGeneration: handleBulkGeneration,
-    isBulkGenerating: isBulkGenerating,
-    bulkMessage: bulkMessage,
-    apiError: apiError,
-    generatedAssets: generatedAssets,
-    onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
-    lastCompletedRowIndex: lastCompletedRowIndex,
-    onResetBulkGeneration: handleResetBulkGeneration,
-    onSetFalAiApiKey: setFalAiApiKey,
-    falAiApiKey: falAiApiKey,
-    apiframeApiKey: apiframeApiKey,
-    onSetApiframeApiKey: setApiframeApiKey,
-    midapiApiKey: midapiApiKey,
-    onSetMidapiApiKey: setMidapiApiKey,
-    imagineApiKey: imagineApiKey,
-    onSetImagineApiKey: setImagineApiKey,
-    useapiApiKey: useapiApiKey,
-    onSetUseapiApiKey: setUseapiApiKey,
-    bulkJobType: bulkJobType,
-    openRouterApiKey: openRouterApiKey, // Pass OpenRouter key for text AI
-    onSetOpenRouterApiKey: setOpenRouterApiKey, // Pass setter for OpenRouter key
+    data: templateData, onFieldChange: handleFieldChange, onImageUpload: handleImageUpload, onGenerateImage: handleGenerateImage,
+    onGenerateImageWithMidjourney: handleGenerateImageWithMidjourney, onGenerateImageWithMidApiAi: handleGenerateImageWithMidApiAi,
+    onGenerateImageWithImagineApi: handleGenerateImageWithImagineApi, onGenerateImageWithUseApi: handleGenerateImageWithUseApi,
+    onGenerateDescription: handleGenerateDescription, onGenerateKeywords: handleGenerateKeywords, onGenerateShortTitle: handleGenerateShortTitle,
+    onDownload: handleDownload, isLoading, isGeneratingImage, isGeneratingMidjourneyImage, isGeneratingMidjourney2Image,
+    isGeneratingImagineImage, isGeneratingUseApiImage, isGeneratingDescription, isGeneratingKeywords, isGeneratingShortTitle,
+    onCsvUpload: handleCsvUpload, onNextRow: handleNextRow, onPrevRow: handlePrevRow, csvData, currentRowIndex,
+    onBulkGeneration: handleBulkGeneration, isBulkGenerating, bulkMessage, apiError, generatedAssets, onDownloadGeneratedAssets: handleDownloadGeneratedAssets,
+    lastCompletedRowIndex, onResetBulkGeneration: handleResetBulkGeneration, onSetFalAiApiKey: setFalAiApiKey, falAiApiKey,
+    apiframeApiKey, onSetApiframeApiKey: setApiframeApiKey, midapiApiKey, onSetMidapiApiKey: setMidapiApiKey,
+    imagineApiKey, onSetImagineApiKey: setImagineApiKey, useapiApiKey, onSetUseapiApiKey: setUseapiApiKey,
+    bulkJobType, openRouterApiKey, onSetOpenRouterApiKey: setOpenRouterApiKey
   };
   
   const renderPage = () => {
     switch(page) {
-        case 'about':
-            return <AboutPage content={adminSettings.aboutPageContent} />;
-        case 'privacy':
-            return <PrivacyPolicyPage content={adminSettings.privacyPageContent} />;
-        case 'terms':
-            return <TermsOfServicePage content={adminSettings.termsPageContent} />;
-        case 'how-to-use':
-            return <HowToUsePage content={adminSettings.howToUsePageContent} />;
-        case 'contact':
-            return <ContactPage content={adminSettings.contactPageContent} />;
-        case 'content-generator':
-            return <ContentGeneratorPage
-                        openRouterApiKey={openRouterApiKey}
-                        onSetOpenRouterApiKey={setOpenRouterApiKey}
-                        textModel={templateData.textModel}
-                        adminSettings={adminSettings}
-                    />;
-        case 'assistant':
-             return <AssistantPage
-                        accounts={pinterestAccounts}
-                        setAccounts={setPinterestAccounts}
-                        openRouterApiKey={openRouterApiKey}
-                        textModel={templateData.textModel}
-                    />;
-        case 'domain-suggestor':
-            return <DNRaterPage />;
-        case 'author':
-            return <AuthorPage />;
-        case 'facebook-page-builder':
-            return <FacebookPageBuilderPage
-                        openRouterApiKey={openRouterApiKey}
-                        onSetOpenRouterApiKey={setOpenRouterApiKey}
-                        textModel={templateData.textModel}
-                    />;
-        case 'quote-generator':
-            return <QuoteGeneratorPage
-                        openRouterApiKey={openRouterApiKey}
-                        onSetOpenRouterApiKey={setOpenRouterApiKey}
-                        useapiApiKey={useapiApiKey}
-                        onSetUseapiApiKey={setUseapiApiKey}
-                        textModel={templateData.textModel}
-                    />;
-        case 'admin':
-            return <AdminPage 
-                        isAdminLoggedIn={isAdminLoggedIn}
-                        setIsAdminLoggedIn={setIsAdminLoggedIn}
-                        settings={adminSettings}
-                        setSettings={setAdminSettings}
-                        allData={allData}
-                        onImportSettings={handleImportSettings}
-                    />;
-        case 'welcome':
-             return <HomePage />;
-        case 'facebook-post-generator':
-            return <FacebookPostGeneratorPage
-                        falAiApiKey={falAiApiKey}
-                        onSetFalAiApiKey={setFalAiApiKey}
-                        useapiApiKey={useapiApiKey}
-                        onSetUseapiApiKey={setUseapiApiKey}
-                        openRouterApiKey={openRouterApiKey}
-                        onSetOpenRouterApiKey={setOpenRouterApiKey}
-                        textModel={templateData.textModel}
-                    />;
-        case 'rewrite-title-description':
-            return <DescriptionRewritePage 
-                        openRouterApiKey={openRouterApiKey}
-                        onSetOpenRouterApiKey={setOpenRouterApiKey}
-                        adminSettings={adminSettings}
-                    />;
-        case 'pin-generator':
-        default:
-             return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
+        case 'about': return <AboutPage content={adminSettings.aboutPageContent} />;
+        case 'privacy': return <PrivacyPolicyPage content={adminSettings.privacyPageContent} />;
+        case 'terms': return <TermsOfServicePage content={adminSettings.termsPageContent} />;
+        case 'how-to-use': return <HowToUsePage content={adminSettings.howToUsePageContent} />;
+        case 'contact': return <ContactPage content={adminSettings.contactPageContent} />;
+        case 'content-generator': return <ContentGeneratorPage openRouterApiKey={openRouterApiKey} onSetOpenRouterApiKey={setOpenRouterApiKey} textModel={templateData.textModel} adminSettings={adminSettings} />;
+        case 'assistant': return <AssistantPage accounts={pinterestAccounts} setAccounts={setPinterestAccounts} openRouterApiKey={openRouterApiKey} textModel={templateData.textModel} />;
+        case 'domain-suggestor': return <DNRaterPage />;
+        case 'author': return <AuthorPage />;
+        case 'facebook-page-builder': return <FacebookPageBuilderPage openRouterApiKey={openRouterApiKey} onSetOpenRouterApiKey={setOpenRouterApiKey} textModel={templateData.textModel} />;
+        case 'quote-generator': return <QuoteGeneratorPage openRouterApiKey={openRouterApiKey} onSetOpenRouterApiKey={setOpenRouterApiKey} useapiApiKey={useapiApiKey} onSetUseapiApiKey={setUseapiApiKey} textModel={templateData.textModel} />;
+        case 'admin': return <AdminPage isAdminLoggedIn={isAdminLoggedIn} setIsAdminLoggedIn={setIsAdminLoggedIn} settings={adminSettings} setSettings={setAdminSettings} allData={allData} onImportSettings={handleImportSettings} />;
+        case 'welcome': return <HomePage />;
+        case 'facebook-post-generator': return <FacebookPostGeneratorPage falAiApiKey={falAiApiKey} onSetFalAiApiKey={setFalAiApiKey} useapiApiKey={useapiApiKey} onSetUseapiApiKey={setUseapiApiKey} openRouterApiKey={openRouterApiKey} onSetOpenRouterApiKey={setOpenRouterApiKey} textModel={templateData.textModel} />;
+        case 'rewrite-title-description': return <DescriptionRewritePage openRouterApiKey={openRouterApiKey} onSetOpenRouterApiKey={setOpenRouterApiKey} adminSettings={adminSettings} />;
+        default: return <GeneratorInterface controlProps={controlProps} previewRef={previewRef} templateData={templateData} apiError={apiError} />;
     }
   };
-
 
   return (
     <div className="min-h-screen flex flex-col">
