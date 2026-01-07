@@ -19,12 +19,9 @@ import AssistantPage from './components/pages/AssistantPage';
 import HomePage from './components/pages/HomePage';
 import DNRaterPage from './components/pages/DNRaterPage';
 import AuthorPage from './components/pages/AuthorPage';
-// FIX: Change to named import for FacebookPostGeneratorPage
 import { FacebookPostGeneratorPage } from './components/pages/FacebookPostGeneratorPage';
-// FIX: Change to named import for QuoteGeneratorPage
 import { QuoteGeneratorPage } from './components/pages/QuoteGeneratorPage';
 import DescriptionRewritePage from './components/pages/DescriptionRewritePage';
-// FIX: Add named import for FacebookPageBuilderPage
 import { FacebookPageBuilderPage } from './components/pages/FacebookPageBuilderPage';
 
 // TypeScript declaration for the CDN-loaded libraries
@@ -63,7 +60,7 @@ const initialPersistedData: PersistedData = {
     pinsPerDayMax: 5,
     startDate: new Date().toISOString().split('T')[0],
     imageModel: 'fal-ai/recraft/v3/text-to-image',
-    textModel: 'google/gemini-2.5-flash', // Default for OpenRouter
+    textModel: 'google/gemini-pro', // Default for OpenRouter
 };
 
 const initialImageData = {
@@ -633,7 +630,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
       .then((dataUrl) => {
         const link = document.createElement('a');
         const safeTitle = templateData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const fileName = currentRowIndex !== null ? `pin_${currentRowIndex + 1}_${safeTitle}.png` : 'pinterest-pin.png';
+        const fileName = safeTitle ? `${safeTitle}.png` : 'pinterest-pin.png';
         link.download = fileName;
         link.href = dataUrl;
         link.click();
@@ -643,7 +640,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         setApiError({ type: 'generic', message: 'Could not generate image. Please try again.'});
       })
       .finally(() => setIsLoading(false));
-  }, [previewRef, templateData.title, currentRowIndex]);
+  }, [previewRef, templateData.title]);
 
   const parseCsvLine = (line: string): string[] => {
     const result: string[] = [];
@@ -736,7 +733,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
   const handlePrevRow = () => {
     if (currentRowIndex !== null && currentRowIndex > 0) {
-      setCurrentRowIndex(currentRowIndex + 1);
+      setCurrentRowIndex(currentRowIndex - 1);
     }
   };
 
@@ -1030,8 +1027,14 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
             if (imageGenerated && previewRef.current) {
                 const dataUrl = await window.htmlToImage.toPng(previewRef.current, { cacheBust: true, pixelRatio: 2, fetchRequestInit: { mode: 'cors' }});
-                const safeTitle = currentData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                const filename = `pin_${i + 1}_${safeTitle}.png`;
+                const safeTitle = currentData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'unnamed_pin';
+                
+                let filename = `${safeTitle}.png`;
+                let counter = 1;
+                while (zip.file(filename)) {
+                    filename = `${safeTitle}_${counter}.png`;
+                    counter++;
+                }
 
                 const base64Data = dataUrl.substring(dataUrl.indexOf(',') + 1);
                 zip.file(filename, base64Data, { base64: true });
@@ -1283,6 +1286,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         isAdminLoggedIn={isAdminLoggedIn}
                         setIsAdminLoggedIn={setIsAdminLoggedIn}
                         settings={adminSettings}
+// FIX: Cannot find name 'setSettings'.
                         setSettings={setAdminSettings}
                         allData={allData}
                         onImportSettings={handleImportSettings}
