@@ -308,8 +308,11 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
         '91', // Mira Recipe Template
         '92', // Terracotta Recipe Template
         '93', // Purple Banner Template
+        '94', // Royal Blue Banner Template
+        '95', // Deep Violet Banner Template
+        '96', // Black Banner Template
     ];
-    const templateOptions = templateIds.map(id => ({ id, name: id === '93' ? 'M93' : id }));
+    const templateOptions = templateIds.map(id => ({ id, name: id === '93' ? 'M93' : id === '94' ? 'M94' : id === '95' ? 'M95' : id === '96' ? 'M96' : id }));
       
     const [falAiApiKeyInput, setFalAiApiKeyInput] = useState(falAiApiKey);
     const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
@@ -633,7 +636,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
     };
 
     // FIX: Ensure all split-layout templates are accounted for in multi-image logic (restored missing ranges)
-    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90', '91', '92', '93'].includes(data.templateId);
+    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90', '91', '92', '93', '94', '95', '96'].includes(data.templateId);
     const needsImage3 = ['7', '15', '19', '22'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;

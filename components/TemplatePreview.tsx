@@ -2033,6 +2033,226 @@ const PurpleBannerTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
     );
 };
 
+const RoyalBlueBannerTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, backgroundImage, backgroundImage2 } = data;
+    
+    const displayTitle = title || "";
+    const lines = displayTitle ? displayTitle.split('\n') : [];
+    
+    return (
+        <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
+            {/* Background Images - Stacked Layout */}
+            <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                </div>
+            </div>
+
+            {/* Royal Blue Banner */}
+            <div 
+                className="absolute left-0 w-full bg-[#2563EB] flex items-center justify-center z-20"
+                style={{ 
+                    top: '42.17%', 
+                    height: '19.05%',
+                    boxShadow: 'none'
+                }}
+            >
+                <div className="text-center w-full">
+                    {lines.map((line, i) => (
+                        <div 
+                            key={i}
+                            className="text-white font-nunito font-[900] leading-[1.1] uppercase px-4"
+                            style={{ 
+                                fontSize: '50px',
+                                // 3D Pressed effect with stroke matching background
+                                textShadow: `
+                                    -1px -1px 0 #2563EB,  
+                                     1px -1px 0 #2563EB,
+                                    -1px  1px 0 #2563EB,
+                                     1px  1px 0 #2563EB,
+                                     3px  3px 0px rgba(0,0,0,0.15)
+                                `,
+                                WebkitTextStroke: '2px #2563EB',
+                                paintOrder: 'stroke fill'
+                            }}
+                        >
+                            {line}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const DeepVioletBannerTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, backgroundImage, backgroundImage2 } = data;
+    
+    const displayTitle = title || "";
+    const lines = displayTitle ? displayTitle.split('\n') : [];
+    
+    return (
+        <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
+            {/* Background Images - Stacked Layout */}
+            <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                </div>
+            </div>
+
+            {/* Deep Violet Banner */}
+            <div 
+                className="absolute left-0 w-full bg-[#7C3AED] flex items-center justify-center z-20"
+                style={{ 
+                    top: '42.17%', 
+                    height: '19.05%',
+                    boxShadow: 'none'
+                }}
+            >
+                <div className="text-center w-full">
+                    {lines.map((line, i) => (
+                        <div 
+                            key={i}
+                            className="text-white font-nunito font-[900] leading-[1.1] uppercase px-4"
+                            style={{ 
+                                fontSize: '50px',
+                                // 3D Pressed effect with stroke matching background
+                                textShadow: `
+                                    -1px -1px 0 #7C3AED,  
+                                     1px -1px 0 #7C3AED,
+                                    -1px  1px 0 #7C3AED,
+                                     1px  1px 0 #7C3AED,
+                                     3px  3px 0px rgba(0,0,0,0.15)
+                                `,
+                                WebkitTextStroke: '2px #7C3AED',
+                                paintOrder: 'stroke fill'
+                            }}
+                        >
+                            {line}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const BlackBannerTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, backgroundImage, backgroundImage2 } = data;
+    
+    const displayTitle = title || "";
+    const lines = displayTitle ? displayTitle.split('\n') : [];
+    
+    return (
+        <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
+            {/* Background Images - Stacked Layout */}
+            <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                </div>
+            </div>
+
+            {/* Black Banner */}
+            <div 
+                className="absolute left-0 w-full bg-[#111111] flex items-center justify-center z-20"
+                style={{ 
+                    top: '42.17%', 
+                    height: '19.05%',
+                    boxShadow: 'none'
+                }}
+            >
+                <div className="text-center w-full">
+                    {lines.map((line, i) => (
+                        <div 
+                            key={i}
+                            className="text-white font-nunito font-[900] leading-[1.1] uppercase px-4"
+                            style={{ 
+                                fontSize: '50px',
+                                // 3D Pressed effect with stroke matching background
+                                textShadow: `
+                                    -1px -1px 0 #111111,  
+                                     1px -1px 0 #111111,
+                                    -1px  1px 0 #111111,
+                                     1px  1px 0 #111111,
+                                     3px  3px 0px rgba(255,255,255,0.1)
+                                `,
+                                WebkitTextStroke: '2px #111111',
+                                paintOrder: 'stroke fill'
+                            }}
+                        >
+                            {line}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const WarmTomatoBannerTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, backgroundImage, backgroundImage2 } = data;
+    
+    const displayTitle = title || "";
+    const lines = displayTitle ? displayTitle.split('\n') : [];
+    
+    return (
+        <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
+            {/* Background Images - Stacked Layout */}
+            <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                </div>
+            </div>
+
+            {/* Warm Tomato Red Banner */}
+            <div 
+                className="absolute left-0 w-full bg-[#D62828] flex items-center justify-center z-20"
+                style={{ 
+                    top: '42.17%', 
+                    height: '19.05%',
+                    boxShadow: 'none'
+                }}
+            >
+                <div className="text-center w-full">
+                    {lines.map((line, i) => (
+                        <div 
+                            key={i}
+                            className="text-[#FFF8F0] font-nunito font-[900] leading-[1.1] uppercase px-4"
+                            style={{ 
+                                fontSize: '50px',
+                                // 3D Pressed effect with stroke matching background
+                                textShadow: `
+                                    -1px -1px 0 #D62828,  
+                                     1px -1px 0 #D62828,
+                                    -1px  1px 0 #D62828,
+                                     1px  1px 0 #D62828,
+                                     3px  3px 0px rgba(0,0,0,0.15)
+                                `,
+                                WebkitTextStroke: '2px #D62828',
+                                paintOrder: 'stroke fill'
+                            }}
+                        >
+                            {line}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {
     const { templateId } = data;
 
@@ -2096,6 +2316,10 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
             case '91': return <MiraRecipeTemplate data={data} />;
             case '92': return <TerracottaRecipeTemplate data={data} />;
             case '93': return <PurpleBannerTemplate data={data} />;
+            case '94': return <RoyalBlueBannerTemplate data={data} />;
+            case '95': return <DeepVioletBannerTemplate data={data} />;
+            case '96': return <BlackBannerTemplate data={data} />;
+            case '97': return <WarmTomatoBannerTemplate data={data} />;
 
             default: return <ClassicTemplate data={data} />;
         }
