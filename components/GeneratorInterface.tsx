@@ -1,6 +1,6 @@
 
 import React from 'react';
-import type { TemplateData } from '../types';
+import type { TemplateData } from '@/types';
 import { SettingsAndCustomizeControls, PinContentControls, CsvAndActionsControls, ControlsProps } from './Controls';
 import TemplatePreview from './TemplatePreview';
 import ErrorIcon from './icons/ErrorIcon';

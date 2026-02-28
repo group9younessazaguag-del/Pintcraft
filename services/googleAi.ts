@@ -116,7 +116,7 @@ export const generateSafeImagePrompt = async (apiKey: string, model: string, tit
 // --- Image Generators ---
 
 export const generateImage = async (apiKey: string, model: string, prompt: string, aspectRatio: string): Promise<string> => {
-    // Fal.ai implementation
+// Fal.ai implementation
     // Assuming model is something like 'fal-ai/recraft/v3/text-to-image'
     // Mapping aspect ratio to Fal.ai format
     const arMap: {[key: string]: string} = { '1:1': 'square', '3:4': 'portrait_4_3', '9:16': 'portrait_16_9', '4:5': 'portrait_4_5' };
@@ -143,7 +143,7 @@ export const generateImage = async (apiKey: string, model: string, prompt: strin
     }
 
     const data = await response.json();
-    
+
     // Polling logic for queue.fal.run
     if (data.request_id) {
         const requestId = data.request_id;
@@ -161,7 +161,7 @@ export const generateImage = async (apiKey: string, model: string, prompt: strin
         }
         throw new Error('Fal.ai timeout');
     }
-    
+
     if (data.images && data.images.length > 0) return data.images[0].url;
     throw new Error('No image returned from Fal.ai');
 };
@@ -191,12 +191,12 @@ export const generateImageWithUseApi = async (
     aspectRatio: ImageAspectRatio,
     onProgressUpdate?: (message: string) => void
 ): Promise<string[]> => {
-    
+
     const generationTask = async (): Promise<string[]> => {
         const BASE_URL = 'https://api.useapi.net/v3/midjourney/jobs';
 
         if (onProgressUpdate) onProgressUpdate('Submitting job to useapi.net...');
-        
+
         const fullPrompt = `${prompt} --ar ${aspectRatio}`;
 
         const imagineResponse = await fetch(`${BASE_URL}/imagine`, {
@@ -229,25 +229,25 @@ export const generateImageWithUseApi = async (
         if (onProgressUpdate) onProgressUpdate(`Job submitted. Waiting for result...`);
 
         const maxPollAttempts = 60;
-        let pollAttempt = 0;
+let pollAttempt = 0;
         let jobData;
 
         while (pollAttempt < maxPollAttempts) {
             await sleep(5000);
             pollAttempt++;
-            
+
             const statusResponse = await fetch(`${BASE_URL}/${jobId}`, {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${apiKey}` }
             });
-            
+
             if (!statusResponse.ok) {
                continue;
             }
 
             jobData = await statusResponse.json();
             const status = jobData.status;
-            
+
             if (status === 'completed') break;
             if (status === 'failed' || status === 'cancelled') {
                 throw new Error(`useapi.net task failed: ${jobData.error}`);
@@ -284,7 +284,7 @@ export const generateImageWithUseApi = async (
 
         return base64Images;
     };
-    
+
     return await generationTask();
 };
 
@@ -298,7 +298,7 @@ export const generatePinContentFromKeyword = async (
     categoryOptions: string = ""
 ): Promise<Omit<GeneratedContentRow, 'keyword'>> => {
     const ai = new GoogleGenAI({ apiKey });
-    
+
     const prompt = `Generate Pinterest pin content for the keyword: "${keyword}".
     Return a JSON object with the following fields:
     - title: A catchy title.
@@ -308,7 +308,7 @@ export const generatePinContentFromKeyword = async (
     - alt_text: Alt text for the image.
     - interests: An array of 3-5 relevant interest tags.
     - category: A general category${categoryOptions ? ` (choose from: ${categoryOptions})` : ''}.
-    
+
     Do not use markdown code blocks. Just return the JSON.`;
 
     const response = await ai.models.generateContent({
@@ -384,7 +384,7 @@ export const rewriteDescriptionWithOpenRouter = async (apiKey: string, model: st
     const prompt = `Rewrite the following Pinterest content to be more SEO-friendly and engaging.
     Original Title: "${title}"
     Original Description: "${description}"
-    
+
     Return a JSON object with:
     - title: Rewritten title (catchy, SEO).
     - description: Rewritten description (engaging, 2-3 sentences).

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { generateViralQuotes, generateImageWithUseApi, enhanceViralQuote, generateSoraVideoPrompt } from '../../services/ai';
+import { generateViralQuotes, generateImageWithUseApi, enhanceViralQuote, generateSoraVideoPrompt } from '@/services/ai';
 import { ControlCard, ApiKeyInput } from '../Controls';
 import SettingsIcon from '../icons/SettingsIcon';
 import QuoteIcon from '../icons/QuoteIcon';

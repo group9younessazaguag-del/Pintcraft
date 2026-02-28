@@ -90,21 +90,6 @@ const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof Tem
     </div>
 );
 
-const SelectField: React.FC<{ value: string; onChange: (value: string) => void; id: string; label: string; children: React.ReactNode }> = ({ value, onChange, id, label, children }) => (
-    <div>
-        <label htmlFor={id} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
-        <select
-            id={id}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 appearance-none bg-no-repeat bg-right pr-8 transition-colors duration-200"
-            style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.5em 1.5em'}}
-        >
-           {children}
-        </select>
-    </div>
-);
-
 const ToggleButtonGrid: React.FC<{ label: string; options: {id: string; name: string}[]; selected: string; onSelect: (id: string) => void; gridCols?: string }> = ({ label, options, selected, onSelect, gridCols = 'grid-cols-2' }) => (
     <div>
         <label className="block text-sm font-medium text-slate-600 mb-2">{label}</label>
@@ -305,6 +290,8 @@ const CANVAS_OPTIONS = {
       { id: 'standard', name: 'Standard Pin (3:4)' },
       { id: 'long', name: 'Long Pin (9:16)' },
       { id: 'extraLong', name: 'Tall Pin (5:12)' },
+      { id: 'recipe', name: '2:3' },
+      { id: 'tall', name: 'Tall (1:2)' },
     ],
     aspectRatios: [
         { id: '1:1', name: 'Square (1:1)' },
@@ -318,8 +305,11 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
     const templateIds = [
         ...Array.from({ length: 23 }, (_, i) => `${i + 1}`), // Templates 1-23
         ...Array.from({ length: 32 }, (_, i) => `${i + 59}`), // Templates 59-90
+        '91', // Mira Recipe Template
+        '92', // Terracotta Recipe Template
+        '93', // Purple Banner Template
     ];
-    const templateOptions = templateIds.map(id => ({ id, name: id }));
+    const templateOptions = templateIds.map(id => ({ id, name: id === '93' ? 'M93' : id }));
       
     const [falAiApiKeyInput, setFalAiApiKeyInput] = useState(falAiApiKey);
     const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
@@ -643,7 +633,7 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
     };
 
     // FIX: Ensure all split-layout templates are accounted for in multi-image logic (restored missing ranges)
-    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90'].includes(data.templateId);
+    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90', '91', '92', '93'].includes(data.templateId);
     const needsImage3 = ['7', '15', '19', '22'].includes(data.templateId);
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;

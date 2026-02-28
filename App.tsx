@@ -1,28 +1,28 @@
 
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from './types';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import AboutPage from './components/pages/AboutPage';
-import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
-import TermsOfServicePage from './components/pages/TermsOfServicePage';
-import AdminPage from './components/pages/AdminPage';
-import AdBanner from './components/AdBanner';
-import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, DEFAULT_CONTENT_PROMPT, generateImageWithMidjourney, generateSafeImagePrompt, generateImageWithMidApiAi, generateImageWithImagineApi, generateImageWithUseApi } from './services/ai';
-import useLocalStorage from './hooks/useLocalStorage';
-import { useAnalytics } from './hooks/useAnalytics';
-import GeneratorInterface from './components/GeneratorInterface';
-import HowToUsePage from './components/pages/HowToUsePage';
-import ContactPage from './components/pages/ContactPage';
-import ContentGeneratorPage from './components/pages/ContentGeneratorPage';
-import AssistantPage from './components/pages/AssistantPage';
-import HomePage from './components/pages/HomePage';
-import DNRaterPage from './components/pages/DNRaterPage';
-import AuthorPage from './components/pages/AuthorPage';
-import { FacebookPostGeneratorPage } from './components/pages/FacebookPostGeneratorPage';
-import { QuoteGeneratorPage } from './components/pages/QuoteGeneratorPage';
-import DescriptionRewritePage from './components/pages/DescriptionRewritePage';
-import { FacebookPageBuilderPage } from './components/pages/FacebookPageBuilderPage';
+import type { TemplateData, CsvRow, AdminSettings, BackupData, PinterestAccount } from '@/types';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import AboutPage from '@/components/pages/AboutPage';
+import PrivacyPolicyPage from '@/components/pages/PrivacyPolicyPage';
+import TermsOfServicePage from '@/components/pages/TermsOfServicePage';
+import AdminPage from '@/components/pages/AdminPage';
+import AdBanner from '@/components/AdBanner';
+import { generateImage, generatePlaceholderImage, generateDescription, generatePlaceholderDescription, generateKeywords, generatePlaceholderKeywords, generateShortTitle, DEFAULT_CONTENT_PROMPT, generateImageWithMidjourney, generateSafeImagePrompt, generateImageWithMidApiAi, generateImageWithImagineApi, generateImageWithUseApi } from '@/services/ai';
+import useLocalStorage from '@/hooks/useLocalStorage';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import GeneratorInterface from '@/components/GeneratorInterface';
+import HowToUsePage from '@/components/pages/HowToUsePage';
+import ContactPage from '@/components/pages/ContactPage';
+import ContentGeneratorPage from '@/components/pages/ContentGeneratorPage';
+import AssistantPage from '@/components/pages/AssistantPage';
+import HomePage from '@/components/pages/HomePage';
+import DNRaterPage from '@/components/pages/DNRaterPage';
+import AuthorPage from '@/components/pages/AuthorPage';
+import { FacebookPostGeneratorPage } from '@/components/pages/FacebookPostGeneratorPage';
+import { QuoteGeneratorPage } from '@/components/pages/QuoteGeneratorPage';
+import DescriptionRewritePage from '@/components/pages/DescriptionRewritePage';
+import { FacebookPageBuilderPage } from '@/components/pages/FacebookPageBuilderPage';
 
 // TypeScript declaration for the CDN-loaded libraries
 declare global {

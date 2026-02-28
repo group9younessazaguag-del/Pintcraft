@@ -1,6 +1,6 @@
 
 import React, { forwardRef } from 'react';
-import type { TemplateData } from '../types';
+import type { TemplateData } from '@/types';
 // FIX: Import StarIcon component
 import StarIcon from './icons/StarIcon';
 
@@ -1873,6 +1873,166 @@ const AestheticLuxuryMagazineDuoTemplate: React.FC<{ data: TemplateData }> = ({ 
     );
 };
 
+const MiraRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, website, backgroundImage, backgroundImage2 } = data;
+    const titleFontSize = getDynamicTitleFontSize(title?.length || 0, 'text-2xl', 'text-4xl', 'text-3xl');
+    
+    return (
+        <div className="w-full h-full flex flex-col justify-center items-center relative font-serif overflow-hidden">
+            {/* Background Images - Split Layout */}
+            <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative overflow-hidden border-b border-[#F8F5F0]/20">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                    {!backgroundImage && <div className="absolute inset-0 bg-slate-200 flex items-center justify-center text-slate-400 text-xs uppercase tracking-widest">Image 1</div>}
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                    {!backgroundImage2 && <div className="absolute inset-0 bg-slate-300 flex items-center justify-center text-slate-500 text-xs uppercase tracking-widest">Image 2</div>}
+                </div>
+            </div>
+            
+            {/* Subtle Herb Illustrations in corners */}
+            <div className="absolute top-6 left-6 opacity-20 text-[#4F6F52] pointer-events-none z-20">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L12 22" />
+                    <path d="M12 7c-2 0-4 1-5 3s-1 4 0 6" />
+                    <path d="M12 7c2 0 4 1 5 3s1 4 0 6" />
+                    <path d="M12 12c-2 0-4 1-5 3s-1 4 0 6" />
+                    <path d="M12 12c2 0 4 1 5 3s1 4 0 6" />
+                </svg>
+            </div>
+            <div className="absolute bottom-6 right-6 opacity-20 text-[#4F6F52] pointer-events-none transform rotate-180 z-20">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L12 22" />
+                    <path d="M12 7c-2 0-4 1-5 3s-1 4 0 6" />
+                    <path d="M12 7c2 0 4 1 5 3s1 4 0 6" />
+                    <path d="M12 12c-2 0-4 1-5 3s-1 4 0 6" />
+                    <path d="M12 12c2 0 4 1 5 3s1 4 0 6" />
+                </svg>
+            </div>
+
+            {/* Centered horizontal text banner */}
+            <div className="relative z-30 w-full bg-[#4F6F52]/95 py-10 px-8 text-center shadow-2xl border-y border-[#F8F5F0]/20">
+                {title && (
+                    <h2 
+                        className={`font-serif font-bold ${titleFontSize} uppercase leading-tight tracking-tight text-[#F8F5F0]`}
+                        style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)', wordBreak: 'break-word' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+            </div>
+
+            {/* Website at the bottom */}
+            {website && (
+                <div className="absolute bottom-12 left-0 w-full text-center z-30">
+                    <p className="text-xs font-bold tracking-[0.25em] text-white uppercase drop-shadow-lg opacity-90">
+                        {website}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const TerracottaRecipeTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, website, backgroundImage, backgroundImage2 } = data;
+    
+    return (
+        <div className="w-full h-full flex flex-col justify-center items-center relative font-serif overflow-hidden">
+            {/* Background Images - Stacked Layout */}
+            <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                    {!backgroundImage && <div className="absolute inset-0 bg-slate-200 flex items-center justify-center text-slate-400 text-xs uppercase tracking-widest">Top Image</div>}
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                    {!backgroundImage2 && <div className="absolute inset-0 bg-slate-300 flex items-center justify-center text-slate-500 text-xs uppercase tracking-widest">Bottom Image</div>}
+                </div>
+            </div>
+
+            {/* Centered Rounded Rectangle Text Area */}
+            <div className="relative z-30 w-[85%] bg-[#C5705D] py-8 px-6 text-center shadow-2xl rounded-2xl border border-white/20">
+                {title && (
+                    <h2 
+                        className="font-serif font-bold uppercase leading-tight tracking-tight text-white"
+                        style={{ fontSize: '50px', textShadow: '1px 1px 3px rgba(0,0,0,0.2)', wordBreak: 'break-word' }}
+                    >
+                        {title}
+                    </h2>
+                )}
+            </div>
+
+            {/* Website at the bottom */}
+            {website && (
+                <div className="absolute bottom-8 left-0 w-full text-center z-30">
+                    <p className="text-xs font-bold tracking-[0.2em] text-white uppercase drop-shadow-md opacity-90">
+                        {website}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const PurpleBannerTemplate: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, backgroundImage, backgroundImage2 } = data;
+    
+    // Split title into two lines if it's the default text or if it's long
+    // User specifically asked for "text text texte" split as "text text" and "texte"
+    const displayTitle = title || "";
+    const lines = displayTitle ? displayTitle.split('\n') : [];
+    
+    return (
+        <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
+            {/* Background Images - Stacked Layout */}
+            <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                </div>
+            </div>
+
+            {/* Purple Banner */}
+            <div 
+                className="absolute left-0 w-full bg-[#BB00FF] flex items-center justify-center z-20"
+                style={{ 
+                    top: '42.17%', // Y=620px on 1470px height
+                    height: '19.05%', // 280px on 1470px height
+                    boxShadow: 'none'
+                }}
+            >
+                <div className="text-center w-full">
+                    {lines.map((line, i) => (
+                        <div 
+                            key={i}
+                            className="text-white font-nunito font-[900] leading-[1.1] uppercase px-4"
+                            style={{ 
+                                fontSize: '50px',
+                                // 3D Pressed effect with stroke matching background
+                                textShadow: `
+                                    -1px -1px 0 #BB00FF,  
+                                     1px -1px 0 #BB00FF,
+                                    -1px  1px 0 #BB00FF,
+                                     1px  1px 0 #BB00FF,
+                                     3px  3px 0px rgba(0,0,0,0.15)
+                                `,
+                                WebkitTextStroke: '2px #BB00FF',
+                                paintOrder: 'stroke fill'
+                            }}
+                        >
+                            {line}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {
     const { templateId } = data;
 
@@ -1933,6 +2093,9 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
             case '87': return <AestheticFreshDuoTemplate data={data} />;
             case '88': return <AestheticPastelDessertDuoTemplate data={data} />;
             case '90': return <AestheticLuxuryMagazineDuoTemplate data={data} />;
+            case '91': return <MiraRecipeTemplate data={data} />;
+            case '92': return <TerracottaRecipeTemplate data={data} />;
+            case '93': return <PurpleBannerTemplate data={data} />;
 
             default: return <ClassicTemplate data={data} />;
         }
@@ -1943,6 +2106,8 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
             case 'standard': return 'aspect-[3/4]';
             case 'long': return 'aspect-[9/16]';
             case 'extraLong': return 'aspect-[1/2.4]';
+            case 'recipe': return 'aspect-[2/3]';
+            case 'tall': return 'aspect-[1/2]';
             default: return 'aspect-[2/3]';
         }
     };

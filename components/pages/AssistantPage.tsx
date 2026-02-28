@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { PinterestAccount } from '../../types';
-import { generatePinIdeas, getAiSuggestions, PinIdea, AISuggestions } from '../../services/ai';
+import type { PinterestAccount } from '@/types';
+import { generatePinIdeas, getAiSuggestions, PinIdea, AISuggestions } from '@/services/ai';
 import PlusIcon from '../icons/PlusIcon';
 import TrashIcon from '../icons/TrashIcon';
 import LightbulbIcon from '../icons/LightbulbIcon';

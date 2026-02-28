@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { generateFacebookPageStrategy } from '../../services/ai';
-import type { FacebookPageStrategy } from '../../types';
+import { generateFacebookPageStrategy } from '@/services/ai';
+import type { FacebookPageStrategy } from '@/types';
 import { ControlCard, ApiKeyInput } from '../Controls';
 import SettingsIcon from '../icons/SettingsIcon';
 import FacebookIcon from '../icons/FacebookIcon';

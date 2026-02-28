@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import type { AdminSettings, BackupData } from '../../types';
+import type { AdminSettings, BackupData } from '@/types';
 import RichTextEditor from '../RichTextEditor';
 import PageIcon from '../icons/PageIcon';
 import ChevronDownIcon from '../icons/ChevronDownIcon';

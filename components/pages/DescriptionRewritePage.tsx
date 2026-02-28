@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { rewriteDescription } from '../../services/ai';
-import type { AdminSettings } from '../../types';
+import { rewriteDescription } from '@/services/ai';
+import type { AdminSettings } from '@/types';
 import CsvIcon from '../icons/CsvIcon';
 import LoadingSpinner from '../icons/LoadingSpinner';
 import DownloadIcon from '../icons/DownloadIcon';

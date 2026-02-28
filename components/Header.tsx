@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import PinIcon from './icons/PinIcon';
 import MenuIcon from './icons/MenuIcon';
 import CloseIcon from './icons/CloseIcon';
-import RewriteIcon from './icons/RewriteIcon';
 
 const getCurrentPage = () => {
     const hash = window.location.hash.substring(1).replace(/^\/|\/$/g, '');

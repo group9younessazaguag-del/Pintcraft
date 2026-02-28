@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { generatePinContentFromKeyword, rewriteKeyword } from '../../services/ai';
-import type { AdminSettings, GeneratedContentRow } from '../../types';
+import { generatePinContentFromKeyword, rewriteKeyword } from '@/services/ai';
+import type { AdminSettings, GeneratedContentRow } from '@/types';
 import CsvIcon from '../icons/CsvIcon';
 import LoadingSpinner from '../icons/LoadingSpinner';
 import DownloadIcon from '../icons/DownloadIcon';
