@@ -12,6 +12,7 @@ export interface TemplateData {
   backgroundImage: string | null;
   backgroundImage2: string | null;
   backgroundImage3: string | null;
+  backgroundImage4: string | null;
   templateId: TemplateId;
   pinSize: PinSize;
   imageAspectRatio: ImageAspectRatio;
@@ -25,6 +26,17 @@ export interface TemplateData {
   startDate: string;
   imageModel: string;
   textModel: string;
+  // Recipe specific fields
+  prepTime?: string;
+  cookTime?: string;
+  servings?: string;
+  difficulty?: string;
+  ingredients?: string;
+  calories?: string;
+  protein?: string;
+  fat?: string;
+  carbs?: string;
+  websiteUrl?: string; // Added to match usage in V97
 }
 
 export interface CsvRow {
@@ -34,6 +46,15 @@ export interface CsvRow {
   description: string;
   keywords: string;
   imagePrompt?: string;
+  prepTime?: string;
+  cookTime?: string;
+  servings?: string;
+  difficulty?: string;
+  ingredients?: string;
+  calories?: string;
+  protein?: string;
+  fat?: string;
+  carbs?: string;
 }
 
 export type WebsiteProfile = {
@@ -65,6 +86,15 @@ export interface GeneratedContentRow {
     alt_text: string;
     interests: string[];
     category: string;
+    prepTime?: string;
+    cookTime?: string;
+    servings?: string;
+    difficulty?: string;
+    ingredients?: string;
+    calories?: string;
+    protein?: string;
+    fat?: string;
+    carbs?: string;
 }
 
 export type PinterestAccount = {

@@ -226,7 +226,12 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
             return value;
         };
 
-        const headers = ['Title of recipes', 'Pinterest board', 'Image Prompt', 'Description', 'Interest Used', 'Description Alt Text', 'SITE', 'Category'];
+        const headers = [
+            'Title of recipes', 'Pinterest board', 'Image Prompt', 'Description', 
+            'Interest Used', 'Description Alt Text', 'SITE', 'Category',
+            'Prep Time', 'Cook Time', 'Servings', 'Difficulty', 'Ingredients',
+            'Calories', 'Protein', 'Fat', 'Carbs'
+        ];
         const headerString = headers.map(escapeCsvCell).join(',');
 
         const rows = generatedData.map(row => {
@@ -239,6 +244,15 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                 row.alt_text,
                 '', // Site is always void as requested
                 row.category,
+                row.prepTime || '',
+                row.cookTime || '',
+                row.servings || '',
+                row.difficulty || '',
+                row.ingredients || '',
+                row.calories || '',
+                row.protein || '',
+                row.fat || '',
+                row.carbs || '',
             ];
             return rowData.map(escapeCsvCell).join(',');
         });

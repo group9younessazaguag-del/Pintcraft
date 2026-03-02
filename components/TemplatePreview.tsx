@@ -2067,15 +2067,15 @@ const RoyalBlueBannerTemplate: React.FC<{ data: TemplateData }> = ({ data }) => 
                             className="text-white font-nunito font-[900] leading-[1.1] uppercase px-4"
                             style={{ 
                                 fontSize: '50px',
-                                // 3D Pressed effect with stroke matching background
+                                // 3D Pressed effect with black stroke
                                 textShadow: `
-                                    -1px -1px 0 #2563EB,  
-                                     1px -1px 0 #2563EB,
-                                    -1px  1px 0 #2563EB,
-                                     1px  1px 0 #2563EB,
+                                    -3px -3px 0 #000000,  
+                                     3px -3px 0 #000000,
+                                    -3px  3px 0 #000000,
+                                     3px  3px 0 #000000,
                                      3px  3px 0px rgba(0,0,0,0.15)
                                 `,
-                                WebkitTextStroke: '2px #2563EB',
+                                WebkitTextStroke: '3px #000000',
                                 paintOrder: 'stroke fill'
                             }}
                         >
@@ -2253,6 +2253,110 @@ const WarmTomatoBannerTemplate: React.FC<{ data: TemplateData }> = ({ data }) =>
     );
 };
 
+const M98Template: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, backgroundImage, backgroundImage2 } = data;
+    
+    const displayTitle = title || "";
+    const lines = displayTitle ? displayTitle.split('\n') : [];
+    
+    return (
+        <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
+            <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                </div>
+            </div>
+
+            <div 
+                className="absolute left-0 w-full bg-[#42706F] flex items-center justify-center z-20"
+                style={{ 
+                    top: '42.17%',
+                    height: '19.05%',
+                    boxShadow: 'none'
+                }}
+            >
+                <div className="text-center w-full">
+                    {lines.map((line, i) => (
+                        <div 
+                            key={i}
+                            className="text-white font-nunito font-[900] leading-[1.1] uppercase px-4"
+                            style={{ 
+                                fontSize: '50px',
+                                textShadow: `
+                                    -1px -1px 0 #42706F,  
+                                     1px -1px 0 #42706F,
+                                    -1px  1px 0 #42706F,
+                                     1px  1px 0 #42706F,
+                                     3px  3px 0px rgba(0,0,0,0.15)
+                                `,
+                                WebkitTextStroke: '2px #42706F',
+                                paintOrder: 'stroke fill'
+                            }}
+                        >
+                            {line}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const M99Template: React.FC<{ data: TemplateData }> = ({ data }) => {
+    const { title, backgroundImage, backgroundImage2 } = data;
+    
+    const displayTitle = title || "";
+    const lines = displayTitle ? displayTitle.split('\n') : [];
+    
+    return (
+        <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
+            <div className="absolute inset-0 flex flex-col">
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage} />
+                </div>
+                <div className="flex-1 relative overflow-hidden">
+                    <BackgroundImage imageUrl={backgroundImage2} />
+                </div>
+            </div>
+
+            <div 
+                className="absolute left-0 w-full bg-[#A67624] flex items-center justify-center z-20"
+                style={{ 
+                    top: '42.17%',
+                    height: '19.05%',
+                    boxShadow: 'none'
+                }}
+            >
+                <div className="text-center w-full">
+                    {lines.map((line, i) => (
+                        <div 
+                            key={i}
+                            className="text-white font-nunito font-[900] leading-[1.1] uppercase px-4"
+                            style={{ 
+                                fontSize: '50px',
+                                textShadow: `
+                                    -3px -3px 0 #000000,  
+                                     3px -3px 0 #000000,
+                                    -3px  3px 0 #000000,
+                                     3px  3px 0 #000000,
+                                     3px  3px 0px rgba(0,0,0,0.15)
+                                `,
+                                WebkitTextStroke: '3px #000000',
+                                paintOrder: 'stroke fill'
+                            }}
+                        >
+                            {line}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data }, ref) => {
     const { templateId } = data;
 
@@ -2320,6 +2424,8 @@ const TemplatePreview = forwardRef<HTMLDivElement, TemplatePreviewProps>(({ data
             case '95': return <DeepVioletBannerTemplate data={data} />;
             case '96': return <BlackBannerTemplate data={data} />;
             case '97': return <WarmTomatoBannerTemplate data={data} />;
+            case '98': return <M98Template data={data} />;
+            case '99': return <M99Template data={data} />;
 
             default: return <ClassicTemplate data={data} />;
         }

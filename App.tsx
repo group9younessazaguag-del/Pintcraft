@@ -42,7 +42,7 @@ const getCurrentPage = () => {
 };
 
 
-type PersistedData = Omit<TemplateData, 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3'>;
+type PersistedData = Omit<TemplateData, 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3' | 'backgroundImage4'>;
 
 const initialPersistedData: PersistedData = {
     title: 'GARLIC HERB MOZZARELLA BITES',
@@ -61,12 +61,23 @@ const initialPersistedData: PersistedData = {
     startDate: new Date().toISOString().split('T')[0],
     imageModel: 'fal-ai/recraft/v3/text-to-image',
     textModel: 'google/gemini-pro', // Default for OpenRouter
+    prepTime: '10 min',
+    cookTime: '20 min',
+    servings: '4',
+    difficulty: 'Easy',
+    ingredients: 'Chicken, Cream, Garlic, Parmesan, Pasta, Herbs',
+    calories: '420',
+    protein: '38g',
+    fat: '12g',
+    carbs: '45g',
+    websiteUrl: 'www.yourwebsite.com',
 };
 
 const initialImageData = {
     backgroundImage: null,
     backgroundImage2: null,
     backgroundImage3: null,
+    backgroundImage4: null,
 };
 
 const initialAdminSettings: AdminSettings = {
@@ -170,18 +181,32 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (currentRowIndex !== null && csvData[currentRowIndex]) {
-      const { title, description, keywords, board } = csvData[currentRowIndex];
+      const { 
+        title, description, keywords, board,
+        prepTime, cookTime, servings, difficulty, ingredients,
+        calories, protein, fat, carbs
+      } = csvData[currentRowIndex];
       setPersistedData(prev => ({
         ...prev,
         title: title,
         description: description,
         keywords: keywords,
         board: board,
+        prepTime: prepTime || prev.prepTime,
+        cookTime: cookTime || prev.cookTime,
+        servings: servings || prev.servings,
+        difficulty: difficulty || prev.difficulty,
+        ingredients: ingredients || prev.ingredients,
+        calories: calories || prev.calories,
+        protein: protein || prev.protein,
+        fat: fat || prev.fat,
+        carbs: carbs || prev.carbs,
       }));
       setImageData({
         backgroundImage: null,
         backgroundImage2: null,
         backgroundImage3: null,
+        backgroundImage4: null,
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -191,7 +216,7 @@ const App: React.FC = () => {
     if (apiError) setApiError(null);
     if (generatedAssets) setGeneratedAssets(null);
     
-    const imageFields: (keyof TemplateData)[] = ['backgroundImage', 'backgroundImage2', 'backgroundImage3'];
+    const imageFields: (keyof TemplateData)[] = ['backgroundImage', 'backgroundImage2', 'backgroundImage3', 'backgroundImage4'];
     if (imageFields.includes(field)) {
       setImageData(prev => ({ ...prev, [field]: value }));
     } else {
@@ -199,12 +224,12 @@ const App: React.FC = () => {
     }
   };
 
-  const handleImageUpload = (file: File, imageNumber: 1 | 2 | 3) => {
+  const handleImageUpload = (file: File, imageNumber: 1 | 2 | 3 | 4) => {
     if (apiError) setApiError(null);
     if (generatedAssets) setGeneratedAssets(null);
     const reader = new FileReader();
     reader.onloadend = () => {
-      const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
+      const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3' | 'backgroundImage4';
       setImageData(prev => ({ ...prev, [field]: reader.result as string }));
     };
     reader.readAsDataURL(file);
@@ -226,7 +251,7 @@ const App: React.FC = () => {
         });
   };
 
-  const handleGenerateImage = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
+  const handleGenerateImage = async (imageNumber: 1 | 2 | 3 | 4, throwOnError = false, overridePrompt?: string): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -268,7 +293,7 @@ const App: React.FC = () => {
             );
         }
         
-        const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3';
+        const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3' | 'backgroundImage4';
         setImageData(prev => ({ ...prev, [field]: imageUrl }));
     } catch (error: any) {
         console.error(`Error generating image:`, error);
@@ -285,7 +310,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGenerateImageWithMidjourney = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string): Promise<void> => {
+  const handleGenerateImageWithMidjourney = async (imageNumber: 1 | 2 | 3 | 4, throwOnError = false, overridePrompt?: string): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -310,7 +335,7 @@ const App: React.FC = () => {
         return;
     }
 
-    setIsGeneratingMidjourneyImage({ 1: true, 2: true, 3: true });
+    setIsGeneratingMidjourneyImage({ 1: true, 2: true, 3: true, 4: true });
     setApiError(null);
 
     const aspectRatio = templateData.imageAspectRatio;
@@ -322,12 +347,13 @@ const App: React.FC = () => {
             aspectRatio
         );
         
-        // Populate up to 3 image slots from the returned array
+        // Populate up to 4 image slots from the returned array
         setImageData(prev => ({
             ...prev,
             backgroundImage: imageUrls[0] || prev.backgroundImage,
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
+            backgroundImage4: imageUrls[3] || prev.backgroundImage4,
         }));
     } catch (error: any) {
         console.error(`Error generating image with Midjourney:`, error);
@@ -340,11 +366,11 @@ const App: React.FC = () => {
             helpLink: error.helpLink
         });
     } finally {
-        setIsGeneratingMidjourneyImage({ 1: false, 2: false, 3: false });
+        setIsGeneratingMidjourneyImage({ 1: false, 2: false, 3: false, 4: false });
     }
   };
 
-  const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
+  const handleGenerateImageWithMidApiAi = async (imageNumber: 1 | 2 | 3 | 4, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -368,7 +394,7 @@ const App: React.FC = () => {
         return;
     }
 
-    setIsGeneratingMidjourney2Image({ 1: true, 2: true, 3: true });
+    setIsGeneratingMidjourney2Image({ 1: true, 2: true, 3: true, 4: true });
     setApiError(null);
 
     const aspectRatio = templateData.imageAspectRatio;
@@ -381,12 +407,13 @@ const App: React.FC = () => {
             onProgressUpdate
         );
         
-        // Populate up to 3 image slots from the returned array
+        // Populate up to 4 image slots from the returned array
         setImageData(prev => ({
             ...prev,
             backgroundImage: imageUrls[0] || prev.backgroundImage,
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
+            backgroundImage4: imageUrls[3] || prev.backgroundImage4,
         }));
     } catch (error: any) {
         console.error(`Error generating image with midapi.ai:`, error);
@@ -399,11 +426,11 @@ const App: React.FC = () => {
             helpLink: error.helpLink
         });
     } finally {
-        setIsGeneratingMidjourney2Image({ 1: false, 2: false, 3: false });
+        setIsGeneratingMidjourney2Image({ 1: false, 2: false, 3: false, 4: false });
     }
   };
 
-  const handleGenerateImageWithImagineApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
+  const handleGenerateImageWithImagineApi = async (imageNumber: 1 | 2 | 3 | 4, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -427,7 +454,7 @@ const App: React.FC = () => {
         return;
     }
 
-    setIsGeneratingImagineImage({ 1: true, 2: true, 3: true });
+    setIsGeneratingImagineImage({ 1: true, 2: true, 3: true, 4: true });
     setApiError(null);
 
     const aspectRatio = templateData.imageAspectRatio;
@@ -440,12 +467,13 @@ const App: React.FC = () => {
             onProgressUpdate
         );
         
-        // Populate up to 3 image slots from the returned array
+        // Populate up to 4 image slots from the returned array
         setImageData(prev => ({
             ...prev,
             backgroundImage: imageUrls[0] || prev.backgroundImage,
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
+            backgroundImage4: imageUrls[3] || prev.backgroundImage4,
         }));
     } catch (error: any) {
         console.error(`Error generating image with ImagineAPI:`, error);
@@ -458,11 +486,11 @@ const App: React.FC = () => {
             helpLink: error.helpLink
         });
     } finally {
-        setIsGeneratingImagineImage({ 1: false, 2: false, 3: false });
+        setIsGeneratingImagineImage({ 1: false, 2: false, 3: false, 4: false });
     }
   };
 
-  const handleGenerateImageWithUseApi = async (imageNumber: 1 | 2 | 3, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
+  const handleGenerateImageWithUseApi = async (imageNumber: 1 | 2 | 3 | 4, throwOnError = false, overridePrompt?: string, onProgressUpdate?: (message: string) => void): Promise<void> => {
     // Determine prompt: Override (from bulk) > CSV Image Prompt > CSV Title (Title of recipes) > Current State Title
     let userPrompt = overridePrompt;
     
@@ -486,7 +514,7 @@ const App: React.FC = () => {
         return;
     }
 
-    setIsGeneratingUseApiImage({ 1: true, 2: true, 3: true });
+    setIsGeneratingUseApiImage({ 1: true, 2: true, 3: true, 4: true });
     setApiError(null);
 
     const aspectRatio = templateData.imageAspectRatio;
@@ -499,12 +527,13 @@ const App: React.FC = () => {
             onProgressUpdate
         );
         
-        // Populate up to 3 image slots from the returned array
+        // Populate up to 4 image slots from the returned array
         setImageData(prev => ({
             ...prev,
             backgroundImage: imageUrls[0] || prev.backgroundImage,
             backgroundImage2: imageUrls[1] || prev.backgroundImage2,
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
+            backgroundImage4: imageUrls[3] || prev.backgroundImage4,
         }));
     } catch (error: any) {
         console.error(`Error generating image with useapi.net:`, error);
@@ -517,7 +546,7 @@ const App: React.FC = () => {
             helpLink: error.helpLink
         });
     } finally {
-        setIsGeneratingUseApiImage({ 1: false, 2: false, 3: false });
+        setIsGeneratingUseApiImage({ 1: false, 2: false, 3: false, 4: false });
     }
   };
 
@@ -688,6 +717,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
         if (lowerH.includes('keywords') || lowerH.includes('interest')) headerMap['keywords'] = { original: h, index: i };
         if (lowerH.includes('prompt')) headerMap['imagePrompt'] = { original: h, index: i };
         if (lowerH.includes('board')) headerMap['board'] = { original: h, index: i };
+        if (lowerH.includes('prep')) headerMap['prepTime'] = { original: h, index: i };
+        if (lowerH.includes('cook')) headerMap['cookTime'] = { original: h, index: i };
+        if (lowerH.includes('servings') || lowerH.includes('serves')) headerMap['servings'] = { original: h, index: i };
+        if (lowerH.includes('difficulty') || lowerH.includes('level')) headerMap['difficulty'] = { original: h, index: i };
+        if (lowerH.includes('ingredients')) headerMap['ingredients'] = { original: h, index: i };
+        if (lowerH.includes('calories') || lowerH.includes('cals')) headerMap['calories'] = { original: h, index: i };
+        if (lowerH.includes('protein')) headerMap['protein'] = { original: h, index: i };
+        if (lowerH.includes('fat')) headerMap['fat'] = { original: h, index: i };
+        if (lowerH.includes('carbs')) headerMap['carbs'] = { original: h, index: i };
       });
 
 
@@ -715,6 +753,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
               description: headerMap['description'] ? row[headerMap['description'].original] || '' : '',
               keywords: headerMap['keywords'] ? row[headerMap['keywords'].original] || '' : '',
               imagePrompt: headerMap['imagePrompt'] ? row[headerMap['imagePrompt'].original] || '' : '',
+              prepTime: headerMap['prepTime'] ? row[headerMap['prepTime'].original] || '' : '',
+              cookTime: headerMap['cookTime'] ? row[headerMap['cookTime'].original] || '' : '',
+              servings: headerMap['servings'] ? row[headerMap['servings'].original] || '' : '',
+              difficulty: headerMap['difficulty'] ? row[headerMap['difficulty'].original] || '' : '',
+              ingredients: headerMap['ingredients'] ? row[headerMap['ingredients'].original] || '' : '',
+              calories: headerMap['calories'] ? row[headerMap['calories'].original] || '' : '',
+              protein: headerMap['protein'] ? row[headerMap['protein'].original] || '' : '',
+              fat: headerMap['fat'] ? row[headerMap['fat'].original] || '' : '',
+              carbs: headerMap['carbs'] ? row[headerMap['carbs'].original] || '' : '',
           };
       });
       
@@ -833,7 +880,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
     // Pre-calculate scheduling for ALL rows to ensure consistency, even if we only process from startIndex
     const schedule: { date: string }[] = [];
-    let currentDate = new Date(start);
+    const currentDate = new Date(start);
     let currentDayPinCount = 0;
     let targetPinsForDay = useRandomPinsPerDay 
         ? Math.floor(Math.random() * (maxPins - minPins + 1)) + minPins
@@ -928,9 +975,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
             if (prompt) {
                 try {
-                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(templateData.templateId);
+                    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99'].includes(templateData.templateId);
                     const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
-                    const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
+                    const needsImage4 = false;
+                    const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0) + (needsImage4 ? 1 : 0);
                     
                     // Determine if we should use batch processing (call API once) or loop (call API multiple times)
                     const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
@@ -956,7 +1004,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     } else {
                         // For single image generators (Fal.ai, or placeholder), loop through required slots
                         for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
-                            await handleGenerateImage(imgIdx as 1 | 2 | 3, true, prompt);
+                            await handleGenerateImage(imgIdx as 1 | 2 | 3 | 4, true, prompt);
                         }
                     }
                     
@@ -980,7 +1028,8 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                             
                             const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(templateData.templateId);
                             const needsImage3 = ['7', '15', '19', '22'].includes(templateData.templateId);
-                            const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0);
+                            const needsImage4 = false;
+                            const imagesNeeded = 1 + (needsImage2 ? 1 : 0) + (needsImage3 ? 1 : 0) + (needsImage4 ? 1 : 0);
                             const isMultiImageGenerator = ['midjourney', 'midjourney2', 'imagine', 'useapi'].includes(imageGenerator);
 
                             if (isMultiImageGenerator) {
@@ -992,7 +1041,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                             } else {
                                 // Single loop retry
                                 for (let imgIdx = 1; imgIdx <= imagesNeeded; imgIdx++) {
-                                    await handleGenerateImage(imgIdx as 1 | 2 | 3, true, newPrompt);
+                                    await handleGenerateImage(imgIdx as 1 | 2 | 3 | 4, true, newPrompt);
                                 }
                             }
                             
@@ -1018,7 +1067,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             // Explicitly wait for images to load to prevent blank pins
             const { backgroundImage, backgroundImage2, backgroundImage3 } = imageData; // Get LATEST state
             await waitForImageLoad(backgroundImage);
-            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '29', '31', '32', '34', '35', '36', '38', '39', '40', '41', '42', '43', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71'].includes(templateData.templateId)) {
+            if (['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99'].includes(templateData.templateId)) {
                 await waitForImageLoad(backgroundImage2);
             }
             if (['7', '15', '19', '22'].includes(templateData.templateId)) {
@@ -1063,7 +1112,10 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
         setBulkMessage(finalMessage);
         
-        const outputHeaders = ['Title', 'Media URL', 'Pinterest board', 'Description', 'Link', 'Publish date', 'Keywords'];
+        const outputHeaders = [
+            'Title', 'Media URL', 'Pinterest board', 'Description', 'Link', 'Publish date', 'Keywords',
+            'Prep Time', 'Cook Time', 'Servings', 'Difficulty', 'Ingredients', 'Calories', 'Protein', 'Fat', 'Carbs'
+        ];
 
         const getOriginalHeader = (canonicalName: string): string | undefined => {
             const lowerCanonical = canonicalName.toLowerCase();
@@ -1072,6 +1124,15 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                 if (lowerCanonical === 'title') return lowerH.startsWith('title');
                 if (lowerCanonical === 'pinterest board') return lowerH === 'pinterest board' || lowerH === 'board';
                 if (lowerCanonical === 'link') return lowerH === 'link' || lowerH === 'website' || lowerH === 'site';
+                if (lowerCanonical === 'prep time') return lowerH.includes('prep');
+                if (lowerCanonical === 'cook time') return lowerH.includes('cook');
+                if (lowerCanonical === 'servings') return lowerH.includes('servings') || lowerH.includes('serves');
+                if (lowerCanonical === 'difficulty') return lowerH.includes('difficulty') || lowerH.includes('level');
+                if (lowerCanonical === 'ingredients') return lowerH.includes('ingredients');
+                if (lowerCanonical === 'calories') return lowerH.includes('calories') || lowerH.includes('cals');
+                if (lowerCanonical === 'protein') return lowerH.includes('protein');
+                if (lowerCanonical === 'fat') return lowerH.includes('fat');
+                if (lowerCanonical === 'carbs') return lowerH.includes('carbs');
                 return lowerH === lowerCanonical;
             });
         };

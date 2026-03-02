@@ -326,6 +326,15 @@ export const generatePinContentFromKeyword = async (
     - alt_text: Alt text for the image.
     - interests: An array of 3-5 relevant interest tags.
     - category: A general category${categoryOptions ? ` (choose from: ${categoryOptions})` : ''}.
+    - prepTime: Estimated preparation time (e.g., "10 min").
+    - cookTime: Estimated cooking time (e.g., "20 min").
+    - servings: Number of servings (e.g., "4").
+    - difficulty: Difficulty level (e.g., "Easy").
+    - ingredients: Comma-separated list of 5-8 key ingredients.
+    - calories: Estimated calories per serving (e.g., "420").
+    - protein: Estimated protein per serving (e.g., "38g").
+    - fat: Estimated fat per serving (e.g., "12g").
+    - carbs: Estimated carbs per serving (e.g., "45g").
 
     Do not use markdown code blocks. Just return the JSON.`;
 

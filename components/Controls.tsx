@@ -13,13 +13,13 @@ import LoadingSpinner from './icons/LoadingSpinner';
 
 export interface ControlsProps {
   data: TemplateData;
-  onFieldChange: (field: keyof TemplateData, value: any) => void;
-  onImageUpload: (file: File, imageNumber: 1 | 2 | 3) => void;
-  onGenerateImage: (imageNumber: 1 | 2 | 3) => void;
-  onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3) => void;
-  onGenerateImageWithMidApiAi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
-  onGenerateImageWithImagineApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
-  onGenerateImageWithUseApi: (imageNumber: 1 | 2 | 3, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
+  onFieldChange: (field: keyof TemplateData, value: string | number | boolean | null) => void;
+  onImageUpload: (file: File, imageNumber: 1 | 2 | 3 | 4) => void;
+  onGenerateImage: (imageNumber: 1 | 2 | 3 | 4) => void;
+  onGenerateImageWithMidjourney: (imageNumber: 1 | 2 | 3 | 4) => void;
+  onGenerateImageWithMidApiAi: (imageNumber: 1 | 2 | 3 | 4, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
+  onGenerateImageWithImagineApi: (imageNumber: 1 | 2 | 3 | 4, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
+  onGenerateImageWithUseApi: (imageNumber: 1 | 2 | 3 | 4, throwOnError?: boolean, overridePrompt?: string, onProgressUpdate?: (message: string) => void) => void;
   onGenerateDescription: () => void;
   onGenerateKeywords: () => void;
   onGenerateShortTitle: () => void;
@@ -74,7 +74,7 @@ export const ControlCard: React.FC<{ icon: React.ReactNode; title: string; child
 );
 
 
-const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: any) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
+const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string | number | boolean | null) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
       <input
@@ -311,8 +311,11 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
         '94', // Royal Blue Banner Template
         '95', // Deep Violet Banner Template
         '96', // Black Banner Template
+        '97', // Warm Tomato Banner Template
+        '98', // M98 Template
+        '99', // M99 Template
     ];
-    const templateOptions = templateIds.map(id => ({ id, name: id === '93' ? 'M93' : id === '94' ? 'M94' : id === '95' ? 'M95' : id === '96' ? 'M96' : id }));
+    const templateOptions = templateIds.map(id => ({ id, name: id === '93' ? 'M93' : id === '94' ? 'M94' : id === '95' ? 'M95' : id === '96' ? 'M96' : id === '97' ? 'M97' : id === '98' ? 'M98' : id === '99' ? 'M99' : id }));
       
     const [falAiApiKeyInput, setFalAiApiKeyInput] = useState(falAiApiKey);
     const [openRouterApiKeyInput, setOpenRouterApiKeyInput] = useState(openRouterApiKey);
@@ -373,6 +376,104 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                     onSelect={(id) => onFieldChange('imageAspectRatio', id as ImageAspectRatio)}
                     gridCols="grid-cols-3"
                 />
+
+                {data.templateId === '99' && (
+                    <div className="mt-6 pt-6 border-t border-slate-100 space-y-4">
+                        <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-rose-400 rounded-full"></span>
+                            Recipe Details (Rose Gold Template)
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Prep Time</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none"
+                                    value={data.prepTime || ''} 
+                                    onChange={(e) => onFieldChange('prepTime', e.target.value)}
+                                    placeholder="e.g. 10 min"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Cook Time</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none"
+                                    value={data.cookTime || ''} 
+                                    onChange={(e) => onFieldChange('cookTime', e.target.value)}
+                                    placeholder="e.g. 20 min"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Servings</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none"
+                                    value={data.servings || ''} 
+                                    onChange={(e) => onFieldChange('servings', e.target.value)}
+                                    placeholder="e.g. 4"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Difficulty</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none"
+                                    value={data.difficulty || ''} 
+                                    onChange={(e) => onFieldChange('difficulty', e.target.value)}
+                                    placeholder="e.g. Easy"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Ingredients (Comma separated)</label>
+                            <textarea 
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none min-h-[80px]"
+                                value={data.ingredients || ''} 
+                                onChange={(e) => onFieldChange('ingredients', e.target.value)}
+                                placeholder="Chicken, Cream, Garlic, Parmesan..."
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-medium text-slate-400 uppercase">Cals</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs"
+                                    value={data.calories || ''} 
+                                    onChange={(e) => onFieldChange('calories', e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-medium text-slate-400 uppercase">Prot</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs"
+                                    value={data.protein || ''} 
+                                    onChange={(e) => onFieldChange('protein', e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-medium text-slate-400 uppercase">Fat</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs"
+                                    value={data.fat || ''} 
+                                    onChange={(e) => onFieldChange('fat', e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-medium text-slate-400 uppercase">Carbs</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs"
+                                    value={data.carbs || ''} 
+                                    onChange={(e) => onFieldChange('carbs', e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
              </ControlCard>
             <ControlCard icon={<SettingsIcon />} title="AI Configuration">
                 <div className="space-y-6">
@@ -636,8 +737,9 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
     };
 
     // FIX: Ensure all split-layout templates are accounted for in multi-image logic (restored missing ranges)
-    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90', '91', '92', '93', '94', '95', '96'].includes(data.templateId);
+    const needsImage2 = ['2', '4', '7', '11', '13', '15', '16', '19', '22', '23', '48', '49', '50', '51', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99'].includes(data.templateId);
     const needsImage3 = ['7', '15', '19', '22'].includes(data.templateId);
+    const needsImage4 = false;
     const isQuotaError = apiError?.type === 'quota';
     const hasPausedJob = lastCompletedRowIndex !== null;
     const falKeyIsConfigured = falAiApiKey && falAiApiKey.length > 5;
@@ -704,6 +806,9 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                 )}
                 {needsImage3 && (
                     <ImageUpload id={3} label="Background Image 3" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} isGeneratingMidjourney2Image={isGeneratingMidjourney2Image} onGenerateImageWithMidApiAi={onGenerateImageWithMidApiAi} isMj2Configured={mj2KeyIsConfigured} isGeneratingImagineImage={isGeneratingImagineImage} onGenerateImageWithImagineApi={onGenerateImageWithImagineApi} isImagineConfigured={imagineKeyIsConfigured} isGeneratingUseApiImage={isGeneratingUseApiImage} onGenerateImageWithUseApi={onGenerateImageWithUseApi} isUseApiConfigured={useapiKeyIsConfigured} />
+                )}
+                {needsImage4 && (
+                    <ImageUpload id={4} label="Background Image 4" isGeneratingImage={isGeneratingImage} onImageUpload={onImageUpload} onGenerateImage={onGenerateImage} isBulkGenerating={isBulkGenerating} isConfigured={falKeyIsConfigured} isGeneratingMidjourneyImage={isGeneratingMidjourneyImage} onGenerateImageWithMidjourney={onGenerateImageWithMidjourney} isMjConfigured={mjKeyIsConfigured} isGeneratingMidjourney2Image={isGeneratingMidjourney2Image} onGenerateImageWithMidApiAi={onGenerateImageWithMidApiAi} isMj2Configured={mj2KeyIsConfigured} isGeneratingImagineImage={isGeneratingImagineImage} onGenerateImageWithImagineApi={onGenerateImageWithImagineApi} isImagineConfigured={imagineKeyIsConfigured} isGeneratingUseApiImage={isGeneratingUseApiImage} onGenerateImageWithUseApi={onGenerateImageWithUseApi} isUseApiConfigured={useapiKeyIsConfigured} />
                 )}
              </ControlCard>
 
