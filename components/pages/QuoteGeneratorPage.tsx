@@ -115,8 +115,9 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
             if (result.length > 0) {
                 setSelectedQuote(result[0]);
             }
-        } catch (error: any) {
-            setApiError(error.message || "An error occurred generating quotes.");
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            setApiError(err.message || "An error occurred generating quotes.");
         } finally {
             setIsLoading(false);
         }
@@ -153,8 +154,9 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
             if (imageUrls && imageUrls.length > 0) {
                 setGeneratedImage(imageUrls[0]);
             }
-        } catch (error: any) {
-            setApiError(error.message || "Failed to generate background image.");
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            setApiError(err.message || "Failed to generate background image.");
         } finally {
             setIsGeneratingImage(false);
             setImageGenerationMessage(null);
@@ -179,8 +181,9 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
             // Correctly call the OpenRouter version of generateSoraVideoPrompt
             const prompt = await generateSoraVideoPrompt(openRouterApiKey, openRouterModel, selectedQuote);
             setVideoPrompt(prompt);
-        } catch (error: any) {
-            setApiError(error.message || "Failed to generate video prompt.");
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            setApiError(err.message || "Failed to generate video prompt.");
         } finally {
             setIsGeneratingVideo(false);
         }
@@ -214,8 +217,8 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
     return (
         <div className="container mx-auto max-w-7xl">
              <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-800">Viral Quote Generator</h1>
-                <p className="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">
+                <h1 className="text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-100">Viral Quote Generator</h1>
+                <p className="mt-2 text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
                     Create aesthetic, viral quote cards for Instagram, Pinterest, and TikTok in seconds.
                 </p>
             </div>
@@ -223,16 +226,16 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1 space-y-6">
                     <ControlCard icon={<QuoteIcon />} title="1. Generate Content">
-                         <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg mb-4">
+                         <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-4">
                             <button
                                 onClick={() => setActiveTab('category')}
-                                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'category' ? 'bg-white text-pink-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'category' ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
                             >
                                 From Category
                             </button>
                             <button
                                 onClick={() => setActiveTab('custom')}
-                                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'custom' ? 'bg-white text-pink-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'custom' ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
                             >
                                 Enhance My Quote
                             </button>
@@ -240,12 +243,12 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
 
                         {activeTab === 'category' ? (
                              <div>
-                                <label htmlFor="category-select" className="block text-sm font-medium text-slate-600 mb-1.5">Select Category</label>
+                                <label htmlFor="category-select" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Select Category</label>
                                 <select
                                     id="category-select"
                                     value={selectedCategory}
                                     onChange={(e) => setSelectedCategory(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                 >
                                     {CATEGORIES.map(category => (
                                         <option key={category} value={category}>{category}</option>
@@ -254,30 +257,30 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                             </div>
                         ) : (
                             <div>
-                                <label htmlFor="custom-quote" className="block text-sm font-medium text-slate-600 mb-1.5">Your Quote</label>
+                                <label htmlFor="custom-quote" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Your Quote</label>
                                 <textarea
                                     id="custom-quote"
                                     value={customQuote}
                                     onChange={(e) => setCustomQuote(e.target.value)}
                                     rows={3}
                                     placeholder="Enter the quote you want to enhance..."
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                 />
                             </div>
                         )}
                         
                         <div>
-                            <label className="block text-sm font-medium text-slate-600 mb-1.5">Quote Length</label>
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Quote Length</label>
                             <div className="flex space-x-2">
                                 <button
                                     onClick={() => setQuoteLength('short')}
-                                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${quoteLength === 'short' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${quoteLength === 'short' ? 'bg-slate-800 dark:bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                 >
                                     Short
                                 </button>
                                 <button
                                     onClick={() => setQuoteLength('long')}
-                                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${quoteLength === 'long' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${quoteLength === 'long' ? 'bg-slate-800 dark:bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                 >
                                     Long
                                 </button>
@@ -293,13 +296,13 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                         </button>
                         
                         {quotes.length > 0 && (
-                            <div className="space-y-3 pt-4 border-t border-slate-200">
-                                <label htmlFor="select-quote" className="block text-sm font-medium text-slate-600 mb-1.5">Select a Quote</label>
+                            <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                                <label htmlFor="select-quote" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Select a Quote</label>
                                 <select
                                     id="select-quote"
                                     value={selectedQuote}
                                     onChange={(e) => setSelectedQuote(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                 >
                                     {quotes.map((q, i) => (
                                         <option key={i} value={q}>{q}</option>
@@ -310,7 +313,7 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                     </ControlCard>
 
                     <ControlCard icon={<ImagesIcon />} title="2. Generate Image">
-                        <p className="text-sm text-slate-600 mb-3">Choose an AI to generate a cinematic background image for your quote.</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Choose an AI to generate a cinematic background image for your quote.</p>
                         <button
                             onClick={handleGenerateImageForQuote}
                             disabled={!selectedQuote || isGeneratingImage || !useapiKeyIsConfigured}
@@ -324,7 +327,7 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                     </ControlCard>
 
                     <ControlCard icon={<VideoIcon />} title="3. Generate Video Prompt (Sora)">
-                        <p className="text-sm text-slate-600 mb-3">
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
                             Generate a detailed video prompt for tools like OpenAI Sora based on your selected quote.
                         </p>
                         <button
@@ -335,9 +338,9 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                             {isGeneratingVideo ? <><LoadingSpinner className="mr-2"/> Generating...</> : '🎬 Generate Video Prompt'}
                         </button>
                         {videoPrompt && (
-                            <div className="mt-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                <p className="text-sm font-mono text-slate-700 whitespace-pre-wrap">{videoPrompt}</p>
-                                <button onClick={handleCopyVideoPrompt} className="mt-3 w-full text-sm bg-white border border-slate-300 text-slate-700 font-semibold py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                            <div className="mt-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <p className="text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{videoPrompt}</p>
+                                <button onClick={handleCopyVideoPrompt} className="mt-3 w-full text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                                     Copy to Clipboard
                                 </button>
                             </div>
@@ -356,27 +359,27 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                             getLinkText="Get an OpenRouter API Key"
                             statusMessage={
                                 openRouterKeyIsConfigured ? (
-                                    <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
+                                    <p className="text-green-800 dark:text-green-100 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Key is configured.</p>
                                 ) : (
-                                    <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for text generation.</p>
+                                    <p className="text-amber-800 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>Required</strong> for text generation.</p>
                                 )
                             }
                         />
                          <div>
-                            <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 mb-1.5">OpenRouter Model</label>
+                            <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">OpenRouter Model</label>
                             <input
                                 type="text"
                                 id="openrouter-model"
                                 value={openRouterModel}
                                 onChange={(e) => setOpenRouterModel(e.target.value)}
                                 placeholder="e.g., google/gemini-2.5-flash"
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                             />
-                            <p className="text-xs text-slate-500 mt-1.5">
-                                Find models on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline text-pink-600">OpenRouter models page</a>.
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                                Find models on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline text-pink-600 dark:text-pink-400">OpenRouter models page</a>.
                             </p>
                         </div>
-                        <hr className="border-slate-200" />
+                        <hr className="border-slate-200 dark:border-slate-800" />
                         <ApiKeyInput
                             label="useapi.net API Key (Midjourney V3)"
                             value={useapiApiKeyInput}
@@ -388,9 +391,9 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                             getLinkText="Get a useapi.net API Key"
                             statusMessage={
                                 useapiKeyIsConfigured ? (
-                                    <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your useapi.net key is saved.</p>
+                                    <p className="text-green-800 dark:text-green-100 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Your useapi.net key is saved.</p>
                                 ) : (
-                                    <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for image generation.</p>
+                                    <p className="text-amber-800 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>Required</strong> for image generation.</p>
                                 )
                             }
                         />
@@ -400,21 +403,21 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                 <div className="lg:col-span-2">
                     <ControlCard icon={<ImagesIcon />} title="4. Quote Card Preview">
                         {apiError && (
-                            <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start mb-4" role="alert">
+                            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-100 p-4 rounded-xl flex items-start mb-4" role="alert">
                                 <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500 flex-shrink-0 mr-3" />
                                 <p className="text-sm">{apiError}</p>
                             </div>
                         )}
                         
                         {(isLoading || isGeneratingImage) && !generatedImage && (
-                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-500">
+                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-500 dark:text-slate-400">
                                 <LoadingSpinner className="w-10 h-10" />
-                                <p className="mt-4 text-lg font-medium">{imageGenerationMessage || 'Generating content...'}</p>
+                                <p className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-100">{imageGenerationMessage || 'Generating content...'}</p>
                             </div>
                         )}
 
                         {selectedQuote && generatedImage && (
-                            <div className="relative w-full aspect-[9/16] bg-slate-100 rounded-lg overflow-hidden shadow-xl border border-slate-200">
+                            <div className="relative w-full aspect-[9/16] bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden shadow-xl border border-slate-200 dark:border-slate-800">
                                 <div
                                     ref={previewRef}
                                     className="w-full h-full bg-cover bg-center flex flex-col justify-center items-center p-8 text-center"
@@ -428,7 +431,7 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                                 <button
                                     onClick={handleDownload}
                                     disabled={isDownloading}
-                                    className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm text-slate-800 p-2 rounded-full shadow-md hover:bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                                    className="absolute top-3 right-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-slate-800 dark:text-slate-100 p-2 rounded-full shadow-md hover:bg-white dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
                                     title="Download Image"
                                 >
                                     {isDownloading ? <LoadingSpinner className="w-5 h-5" /> : <DownloadIcon className="w-5 h-5" />}
@@ -436,7 +439,7 @@ export const QuoteGeneratorPage: React.FC<QuoteGeneratorPageProps> = ({
                             </div>
                         )}
                          {!isLoading && !isGeneratingImage && (!selectedQuote || !generatedImage) && (
-                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-400">
+                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-400 dark:text-slate-500">
                                 <p className="text-lg">Your generated quote card will appear here.</p>
                             </div>
                         )}

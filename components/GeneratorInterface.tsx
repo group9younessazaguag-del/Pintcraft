@@ -25,7 +25,7 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
         <div className="container mx-auto">
              {/* API Key Missing Warning Banner */}
             {(!openRouterKeyIsConfigured || !anyImageKeyIsConfigured) && !controlProps.isBulkGenerating && (
-                <div className="bg-amber-50 border-l-4 border-amber-400 text-amber-800 p-4 rounded-r-lg shadow-md mb-8" role="alert">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-200 p-4 rounded-r-lg shadow-md mb-8 transition-colors duration-300" role="alert">
                     <div className="flex">
                         <div className="py-1">
                             <ErrorIcon className="w-6 h-6 text-amber-500 mr-4" />
@@ -50,7 +50,7 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 <div className="lg:col-span-1 space-y-8">
                     {apiError && apiError.type === 'quota' && (
-                        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl" role="alert">
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 p-4 rounded-xl transition-colors duration-300" role="alert">
                             <div className="flex items-start">
                                 <div className="flex-shrink-0">
                                     <ErrorIcon className="w-5 h-5 mt-0.5 text-amber-500" />
@@ -61,7 +61,7 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
                                         <p>You've exceeded the free usage limit for your OpenRouter API key. This is an issue with your OpenRouter account, not the application.</p>
                                         <p>To continue, please review your OpenRouter billing or use a different API key.</p>
                                         {apiError.helpLink && (
-                                            <a href={apiError.helpLink} target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-amber-900">
+                                            <a href={apiError.helpLink} target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-100">
                                                 Learn more about OpenRouter API billing here.
                                             </a>
                                         )}
@@ -71,7 +71,7 @@ const GeneratorInterface: React.FC<GeneratorInterfaceProps> = ({ controlProps, p
                         </div>
                     )}
                     {apiError && apiError.type !== 'quota' && (
-                        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start" role="alert">
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 p-4 rounded-xl flex items-start transition-colors duration-300" role="alert">
                             <div className="flex-shrink-0">
                                 <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500" />
                             </div>

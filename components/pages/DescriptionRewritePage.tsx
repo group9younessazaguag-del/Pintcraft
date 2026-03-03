@@ -172,13 +172,14 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                 workingData[i].rewrittenCategory = result.category;
                 workingData[i].rewrittenKeywords = result.keywords;
                 workingData[i].status = 'completed';
-            } catch (error: any) {
-                console.error(`Failed to rewrite row ${i + 1}:`, error);
+            } catch (error: unknown) {
+                const err = error as { message?: string };
+                console.error(`Failed to rewrite row ${i + 1}:`, err);
                 workingData[i].status = 'failed';
-                workingData[i].error = error.message;
+                workingData[i].error = err.message;
                 errorCount++;
                 
-                if (error.message && (error.message.includes('quota') || error.message.includes('429'))) {
+                if (err.message && (err.message.includes('quota') || err.message.includes('429'))) {
                      setApiError({ type: 'quota', message: "API Quota exceeded. Process stopped." });
                      setCsvData([...workingData]);
                      setIsLoading(false);
@@ -197,7 +198,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
     const handleDownloadCsv = () => {
         if (csvData.length === 0) return;
 
-        const escapeCsvCell = (cell: any): string => {
+        const escapeCsvCell = (cell: unknown): string => {
             const value = cell ? String(cell) : '';
             if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
                 return `"${value.replace(/"/g, '""')}"`;
@@ -234,8 +235,8 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
     return (
         <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-800">Rewrite Title & Description</h1>
-                <p className="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">
+                <h1 className="text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-100">Rewrite Title & Description</h1>
+                <p className="mt-2 text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
                     Batch optimize your Pinterest Titles, Descriptions, Categories, and Keywords for blogging using AI.
                 </p>
             </div>
@@ -256,21 +257,21 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                 getLinkText="Get an OpenRouter API Key"
                                 statusMessage={
                                     openRouterKeyIsConfigured ? (
-                                        <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
+                                        <p className="text-green-800 dark:text-green-100 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Key is configured.</p>
                                     ) : (
-                                        <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong></p>
+                                        <p className="text-amber-800 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>Required</strong></p>
                                     )
                                 }
                             />
                             <div>
-                                <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 mb-1.5">OpenRouter Model</label>
+                                <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">OpenRouter Model</label>
                                 <input
                                     type="text"
                                     id="openrouter-model"
                                     value={openRouterModel}
                                     onChange={(e) => setOpenRouterModel(e.target.value)}
                                     placeholder="e.g., google/gemini-2.5-flash"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                 />
                             </div>
                         </div>
@@ -278,12 +279,12 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
 
                     <ControlCard icon={<ProfileIcon />} title="2. Website Profile">
                         <div>
-                           <label htmlFor="profile-select" className="block text-sm font-medium text-slate-600 mb-1.5">Select Profile (for Categories)</label>
+                           <label htmlFor="profile-select" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Select Profile (for Categories)</label>
                             <select
                                 id="profile-select"
                                 value={selectedProfileId}
                                 onChange={(e) => setSelectedProfileId(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                 disabled={adminSettings.websiteProfiles.length === 0}
                             >
                                 {adminSettings.websiteProfiles.length > 0 ? (
@@ -297,8 +298,8 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                 )}
                             </select>
                             {adminSettings.websiteProfiles.length === 0 && (
-                                <p className="text-xs text-slate-500 mt-1.5">
-                                    Create profiles in the <a href="/#/admin" className="underline text-pink-600">Admin Panel</a> to provide category lists.
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                                    Create profiles in the <a href="/#/admin" className="underline text-pink-600 dark:text-pink-400">Admin Panel</a> to provide category lists.
                                 </p>
                             )}
                         </div>
@@ -311,9 +312,9 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                 type="file"
                                 accept=".csv"
                                 onChange={(e) => e.target.files && e.target.files[0] && handleCsvUpload(e.target.files[0])}
-                                className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-600 hover:file:bg-pink-100 cursor-pointer transition-colors duration-200"
+                                className="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 dark:file:bg-pink-900/30 file:text-pink-600 dark:file:text-pink-400 hover:file:bg-pink-100 dark:hover:file:bg-pink-900/50 cursor-pointer transition-colors duration-200"
                             />
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                                 CSV must contain <strong>Title</strong> and <strong>Description</strong> columns.
                             </p>
                         </div>
@@ -331,10 +332,10 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                 ) : '✨ Rewrite All'}
                             </button>
                              {progressMessage && (
-                                <p className="text-sm text-center text-slate-600 bg-slate-100 p-3 rounded-lg border border-slate-200">{progressMessage}</p>
+                                <p className="text-sm text-center text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">{progressMessage}</p>
                             )}
                             {apiError && (
-                                <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-xl flex items-start" role="alert">
+                                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-100 p-3 rounded-xl flex items-start" role="alert">
                                     <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500 flex-shrink-0 mr-2" />
                                     <p className="text-sm">{apiError.message}</p>
                                 </div>
@@ -357,37 +358,37 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
 
                 {/* Results Column */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-                        <h3 className="text-lg font-semibold text-slate-800 tracking-tight mb-4">
+                    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800">
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 tracking-tight mb-4">
                             Results {csvData.length > 0 && `(${csvData.filter(r => r.status === 'completed').length} / ${csvData.length})`}
                         </h3>
-                        <div className="overflow-x-auto max-h-[80vh] rounded-lg border border-slate-200">
-                           <table className="w-full text-sm text-left text-slate-500">
-                               <thead className="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0">
+                        <div className="overflow-x-auto max-h-[80vh] rounded-lg border border-slate-200 dark:border-slate-800">
+                           <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
+                               <thead className="text-xs text-slate-700 dark:text-slate-300 uppercase bg-slate-50 dark:bg-slate-800 sticky top-0">
                                    <tr>
                                        <th scope="col" className="px-4 py-3 w-10">#</th>
                                        <th scope="col" className="px-4 py-3">Original Title</th>
-                                       <th scope="col" className="px-4 py-3 bg-green-50">New Title</th>
+                                       <th scope="col" className="px-4 py-3 bg-green-50 dark:bg-green-900/30">New Title</th>
                                        <th scope="col" className="px-4 py-3">Original Desc</th>
-                                       <th scope="col" className="px-4 py-3 bg-green-50">New Desc</th>
-                                       <th scope="col" className="px-4 py-3 bg-blue-50">New Category</th>
-                                       <th scope="col" className="px-4 py-3 bg-purple-50">New Keywords</th>
+                                       <th scope="col" className="px-4 py-3 bg-green-50 dark:bg-green-900/30">New Desc</th>
+                                       <th scope="col" className="px-4 py-3 bg-blue-50 dark:bg-blue-900/30">New Category</th>
+                                       <th scope="col" className="px-4 py-3 bg-purple-50 dark:bg-purple-900/30">New Keywords</th>
                                        <th scope="col" className="px-4 py-3 w-10">Status</th>
                                    </tr>
                                </thead>
                                <tbody>
                                    {csvData.length > 0 ? (
                                        csvData.map((row, index) => (
-                                           <tr key={index} className="bg-white border-b hover:bg-slate-50">
-                                               <td className="px-4 py-3 text-slate-400">{index + 1}</td>
-                                               <td className="px-4 py-3 font-medium text-slate-800 text-xs">{row.originalTitle}</td>
-                                               <td className="px-4 py-3 font-medium text-green-700 text-xs bg-green-50/30">{row.rewrittenTitle}</td>
-                                               <td className="px-4 py-3 text-slate-500 text-xs">{row.originalDescription}</td>
-                                               <td className="px-4 py-3 text-slate-900 font-medium bg-green-50/30 text-xs">{row.rewrittenDescription}</td>
-                                               <td className="px-4 py-3 font-semibold text-blue-700 text-xs bg-blue-50/30">{row.rewrittenCategory}</td>
-                                               <td className="px-4 py-3 font-medium text-purple-700 text-xs bg-purple-50/30">{row.rewrittenKeywords}</td>
+                                           <tr key={index} className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                               <td className="px-4 py-3 text-slate-400 dark:text-slate-500">{index + 1}</td>
+                                               <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200 text-xs">{row.originalTitle}</td>
+                                               <td className="px-4 py-3 font-medium text-green-700 dark:text-green-400 text-xs bg-green-50/30 dark:bg-green-900/20">{row.rewrittenTitle}</td>
+                                               <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">{row.originalDescription}</td>
+                                               <td className="px-4 py-3 text-slate-900 dark:text-slate-100 font-medium bg-green-50/30 dark:bg-green-900/20 text-xs">{row.rewrittenDescription}</td>
+                                               <td className="px-4 py-3 font-semibold text-blue-700 dark:text-blue-400 text-xs bg-blue-50/30 dark:bg-blue-900/20">{row.rewrittenCategory}</td>
+                                               <td className="px-4 py-3 font-medium text-purple-700 dark:text-purple-400 text-xs bg-purple-50/30 dark:bg-purple-900/20">{row.rewrittenKeywords}</td>
                                                <td className="px-4 py-3">
-                                                   {row.status === 'pending' && <span className="text-slate-400">...</span>}
+                                                   {row.status === 'pending' && <span className="text-slate-400 dark:text-slate-500">...</span>}
                                                    {row.status === 'processing' && <LoadingSpinner className="w-4 h-4 text-indigo-500"/>}
                                                    {row.status === 'completed' && <span className="text-green-500 font-bold">✓</span>}
                                                    {row.status === 'failed' && <span className="text-red-500 font-bold" title={row.error}>✗</span>}
@@ -396,7 +397,7 @@ const DescriptionRewritePage: React.FC<DescriptionRewritePageProps> = ({ openRou
                                        ))
                                    ) : (
                                        <tr>
-                                           <td colSpan={8} className="text-center py-10 px-4 text-slate-500">
+                                           <td colSpan={8} className="text-center py-10 px-4 text-slate-500 dark:text-slate-400">
                                                Upload a CSV file to begin.
                                            </td>
                                        </tr>

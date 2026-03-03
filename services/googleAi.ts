@@ -64,8 +64,8 @@ export const generateShortTitle = async (apiKey: string, model: string, title: s
             contents: `Shorten this Pinterest pin title to under 40 characters, keeping it catchy and relevant. Remove any "how to" or numbers if necessary to make it punchy. Title: "${title}"`,
         });
         return response.text?.trim() || title;
-    } catch (e) {
-        console.error(e);
+    } catch (_e) {
+        console.error(_e);
         return title;
     }
 };
@@ -78,9 +78,10 @@ export const generateDescription = async (apiKey: string, model: string, title: 
             contents: `Write a compelling, SEO-friendly Pinterest description for a pin titled "${title}". It should be 2-3 sentences long, engaging, and include a call to action.`,
         });
         return response.text?.trim() || generatePlaceholderDescription(title);
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error(e);
-        if (e.message?.includes('429')) throw { type: 'quota', message: e.message };
+        const err = e as { message?: string };
+        if (err.message?.includes('429')) throw { type: 'quota', message: err.message };
         throw e;
     }
 };
@@ -93,9 +94,10 @@ export const generateKeywords = async (apiKey: string, model: string, title: str
             contents: `Generate 10 comma-separated high-traffic Pinterest keywords for the topic "${title}". Do not include hashtags.`,
         });
         return response.text?.trim() || generatePlaceholderKeywords(title);
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error(e);
-        if (e.message?.includes('429')) throw { type: 'quota', message: e.message };
+        const err = e as { message?: string };
+        if (err.message?.includes('429')) throw { type: 'quota', message: err.message };
         throw e;
     }
 };
@@ -108,7 +110,7 @@ export const generateSafeImagePrompt = async (apiKey: string, model: string, tit
             contents: `Create a safe, family-friendly image generation prompt for "${title}". Ensure no NS_FW terms or ambiguous words are used. Describe a beautiful, aesthetic image suitable for Pinterest.`,
         });
         return response.text?.trim() || title;
-    } catch (e) {
+    } catch {
         return title;
     }
 };
@@ -166,20 +168,20 @@ export const generateImage = async (apiKey: string, model: string, prompt: strin
     throw new Error('No image returned from Fal.ai');
 };
 
-export const generateImageWithMidjourney = async (apiKey: string, prompt: string, aspectRatio: string): Promise<string[]> => {
+export const generateImageWithMidjourney = async (): Promise<string[]> => {
     // APIFrame implementation (Simplified placeholder for example)
     // Needs real implementation of task polling
     console.warn("generateImageWithMidjourney called (APIFrame)");
     throw new Error("Midjourney (APIFrame) integration pending implementation.");
 };
 
-export const generateImageWithMidApiAi = async (apiKey: string, prompt: string, aspectRatio: string, onProgress?: (msg: string) => void): Promise<string[]> => {
+export const generateImageWithMidApiAi = async (): Promise<string[]> => {
     // midapi.ai implementation (Simplified placeholder)
     console.warn("generateImageWithMidApiAi called");
     throw new Error("midapi.ai integration pending implementation.");
 };
 
-export const generateImageWithImagineApi = async (apiKey: string, prompt: string, aspectRatio: string, onProgress?: (msg: string) => void): Promise<string[]> => {
+export const generateImageWithImagineApi = async (): Promise<string[]> => {
     // ImagineAPI implementation (Simplified placeholder)
     console.warn("generateImageWithImagineApi called");
     throw new Error("ImagineAPI integration pending implementation.");
@@ -263,7 +265,7 @@ let pollAttempt = 0;
             throw new Error('The AI model did not return any valid image URLs.');
         }
 
-        const imageUrls = imageUx.map((img: any) => img.url).filter(Boolean);
+        const imageUrls = imageUx.map((img: { url: string }) => img.url).filter(Boolean);
 
         const base64Images = await Promise.all(
             imageUrls.map(async (url: string) => {

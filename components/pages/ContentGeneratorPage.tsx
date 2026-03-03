@@ -167,12 +167,13 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                     setGeneratedData([...results]);
                     success = true;
 
-                } catch (error: any) {
-                    console.error(`Attempt ${attempt} failed for keyword "${currentKeyword}":`, error);
+                } catch (error: unknown) {
+                    const err = error as { type?: string; message?: string; helpLink?: string };
+                    console.error(`Attempt ${attempt} failed for keyword "${currentKeyword}":`, err);
                     
                     // Don't retry quota errors
-                    if (error.type === 'quota') {
-                        setApiError({type: error.type, message: `API Quota Exceeded on keyword "${originalKeyword}". Generation stopped.`, helpLink: error.helpLink});
+                    if (err.type === 'quota') {
+                        setApiError({type: err.type, message: `API Quota Exceeded on keyword "${originalKeyword}". Generation stopped.`, helpLink: err.helpLink});
                         setIsLoading(false);
                         return;
                     }
@@ -195,7 +196,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                         }
                     } else {
                         // Final attempt failed
-                        const errorMessage = `Failed on keyword "${originalKeyword}": ${error.message}`;
+                        const errorMessage = `Failed on keyword "${originalKeyword}": ${err.message}`;
                         generationErrors.push(errorMessage);
                     }
                 }
@@ -218,7 +219,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
     const handleDownloadCsv = () => {
         if (generatedData.length === 0) return;
 
-        const escapeCsvCell = (cell: any): string => {
+        const escapeCsvCell = (cell: unknown): string => {
             const value = cell ? String(cell) : '';
             if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
                 return `"${value.replace(/"/g, '""')}"`;
@@ -273,8 +274,8 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
     return (
         <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-800">AI Content Idea Generator</h1>
-                <p className="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">
+                <h1 className="text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-100">AI Content Idea Generator</h1>
+                <p className="mt-2 text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
                     Supercharge your content strategy. Upload a CSV with keywords, and let AI generate complete Pinterest-ready content for you.
                 </p>
             </div>
@@ -297,24 +298,24 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                                 getLinkText="Get an OpenRouter API Key"
                                 statusMessage={
                                     openRouterKeyIsConfigured ? (
-                                        <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your OpenRouter key is saved in this browser.</p>
+                                        <p className="text-green-800 dark:text-green-100 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Your OpenRouter key is saved in this browser.</p>
                                     ) : (
-                                        <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
+                                        <p className="text-amber-800 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
                                     )
                                 }
                             />
                             <div>
-                                <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 mb-1.5">OpenRouter Model</label>
+                                <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">OpenRouter Model</label>
                                 <input
                                     type="text"
                                     id="openrouter-model"
                                     value={openRouterModel}
                                     onChange={(e) => setOpenRouterModel(e.target.value)}
                                     placeholder="e.g., google/gemini-2.5-flash"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                 />
-                                <p className="text-xs text-slate-500 mt-1.5">
-                                    Find models on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline text-pink-600">OpenRouter models page</a>.
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                                    Find models on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline text-pink-600 dark:text-pink-400">OpenRouter models page</a>.
                                 </p>
                             </div>
                         </div>
@@ -322,12 +323,12 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                     
                      <ControlCard icon={<ProfileIcon />} title="Website Profile">
                         <div>
-                           <label htmlFor="profile-select" className="block text-sm font-medium text-slate-600 mb-1.5">Select Profile</label>
+                           <label htmlFor="profile-select" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Select Profile</label>
                             <select
                                 id="profile-select"
                                 value={selectedProfileId}
                                 onChange={(e) => setSelectedProfileId(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                 disabled={adminSettings.websiteProfiles.length === 0}
                             >
                                 {adminSettings.websiteProfiles.length > 0 ? (
@@ -341,8 +342,8 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                                 )}
                             </select>
                             {adminSettings.websiteProfiles.length === 0 && (
-                                <p className="text-xs text-slate-500 mt-1.5">
-                                    You can create profiles in the <a href="/#/admin" className="underline text-pink-600">Admin Panel</a> to pre-fill board and category lists.
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                                    You can create profiles in the <a href="/#/admin" className="underline text-pink-600 dark:text-pink-400">Admin Panel</a> to pre-fill board and category lists.
                                 </p>
                             )}
                         </div>
@@ -355,9 +356,9 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                                 type="file"
                                 accept=".csv"
                                 onChange={(e) => e.target.files && e.target.files[0] && handleCsvUpload(e.target.files[0])}
-                                className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-600 hover:file:bg-pink-100 cursor-pointer transition-colors duration-200"
+                                className="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 dark:file:bg-pink-900/30 file:text-pink-600 dark:file:text-pink-400 hover:file:bg-pink-100 dark:hover:file:bg-pink-900/50 cursor-pointer transition-colors duration-200"
                             />
-                            <p className="text-xs text-slate-500">Upload a CSV with a 'Keywords' column, or a single-column list of keywords.</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Upload a CSV with a 'Keywords' column, or a single-column list of keywords.</p>
                         </div>
                     </ControlCard>
 
@@ -373,10 +374,10 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                                 ) : '✨ Generate All Content'}
                             </button>
                              {progressMessage && (
-                                <p className="text-sm text-center text-slate-600 bg-slate-100 p-3 rounded-lg border border-slate-200">{progressMessage}</p>
+                                <p className="text-sm text-center text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">{progressMessage}</p>
                             )}
                             {apiError && (
-                                <div className={`border p-3 rounded-xl ${apiError.type === 'quota' ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-red-50 border-red-200 text-red-800'}`} role="alert">
+                                <div className={`border p-3 rounded-xl ${apiError.type === 'quota' ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-100' : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-800 dark:text-red-100'}`} role="alert">
                                     <div className="flex items-start">
                                         <div className="flex-shrink-0">
                                             <ErrorIcon className={`w-5 h-5 mt-0.5 ${apiError.type === 'quota' ? 'text-amber-500' : 'text-red-500'}`} />
@@ -388,7 +389,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                                             <div className="text-sm mt-1 space-y-1">
                                                 <p className="whitespace-pre-wrap">{apiError.message}</p>
                                                 {apiError.type === 'quota' && apiError.helpLink && (
-                                                    <a href={apiError.helpLink} target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-amber-900 mt-2 block">
+                                                    <a href={apiError.helpLink} target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-100 mt-2 block">
                                                         Learn more about API billing &rarr;
                                                     </a>
                                                 )}
@@ -409,7 +410,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                                     <DownloadIcon className="w-5 h-5 mr-2" />
                                     Download Content CSV
                                 </button>
-                                <p className="text-xs text-slate-500 mt-2">You can upload this file directly into the Pin Generator.</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">You can upload this file directly into the Pin Generator.</p>
                             </div>
                         </ControlCard>
                     )}
@@ -417,11 +418,11 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
 
                 {/* Results Column */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-                        <h3 className="text-lg font-semibold text-slate-800 tracking-tight mb-4">Generated Content ({generatedData.length} / {keywords.length})</h3>
-                        <div className="overflow-x-auto max-h-[80vh] rounded-lg border border-slate-200">
-                           <table className="w-full text-sm text-left text-slate-500">
-                               <thead className="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0">
+                    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800">
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 tracking-tight mb-4">Generated Content ({generatedData.length} / {keywords.length})</h3>
+                        <div className="overflow-x-auto max-h-[80vh] rounded-lg border border-slate-200 dark:border-slate-800">
+                           <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
+                               <thead className="text-xs text-slate-700 dark:text-slate-300 uppercase bg-slate-50 dark:bg-slate-800 sticky top-0">
                                    <tr>
                                        <th scope="col" className="px-4 py-3">Keyword</th>
                                        <th scope="col" className="px-4 py-3">Title of recipes</th>
@@ -437,8 +438,8 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                                <tbody>
                                    {generatedData.length > 0 ? (
                                        generatedData.map((row, index) => (
-                                           <tr key={index} className="bg-white border-b hover:bg-slate-50">
-                                               <td className="px-4 py-3 font-semibold text-slate-800 align-top">{row.keyword}</td>
+                                           <tr key={index} className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                               <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200 align-top">{row.keyword}</td>
                                                <td className="px-4 py-3 align-top min-w-[200px]">{row.title}</td>
                                                <td className="px-4 py-3 align-top">{row.board}</td>
                                                <td className="px-4 py-3 align-top min-w-[250px] font-mono text-xs">{row.image_prompt}</td>
@@ -451,7 +452,7 @@ const ContentGeneratorPage: React.FC<ContentGeneratorPageProps> = ({ openRouterA
                                        ))
                                    ) : (
                                        <tr>
-                                           <td colSpan={9} className="text-center py-10 px-4 text-slate-500">
+                                           <td colSpan={9} className="text-center py-10 px-4 text-slate-500 dark:text-slate-400">
                                                {keywords.length > 0 ? 'Generated content will appear here...' : 'Upload a keyword CSV to get started.'}
                                            </td>
                                        </tr>

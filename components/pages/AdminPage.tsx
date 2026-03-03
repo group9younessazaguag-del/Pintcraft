@@ -116,7 +116,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
     }
   };
 
-  const handleSettingsChange = (field: keyof AdminSettings, value: any) => {
+  const handleSettingsChange = (field: keyof AdminSettings, value: string | number | boolean | unknown[]) => {
     setLocalSettings(prev => ({ ...prev, [field]: value }));
   };
   
@@ -149,7 +149,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
   const handleDeleteProfile = (index: number) => {
       if (window.confirm('Are you sure you want to delete this profile?')) {
           const deletedProfile = localSettings.websiteProfiles[index];
-          let newProfiles = localSettings.websiteProfiles.filter((_, i) => i !== index);
+          const newProfiles = localSettings.websiteProfiles.filter((_, i) => i !== index);
 
           // If the deleted one was the default and there are profiles left, set a new default.
           if (deletedProfile.isDefault && newProfiles.length > 0) {
@@ -212,9 +212,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ isAdminLoggedIn, setIsAdminLogged
             } else {
                 throw new Error("Invalid or corrupted backup file.");
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to import settings:", err);
-            alert(`Error importing file: ${err.message}`);
+            alert(`Error importing file: ${(err as Error).message}`);
         } finally {
             // Reset file input so the same file can be selected again
             if (fileInputRef.current) {

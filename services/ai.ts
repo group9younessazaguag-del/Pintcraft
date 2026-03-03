@@ -42,7 +42,7 @@ const callOpenRouter = async (
     model: string,
     prompt: string,
     responseFormat?: { type: 'json_object' }
-): Promise<any> => {
+): Promise<string> => {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -106,7 +106,7 @@ export const generateDescription = async (apiKey: string, model: string, title: 
         const prompt = `Write a compelling, SEO-friendly Pinterest description for a pin titled "${title}". It should be 2-3 sentences long, engaging, and include a call to action.`;
         const content = await callOpenRouter(apiKey, model, prompt);
         return content?.trim() || generatePlaceholderDescription(title);
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error(e);
         throw e;
     }
@@ -117,7 +117,7 @@ export const generateKeywords = async (apiKey: string, model: string, title: str
         const prompt = `Generate 10 comma-separated high-traffic Pinterest keywords for the topic "${title}". Do not include hashtags.`;
         const content = await callOpenRouter(apiKey, model, prompt);
         return content?.trim() || generatePlaceholderKeywords(title);
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error(e);
         throw e;
     }
@@ -186,20 +186,20 @@ export const generateImage = async (apiKey: string, model: string, prompt: strin
     throw new Error('No image returned from Fal.ai');
 };
 
-export const generateImageWithMidjourney = async (apiKey: string, prompt: string, aspectRatio: string): Promise<string[]> => {
+export const generateImageWithMidjourney = async (): Promise<string[]> => {
     // APIFrame implementation (Simplified placeholder for example)
     // Needs real implementation of task polling
     console.warn("generateImageWithMidjourney called (APIFrame) - Placeholder implementation.");
     throw new Error("Midjourney (APIFrame) integration pending implementation.");
 };
 
-export const generateImageWithMidApiAi = async (apiKey: string, prompt: string, aspectRatio: string, onProgress?: (msg: string) => void): Promise<string[]> => {
+export const generateImageWithMidApiAi = async (): Promise<string[]> => {
     // midapi.ai implementation (Simplified placeholder)
     console.warn("generateImageWithMidApiAi called - Placeholder implementation.");
     throw new Error("midapi.ai integration pending implementation.");
 };
 
-export const generateImageWithImagineApi = async (apiKey: string, prompt: string, aspectRatio: string, onProgress?: (msg: string) => void): Promise<string[]> => {
+export const generateImageWithImagineApi = async (): Promise<string[]> => {
     // ImagineAPI implementation (Simplified placeholder)
     console.warn("generateImageWithImagineApi called - Placeholder implementation.");
     throw new Error("ImagineAPI integration pending implementation.");
@@ -283,7 +283,7 @@ export const generateImageWithUseApi = async (
             throw new Error('The AI model did not return any valid image URLs.');
         }
 
-        const imageUrls = imageUx.map((img: any) => img.url).filter(Boolean);
+        const imageUrls = imageUx.map((img: { url: string }) => img.url).filter(Boolean);
 
         const base64Images = await Promise.all(
             imageUrls.map(async (url: string) => {

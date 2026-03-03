@@ -89,8 +89,9 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
         try {
             const postData = await generateFacebookPost(openRouterApiKey, openRouterModel, topic);
             setGeneratedPost(postData);
-        } catch (error: any) {
-            setApiError(error.message || "An unknown error occurred.");
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            setApiError(err.message || "An unknown error occurred.");
         } finally {
             setIsLoading(false);
         }
@@ -141,8 +142,9 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
                 throw new Error("The AI model did not return any valid image.");
             }
 
-        } catch (error: any) {
-            setApiError(error.message || `An unknown error occurred with ${generator}.`);
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            setApiError(err.message || `An unknown error occurred with ${generator}.`);
         } finally {
             setImageGenerator(null);
             setImageGenerationMessage(null);
@@ -181,8 +183,8 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
     return (
         <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-800">AI Facebook Post Generator</h1>
-                <p className="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">
+                <h1 className="text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-100">AI Facebook Post Generator</h1>
+                <p className="mt-2 text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
                     Provide a topic and let AI craft an engaging Facebook post with a unique image and relevant hashtags.
                 </p>
             </div>
@@ -192,14 +194,14 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
                 <div className="lg:col-span-1 space-y-6">
                     <ControlCard icon={<FacebookIcon />} title="1. Create Your Post">
                         <div>
-                            <label htmlFor="topic" className="block text-sm font-medium text-slate-600 mb-1.5">Topic or Keyword</label>
+                            <label htmlFor="topic" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Topic or Keyword</label>
                             <textarea
                                 id="topic"
                                 value={topic}
                                 onChange={(e) => setTopic(e.target.value)}
                                 rows={3}
                                 placeholder="e.g., 'easy weeknight dinner recipes', 'benefits of yoga', 'new sci-fi book release'"
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                             />
                         </div>
                         <button
@@ -226,27 +228,27 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
                                 getLinkText="Get an OpenRouter API Key"
                                 statusMessage={
                                     openRouterKeyIsConfigured ? (
-                                        <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
+                                        <p className="text-green-800 dark:text-green-100 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Key is configured.</p>
                                     ) : (
-                                        <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for text generation.</p>
+                                        <p className="text-amber-800 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>Required</strong> for text generation.</p>
                                     )
                                 }
                             />
                             <div>
-                                <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 mb-1.5">OpenRouter Model</label>
+                                <label htmlFor="openrouter-model" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">OpenRouter Model</label>
                                 <input
                                     type="text"
                                     id="openrouter-model"
                                     value={openRouterModel}
                                     onChange={(e) => setOpenRouterModel(e.target.value)}
                                     placeholder="e.g., google/gemini-2.5-flash"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                 />
-                                <p className="text-xs text-slate-500 mt-1.5">
-                                    Find models on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline text-pink-600">OpenRouter models page</a>.
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                                    Find models on the <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline text-pink-600 dark:text-pink-400">OpenRouter models page</a>.
                                 </p>
                             </div>
-                            <hr className="border-slate-200" />
+                            <hr className="border-slate-200 dark:border-slate-800" />
                             <ApiKeyInput
                                 label="Fal.ai API Key (for Images)"
                                 value={falAiApiKeyInput}
@@ -258,9 +260,9 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
                                 getLinkText="Get a Fal.ai API Key"
                                 statusMessage={
                                     falKeyIsConfigured ? (
-                                        <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Key is configured.</p>
+                                        <p className="text-green-800 dark:text-green-100 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Key is configured.</p>
                                     ) : (
-                                        <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for image generation.</p>
+                                        <p className="text-amber-800 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>Required</strong> for image generation.</p>
                                     )
                                 }
                             />
@@ -275,9 +277,9 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
                                 getLinkText="Get a useapi.net API Key"
                                 statusMessage={
                                     useapiKeyIsConfigured ? (
-                                        <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your useapi.net key is saved.</p>
+                                        <p className="text-green-800 dark:text-green-100 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Your useapi.net key is saved.</p>
                                 ) : (
-                                        <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>Required</strong> for this image generator.</p>
+                                        <p className="text-amber-800 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>Required</strong> for this image generator.</p>
                                     )
                                 }
                             />
@@ -289,27 +291,27 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
                 <div className="lg:col-span-2">
                     <ControlCard icon={<ImagesIcon />} title="3. Generated Post Preview">
                          {apiError && (
-                            <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl flex items-start" role="alert">
+                            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-100 p-4 rounded-xl flex items-start" role="alert">
                                 <ErrorIcon className="w-5 h-5 mt-0.5 text-red-500 flex-shrink-0 mr-3" />
                                 <p className="text-sm">{apiError}</p>
                             </div>
                         )}
                         
                         {isLoading && (
-                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-500">
+                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-500 dark:text-slate-400">
                                 <LoadingSpinner className="w-10 h-10" />
-                                <p className="mt-4 text-lg font-medium">Generating content...</p>
+                                <p className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-100">Generating content...</p>
                             </div>
                         )}
 
                         {generatedPost && (
-                            <div className="bg-white rounded-lg shadow-md max-w-xl mx-auto border border-slate-200 overflow-hidden">
+                            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md max-w-xl mx-auto border border-slate-200 dark:border-slate-800 overflow-hidden">
                                 <div className="p-4">
-                                    <p className="text-slate-800 whitespace-pre-wrap">{generatedPost.postText}</p>
+                                    <p className="text-slate-800 dark:text-slate-100 whitespace-pre-wrap">{generatedPost.postText}</p>
                                 </div>
-                                <div className="aspect-[4/5] bg-slate-100 flex items-center justify-center">
+                                <div className="aspect-[4/5] bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                     {imageGenerator ? (
-                                        <div className="text-slate-500 flex flex-col items-center p-4 text-center">
+                                        <div className="text-slate-500 dark:text-slate-400 flex flex-col items-center p-4 text-center">
                                             <LoadingSpinner className="w-8 h-8"/>
                                             <p className="mt-2 text-sm font-semibold">{imageGenerationMessage || `Generating with ${imageGenerator}...`}</p>
                                         </div>
@@ -329,7 +331,7 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
                                             <button
                                                 onClick={handleDownloadImage}
                                                 disabled={isDownloading}
-                                                className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm text-slate-800 p-2 rounded-full shadow-md hover:bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
+                                                className="absolute top-3 right-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-slate-800 dark:text-slate-100 p-2 rounded-full shadow-md hover:bg-white dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50"
                                                 title="Download Image"
                                             >
                                                 {isDownloading ? <LoadingSpinner className="w-5 h-5" /> : <DownloadIcon className="w-5 h-5" />}
@@ -337,7 +339,7 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-3 p-4 w-full max-w-xs">
-                                            <p className="text-sm text-slate-500 text-center mb-2">Image prompt generated. Choose a service to create the image:</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-2">Image prompt generated. Choose a service to create the image:</p>
                                             <button
                                                 onClick={() => handleGenerateFbImage('fal')}
                                                 disabled={!falKeyIsConfigured || imageGenerator !== null || isLoading}
@@ -358,12 +360,12 @@ export const FacebookPostGeneratorPage: React.FC<FacebookPostGeneratorPageProps>
                                     )}
                                 </div>
                                 <div className="p-4">
-                                    <p className="text-blue-600 text-sm">{generatedPost.hashtags.map(h => `#${h}`).join(' ')}</p>
+                                    <p className="text-blue-600 dark:text-blue-400 text-sm">{generatedPost.hashtags.map(h => `#${h}`).join(' ')}</p>
                                 </div>
                             </div>
                         )}
                          {!isLoading && !generatedPost && (
-                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-400">
+                             <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-400 dark:text-slate-500">
                                 <p className="text-lg">Your generated post will appear here.</p>
                             </div>
                         )}

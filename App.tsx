@@ -31,7 +31,7 @@ declare global {
       toPng: (element: HTMLElement, options?: object) => Promise<string>;
       toBlob: (element: HTMLElement, options?: object) => Promise<Blob | null>;
     };
-    JSZip: any;
+    JSZip: unknown;
   }
 }
 
@@ -139,7 +139,7 @@ const App: React.FC = () => {
   const [inProgressCsvData, setInProgressCsvData] = useState<{[key: string]: string}[]>([]);
   const [bulkJobType, setBulkJobType] = useState<'fal' | 'midjourney' | 'midjourney2' | 'imagine' | 'useapi' | null>(null);
   
-  const zipRef = useRef<any>(null);
+  const zipRef = useRef<unknown>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
   const handleResetBulkGeneration = useCallback(() => {
@@ -212,7 +212,7 @@ const App: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRowIndex, csvData]);
 
-  const handleFieldChange = (field: keyof TemplateData, value: any) => {
+  const handleFieldChange = (field: keyof TemplateData, value: unknown) => {
     if (apiError) setApiError(null);
     if (generatedAssets) setGeneratedAssets(null);
     
@@ -295,15 +295,16 @@ const App: React.FC = () => {
         
         const field = `backgroundImage${imageNumber === 1 ? '' : imageNumber}` as 'backgroundImage' | 'backgroundImage2' | 'backgroundImage3' | 'backgroundImage4';
         setImageData(prev => ({ ...prev, [field]: imageUrl }));
-    } catch (error: any) {
-        console.error(`Error generating image:`, error);
+    } catch (error: unknown) {
+        const err = error as { type?: string; message?: string; helpLink?: string };
+        console.error(`Error generating image:`, err);
         if (throwOnError) {
             throw error; // Re-throw for bulk processor
         }
         setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image.',
-            helpLink: error.helpLink
+            type: err.type || 'generic',
+            message: err.message || 'Failed to generate image.',
+            helpLink: err.helpLink
         });
     } finally {
         setIsGeneratingImage(prev => ({ ...prev, [imageNumber]: false }));
@@ -355,15 +356,16 @@ const App: React.FC = () => {
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
             backgroundImage4: imageUrls[3] || prev.backgroundImage4,
         }));
-    } catch (error: any) {
-        console.error(`Error generating image with Midjourney:`, error);
+    } catch (error: unknown) {
+        const err = error as { type?: string; message?: string; helpLink?: string };
+        console.error(`Error generating image with Midjourney:`, err);
         if (throwOnError) {
             throw error; // Re-throw for bulk processor
         }
         setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image with Midjourney.',
-            helpLink: error.helpLink
+            type: err.type || 'generic',
+            message: err.message || 'Failed to generate image with Midjourney.',
+            helpLink: err.helpLink
         });
     } finally {
         setIsGeneratingMidjourneyImage({ 1: false, 2: false, 3: false, 4: false });
@@ -415,15 +417,16 @@ const App: React.FC = () => {
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
             backgroundImage4: imageUrls[3] || prev.backgroundImage4,
         }));
-    } catch (error: any) {
-        console.error(`Error generating image with midapi.ai:`, error);
+    } catch (error: unknown) {
+        const err = error as { type?: string; message?: string; helpLink?: string };
+        console.error(`Error generating image with midapi.ai:`, err);
         if (throwOnError) {
             throw error; // Re-throw for bulk processor
         }
         setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image with midapi.ai.',
-            helpLink: error.helpLink
+            type: err.type || 'generic',
+            message: err.message || 'Failed to generate image with midapi.ai.',
+            helpLink: err.helpLink
         });
     } finally {
         setIsGeneratingMidjourney2Image({ 1: false, 2: false, 3: false, 4: false });
@@ -475,15 +478,16 @@ const App: React.FC = () => {
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
             backgroundImage4: imageUrls[3] || prev.backgroundImage4,
         }));
-    } catch (error: any) {
-        console.error(`Error generating image with ImagineAPI:`, error);
+    } catch (error: unknown) {
+        const err = error as { type?: string; message?: string; helpLink?: string };
+        console.error(`Error generating image with ImagineAPI:`, err);
         if (throwOnError) {
             throw error; // Re-throw for bulk processor
         }
         setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image with ImagineAPI.',
-            helpLink: error.helpLink
+            type: err.type || 'generic',
+            message: err.message || 'Failed to generate image with ImagineAPI.',
+            helpLink: err.helpLink
         });
     } finally {
         setIsGeneratingImagineImage({ 1: false, 2: false, 3: false, 4: false });
@@ -535,15 +539,16 @@ const App: React.FC = () => {
             backgroundImage3: imageUrls[2] || prev.backgroundImage3,
             backgroundImage4: imageUrls[3] || prev.backgroundImage4,
         }));
-    } catch (error: any) {
-        console.error(`Error generating image with useapi.net:`, error);
+    } catch (error: unknown) {
+        const err = error as { type?: string; message?: string; helpLink?: string };
+        console.error(`Error generating image with useapi.net:`, err);
         if (throwOnError) {
             throw error; // Re-throw for bulk processor
         }
         setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate image with useapi.net.',
-            helpLink: error.helpLink
+            type: err.type || 'generic',
+            message: err.message || 'Failed to generate image with useapi.net.',
+            helpLink: err.helpLink
         });
     } finally {
         setIsGeneratingUseApiImage({ 1: false, 2: false, 3: false, 4: false });
@@ -570,15 +575,16 @@ const App: React.FC = () => {
             newDescription = generatePlaceholderDescription(title);
         }
         handleFieldChange('description', newDescription);
-    } catch (error: any) {
-        console.error(`Error generating description:`, error);
+    } catch (error: unknown) {
+        const err = error as { type?: string; message?: string; helpLink?: string };
+        console.error(`Error generating description:`, err);
         if (throwOnError) {
             throw error;
         }
         setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate description.',
-            helpLink: error.helpLink
+            type: err.type || 'generic',
+            message: err.message || 'Failed to generate description.',
+            helpLink: err.helpLink
         });
     } finally {
         setIsGeneratingDescription(false);
@@ -605,15 +611,16 @@ const App: React.FC = () => {
             newKeywords = generatePlaceholderKeywords(title);
         }
         handleFieldChange('keywords', newKeywords);
-    } catch (error: any) {
-        console.error(`Error generating keywords:`, error);
+    } catch (error: unknown) {
+        const err = error as { type?: string; message?: string; helpLink?: string };
+        console.error(`Error generating keywords:`, err);
         if (throwOnError) {
             throw error;
         }
         setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to generate keywords.',
-            helpLink: error.helpLink
+            type: err.type || 'generic',
+            message: err.message || 'Failed to generate keywords.',
+            helpLink: err.helpLink
         });
     } finally {
         setIsGeneratingKeywords(false);
@@ -639,12 +646,13 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             newTitle = title.length > 35 ? title.substring(0, 32) + '...' : title;
         }
         handleFieldChange('title', newTitle);
-    } catch (error: any) {
-        console.error(`Error generating short title:`, error);
+    } catch (error: unknown) {
+        const err = error as { type?: string; message?: string; helpLink?: string };
+        console.error(`Error generating short title:`, err);
         setApiError({
-            type: error.type || 'generic',
-            message: error.message || 'Failed to shorten title.',
-            helpLink: error.helpLink
+            type: err.type || 'generic',
+            message: err.message || 'Failed to shorten title.',
+            helpLink: err.helpLink
         });
     } finally {
         setIsGeneratingShortTitle(false);
@@ -942,10 +950,11 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         description = generatePlaceholderDescription(currentData.title);
                     }
                     currentRunCsvData[i][descriptionHeaderKey] = description;
-                } catch (error: any) {
-                    console.warn(`Skipping description for row ${i + 1} due to error:`, error);
-                    if (error.type === 'quota') throw error;
-                    generationErrors.push(`Row ${i + 1}: Failed description - ${error.message}`);
+                } catch (error: unknown) {
+                    const err = error as { type?: string; message?: string };
+                    console.warn(`Skipping description for row ${i + 1} due to error:`, err);
+                    if (err.type === 'quota') throw error;
+                    generationErrors.push(`Row ${i + 1}: Failed description - ${err.message}`);
                 }
             }
 
@@ -960,10 +969,11 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                         keywords = generatePlaceholderKeywords(currentData.title);
                     }
                     currentRunCsvData[i][keywordsHeaderKey] = keywords;
-                } catch (error: any) {
-                    console.warn(`Skipping keywords for row ${i + 1} due to error:`, error);
-                    if (error.type === 'quota') throw error;
-                    generationErrors.push(`Row ${i + 1}: Failed keywords - ${error.message}`);
+                } catch (error: unknown) {
+                    const err = error as { type?: string; message?: string };
+                    console.warn(`Skipping keywords for row ${i + 1} due to error:`, err);
+                    if (err.type === 'quota') throw error;
+                    generationErrors.push(`Row ${i + 1}: Failed keywords - ${err.message}`);
                 }
             }
 
@@ -1010,13 +1020,14 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                     
                     imageGenerated = true;
 
-                } catch (error: any) {
-                    console.warn(`Original image generation failed for row ${i + 1}:`, error);
-                    if (error.type === 'quota') {
+                } catch (error: unknown) {
+                    const err = error as { type?: string; message?: string };
+                    console.warn(`Original image generation failed for row ${i + 1}:`, err);
+                    if (err.type === 'quota') {
                         throw error; // Re-throw critical quota errors
                     }
                     
-                    const isBannedWordsError = error.message && error.message.toLowerCase().includes('banned words');
+                    const isBannedWordsError = err.message && err.message.toLowerCase().includes('banned words');
 
                     if (isBannedWordsError && orApiKey) {
                         setBulkMessage(`Row ${i + 1}: Banned words detected. Regenerating prompt...`);
@@ -1048,15 +1059,16 @@ const handleGenerateShortTitle = async (): Promise<void> => {
                             imageGenerated = true;
                             console.log(`Row ${i + 1}: Image generation succeeded on retry.`);
 
-                        } catch (retryError: any) {
-                             console.warn(`Retry failed for row ${i + 1}:`, retryError);
+                        } catch (retryError: unknown) {
+                             const rErr = retryError as { message?: string };
+                             console.warn(`Retry failed for row ${i + 1}:`, rErr);
                              const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
-                             generationErrors.push(`Row ${i + 1} (${shortTitle}): Banned words, retry failed: ${retryError.message}`);
+                             generationErrors.push(`Row ${i + 1} (${shortTitle}): Banned words, retry failed: ${rErr.message}`);
                              imageGenerated = false;
                         }
                     } else {
                         const shortTitle = currentData.title.length > 30 ? `${currentData.title.substring(0, 27)}...` : currentData.title;
-                        generationErrors.push(`Row ${i + 1} (${shortTitle}): ${error.message}`);
+                        generationErrors.push(`Row ${i + 1} (${shortTitle}): ${err.message}`);
                         imageGenerated = false;
                     }
                 }
@@ -1137,7 +1149,7 @@ const handleGenerateShortTitle = async (): Promise<void> => {
             });
         };
         
-        const escapeCsvCell = (cell: any): string => {
+        const escapeCsvCell = (cell: unknown): string => {
             const value = cell ? String(cell) : '';
             if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
                 return `"${value.replace(/"/g, '""')}"`;
@@ -1168,18 +1180,19 @@ const handleGenerateShortTitle = async (): Promise<void> => {
 
         setGeneratedAssets({ zip: zipContent, csv: csvBlob });
 
-    } catch (e: any) {
-        console.error('Bulk generation failed:', e);
+    } catch (error: unknown) {
+        const err = error as { type?: string; message?: string; helpLink?: string };
+        console.error('Bulk generation failed:', err);
         const rowIndex = i + 1;
         
         let message: string;
-        if (e.type === 'quota') {
+        if (err.type === 'quota') {
             message = `API Quota Exceeded on row ${rowIndex}. Bulk generation has been paused.`;
         } else {
-            message = `An error occurred on row ${rowIndex}: ${e.message}. Bulk generation stopped.`;
+            message = `An error occurred on row ${rowIndex}: ${err.message}. Bulk generation stopped.`;
         }
         
-        setApiError({ type: e.type || 'generic', message: message, helpLink: e.helpLink });
+        setApiError({ type: err.type || 'generic', message: message, helpLink: err.helpLink });
         setBulkMessage(message);
     } finally {
         setIsBulkGenerating(false);

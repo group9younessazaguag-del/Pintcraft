@@ -62,12 +62,12 @@ export interface ControlsProps {
 }
 
 export const ControlCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-4 transition-colors duration-300">
         <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 text-slate-500">{icon}</div>
-            <h3 className="text-md font-semibold text-slate-800 tracking-tight">{title}</h3>
+            <div className="flex-shrink-0 text-slate-500 dark:text-slate-400">{icon}</div>
+            <h3 className="text-md font-semibold text-slate-800 dark:text-slate-100 tracking-tight">{title}</h3>
         </div>
-        <div className="space-y-4 pt-4 border-t border-slate-200/80">
+        <div className="space-y-4 pt-4 border-t border-slate-200/80 dark:border-slate-800">
             {children}
         </div>
     </div>
@@ -76,29 +76,29 @@ export const ControlCard: React.FC<{ icon: React.ReactNode; title: string; child
 
 const InputField: React.FC<{data: TemplateData; onFieldChange: (field: keyof TemplateData, value: string | number | boolean | null) => void; id: keyof TemplateData, label: string, type?: string, placeholder?: string, min?: string, description?: string}> = ({ data, onFieldChange, id, label, type = 'text', placeholder, min, description }) => (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{label}</label>
       <input
         type={type}
         id={id}
         value={data[id] as string || ''}
         onChange={(e) => onFieldChange(id, e.target.value)}
-        className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 transition-colors duration-200"
+        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-colors duration-200"
         placeholder={placeholder}
         min={min}
       />
-      {description && <p className="text-xs text-slate-500 mt-1.5">{description}</p>}
+      {description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">{description}</p>}
     </div>
 );
 
 const ToggleButtonGrid: React.FC<{ label: string; options: {id: string; name: string}[]; selected: string; onSelect: (id: string) => void; gridCols?: string }> = ({ label, options, selected, onSelect, gridCols = 'grid-cols-2' }) => (
     <div>
-        <label className="block text-sm font-medium text-slate-600 mb-2">{label}</label>
+        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">{label}</label>
         <div className={`grid ${gridCols} gap-2`}>
             {options.map(option => (
                 <button 
                     key={option.id}
                     onClick={() => onSelect(option.id)}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 ${selected === option.id ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 ${selected === option.id ? 'bg-slate-800 dark:bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                 >
                     {option.name}
                 </button>
@@ -138,8 +138,8 @@ const ImageUpload: React.FC<{
 
     return (
         <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
-            <label htmlFor={`file-upload-${id}`} className="w-full block text-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors duration-200">
+            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{label}</label>
+            <label htmlFor={`file-upload-${id}`} className="w-full block text-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors duration-200">
                 Upload Image
             </label>
             <input id={`file-upload-${id}`} type="file" className="sr-only" accept="image/*" onChange={(e) => {
@@ -153,7 +153,7 @@ const ImageUpload: React.FC<{
                     onClick={() => onGenerateImage(id)}
                     disabled={isAnyGenerating || isBulkGenerating}
                     title={isConfigured ? 'Generate a high-quality image with Fal.ai based on the pin title' : 'Generate a basic placeholder image based on the pin title (add a Fal.ai API key to use AI)'}
-                    className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                    className="w-full flex justify-center items-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed disabled:text-slate-400 dark:disabled:text-slate-600 transition-colors duration-200"
                 >
                 {isGeneratingFal ? (
                     <>
@@ -167,7 +167,7 @@ const ImageUpload: React.FC<{
                     onClick={() => onGenerateImageWithMidjourney(id)}
                     disabled={isAnyGenerating || isBulkGenerating || !isMjConfigured}
                     title={isMjConfigured ? 'Generate a high-quality image with Midjourney (via APIFrame.ai)' : 'Add an APIFrame.ai API key to use Midjourney'}
-                    className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                    className="w-full flex justify-center items-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed disabled:text-slate-400 dark:disabled:text-slate-600 transition-colors duration-200"
                 >
                 {isGeneratingMj ? (
                     <>
@@ -181,7 +181,7 @@ const ImageUpload: React.FC<{
                     onClick={() => onGenerateImageWithMidApiAi(id)}
                     disabled={isAnyGenerating || isBulkGenerating || !isMj2Configured}
                     title={isMj2Configured ? 'Generate a high-quality image with midapi.ai' : 'Add a midapi.ai API key to use this generator'}
-                    className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                    className="w-full flex justify-center items-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed disabled:text-slate-400 dark:disabled:text-slate-600 transition-colors duration-200"
                 >
                 {isGeneratingMj2 ? (
                     <>
@@ -195,7 +195,7 @@ const ImageUpload: React.FC<{
                     onClick={() => onGenerateImageWithImagineApi(id)}
                     disabled={isAnyGenerating || isBulkGenerating || !isImagineConfigured}
                     title={isImagineConfigured ? 'Generate a high-quality image with ImagineAPI' : 'Add an ImagineAPI key to use this generator'}
-                    className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                    className="w-full flex justify-center items-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed disabled:text-slate-400 dark:disabled:text-slate-600 transition-colors duration-200"
                 >
                 {isGeneratingImagine ? (
                     <>
@@ -209,7 +209,7 @@ const ImageUpload: React.FC<{
                     onClick={() => onGenerateImageWithUseApi(id)}
                     disabled={isAnyGenerating || isBulkGenerating || !isUseApiConfigured}
                     title={isUseApiConfigured ? 'Generate a high-quality image with useapi.net' : 'Add a useapi.net API key to use this generator'}
-                    className="w-full flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                    className="w-full flex justify-center items-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed disabled:text-slate-400 dark:disabled:text-slate-600 transition-colors duration-200"
                 >
                 {isGeneratingUseApi ? (
                     <>
@@ -236,20 +236,20 @@ export const ApiKeyInput: React.FC<{
 }> = ({ label, value, onChange, onSave, onClear, placeholder, getLink, getLinkText, statusMessage }) => {
     const [isKeyVisible, setIsKeyVisible] = useState(false);
     return (
-        <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
+        <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{label}</label>
             <div className="relative">
                 <input
                     type={isKeyVisible ? 'text' : 'password'}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}
-                    className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    className="w-full px-3 py-2 pr-10 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-colors duration-200"
                 />
                 <button
                     type="button"
                     onClick={() => setIsKeyVisible(!isKeyVisible)}
-                    className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500"
+                    className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500"
                     aria-label={isKeyVisible ? "Hide API key" : "Show API key"}
                 >
                     {isKeyVisible ? (
@@ -264,20 +264,20 @@ export const ApiKeyInput: React.FC<{
                     )}
                 </button>
             </div>
-            <div className="flex gap-2 mt-2">
-                <button onClick={onSave} className="flex-1 px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
+            <div className="flex gap-2">
+                <button onClick={onSave} className="flex-1 px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white font-semibold rounded-lg shadow-md hover:bg-slate-900 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
                     Save
                 </button>
                 {value && (
-                    <button onClick={onClear} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
+                    <button onClick={onClear} className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors">
                         Clear
                     </button>
                 )}
             </div>
-            <div className="mt-3 text-xs space-y-2">
+            <div className="space-y-2">
                 {statusMessage}
-                <a href={getLink} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:text-pink-800 hover:underline !mt-3 w-full text-left block">
-                    {getLinkText} &rarr;
+                <a href={getLink} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 dark:text-pink-400 hover:text-pink-800 dark:hover:text-pink-300 hover:underline inline-flex items-center">
+                    {getLinkText} <span className="ml-1">&rarr;</span>
                 </a>
             </div>
         </div>
@@ -378,47 +378,47 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                 />
 
                 {data.templateId === '99' && (
-                    <div className="mt-6 pt-6 border-t border-slate-100 space-y-4">
-                        <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                    <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <span className="w-2 h-2 bg-rose-400 rounded-full"></span>
                             Recipe Details (Rose Gold Template)
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Prep Time</label>
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Prep Time</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none text-slate-900 dark:text-slate-100"
                                     value={data.prepTime || ''} 
                                     onChange={(e) => onFieldChange('prepTime', e.target.value)}
                                     placeholder="e.g. 10 min"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Cook Time</label>
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cook Time</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none text-slate-900 dark:text-slate-100"
                                     value={data.cookTime || ''} 
                                     onChange={(e) => onFieldChange('cookTime', e.target.value)}
                                     placeholder="e.g. 20 min"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Servings</label>
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Servings</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none text-slate-900 dark:text-slate-100"
                                     value={data.servings || ''} 
                                     onChange={(e) => onFieldChange('servings', e.target.value)}
                                     placeholder="e.g. 4"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Difficulty</label>
+                                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Difficulty</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none text-slate-900 dark:text-slate-100"
                                     value={data.difficulty || ''} 
                                     onChange={(e) => onFieldChange('difficulty', e.target.value)}
                                     placeholder="e.g. Easy"
@@ -426,9 +426,9 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Ingredients (Comma separated)</label>
+                            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ingredients (Comma separated)</label>
                             <textarea 
-                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none min-h-[80px]"
+                                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 outline-none min-h-[80px] text-slate-900 dark:text-slate-100"
                                 value={data.ingredients || ''} 
                                 onChange={(e) => onFieldChange('ingredients', e.target.value)}
                                 placeholder="Chicken, Cream, Garlic, Parmesan..."
@@ -436,37 +436,37 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         </div>
                         <div className="grid grid-cols-4 gap-2">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-slate-400 uppercase">Cals</label>
+                                <label className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Cals</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs"
+                                    className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-900 dark:text-slate-100"
                                     value={data.calories || ''} 
                                     onChange={(e) => onFieldChange('calories', e.target.value)}
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-slate-400 uppercase">Prot</label>
+                                <label className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Prot</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs"
+                                    className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-900 dark:text-slate-100"
                                     value={data.protein || ''} 
                                     onChange={(e) => onFieldChange('protein', e.target.value)}
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-slate-400 uppercase">Fat</label>
+                                <label className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Fat</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs"
+                                    className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-900 dark:text-slate-100"
                                     value={data.fat || ''} 
                                     onChange={(e) => onFieldChange('fat', e.target.value)}
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-slate-400 uppercase">Carbs</label>
+                                <label className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Carbs</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs"
+                                    className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-slate-900 dark:text-slate-100"
                                     value={data.carbs || ''} 
                                     onChange={(e) => onFieldChange('carbs', e.target.value)}
                                 />
@@ -488,9 +488,9 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         getLinkText="Get an OpenRouter API Key"
                         statusMessage={
                             openRouterKeyIsConfigured ? (
-                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your OpenRouter key is saved in this browser.</p>
+                                <p className="text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-900/20 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Your OpenRouter key is saved in this browser.</p>
                             ) : (
-                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
+                                <p className="text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>API Key Required:</strong> Add a key to enable AI text generation.</p>
                             )
                         }
                     />
@@ -505,9 +505,9 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         getLinkText="Get a Fal.ai API Key"
                         statusMessage={
                             falKeyIsConfigured ? (
-                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your Fal.ai key is saved in this browser.</p>
+                                <p className="text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-900/20 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Your Fal.ai key is saved in this browser.</p>
                             ) : (
-                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable AI image generation.</p>
+                                <p className="text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>API Key Recommended:</strong> Add a key to enable AI image generation.</p>
                             )
                         }
                     />
@@ -522,9 +522,9 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         getLinkText="Get an APIFrame.ai API Key"
                         statusMessage={
                             mjKeyIsConfigured ? (
-                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your APIFrame.ai key is saved in this browser.</p>
+                                <p className="text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-900/20 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Your APIFrame.ai key is saved in this browser.</p>
                             ) : (
-                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable Midjourney image generation.</p>
+                                <p className="text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>API Key Recommended:</strong> Add a key to enable Midjourney image generation.</p>
                             )
                         }
                     />
@@ -539,9 +539,9 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         getLinkText="Get a midapi.ai API Key"
                         statusMessage={
                             mj2KeyIsConfigured ? (
-                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your midapi.ai key is saved in this browser.</p>
+                                <p className="text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-900/20 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Your midapi.ai key is saved in this browser.</p>
                             ) : (
-                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable midapi.ai image generation.</p>
+                                <p className="text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>API Key Recommended:</strong> Add a key to enable midapi.ai image generation.</p>
                             )
                         }
                     />
@@ -556,9 +556,9 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         getLinkText="Get an ImagineAPI API Key"
                         statusMessage={
                             imagineKeyIsConfigured ? (
-                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your ImagineAPI key is saved in this browser.</p>
+                                <p className="text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-900/20 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Your ImagineAPI key is saved in this browser.</p>
                             ) : (
-                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable ImagineAPI image generation.</p>
+                                <p className="text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>API Key Recommended:</strong> Add a key to enable ImagineAPI image generation.</p>
                             )
                         }
                     />
@@ -573,9 +573,9 @@ export const SettingsAndCustomizeControls: React.FC<ControlsProps> = ({ data, on
                         getLinkText="Get a useapi.net API Key"
                         statusMessage={
                             useapiKeyIsConfigured ? (
-                                <p className="text-green-800 bg-green-50 p-2 rounded-lg border border-green-200 font-medium">Your useapi.net key is saved in this browser.</p>
+                                <p className="text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-900/20 p-2 rounded-lg border border-green-200 dark:border-green-800 font-medium">Your useapi.net key is saved in this browser.</p>
                             ) : (
-                                <p className="text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 font-medium"><strong>API Key Recommended:</strong> Add a key to enable useapi.net image generation.</p>
+                                <p className="text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg border border-amber-200 dark:border-amber-800 font-medium"><strong>API Key Recommended:</strong> Add a key to enable useapi.net image generation.</p>
                             )
                         }
                     />
@@ -609,29 +609,29 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
     const openRouterKeyIsConfigured = openRouterApiKey && openRouterApiKey.length > 5;
 
     const getTitleCounterColor = () => {
-        if (titleLength > TITLE_HARD_MAX_LENGTH) return 'text-red-600';
-        if (titleLength > TITLE_RECOMMENDED_MAX_LENGTH) return 'text-amber-600';
-        return 'text-slate-500';
+        if (titleLength > TITLE_HARD_MAX_LENGTH) return 'text-red-600 dark:text-red-400';
+        if (titleLength > TITLE_RECOMMENDED_MAX_LENGTH) return 'text-amber-600 dark:text-amber-400';
+        return 'text-slate-500 dark:text-slate-400';
     };
 
     return (
         <ControlCard icon={<PinContentIcon />} title="Pin Content">
              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-slate-600 mb-1.5">Title</label>
+                <label htmlFor="title" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Title</label>
                 <div className="relative">
                     <input
                         type="text"
                         id="title"
                         value={data.title || ''}
                         onChange={(e) => onFieldChange('title', e.target.value)}
-                        className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        className="w-full px-3 py-2 pr-10 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-colors duration-200"
                     />
                      <button
                         type="button"
                         onClick={onGenerateShortTitle}
                         disabled={isGeneratingShortTitle || isBulkGenerating || !openRouterKeyIsConfigured || titleLength <= TITLE_RECOMMENDED_MAX_LENGTH}
                         title={!openRouterKeyIsConfigured ? "Add an OpenRouter API key to enable" : titleLength <= TITLE_RECOMMENDED_MAX_LENGTH ? "Title is already a good length" : "Use AI to shorten the title"}
-                        className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 disabled:text-slate-300 disabled:cursor-not-allowed rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500 transition-colors"
+                        className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:text-slate-300 dark:disabled:text-slate-700 disabled:cursor-not-allowed rounded-r-lg focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pink-500 transition-colors"
                     >
                         {isGeneratingShortTitle ? <LoadingSpinner className="mr-2" /> : '✨'}
                     </button>
@@ -644,12 +644,12 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
             <InputField data={data} onFieldChange={onFieldChange} id="board" label="Pinterest Board" />
             <InputField data={data} onFieldChange={onFieldChange} id="website" label="Link" />
             <div>
-                <label htmlFor="description" className="block text-sm font-medium text-slate-600 mb-1.5">Description</label>
+                <label htmlFor="description" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Description</label>
                 <textarea
                     id="description"
                     value={data.description || ''}
                     onChange={(e) => onFieldChange('description', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 transition-colors duration-200"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-colors duration-200"
                     rows={4}
                     placeholder="A short, enticing description of your pin."
                 />
@@ -658,7 +658,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     onClick={onGenerateDescription}
                     disabled={isGeneratingDescription || isBulkGenerating}
                     title={openRouterKeyIsConfigured ? 'Generate a high-quality description with OpenRouter AI' : 'Generate a basic placeholder description'}
-                    className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                    className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed disabled:text-slate-400 dark:disabled:text-slate-600 transition-colors duration-200"
                 >
                     {isGeneratingDescription ? (
                         <><LoadingSpinner className="mr-2"/> Generating...</>
@@ -666,12 +666,12 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                 </button>
             </div>
              <div>
-                <label htmlFor="keywords" className="block text-sm font-medium text-slate-600 mb-1.5">Keywords</label>
+                <label htmlFor="keywords" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Keywords</label>
                 <textarea
                     id="keywords"
                     value={data.keywords || ''}
                     onChange={(e) => onFieldChange('keywords', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900 transition-colors duration-200"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-colors duration-200"
                     rows={3}
                     placeholder="Comma-separated keywords for your pin."
                 />
@@ -680,7 +680,7 @@ export const PinContentControls: React.FC<ControlsProps> = ({ data, onFieldChang
                     onClick={onGenerateKeywords}
                     disabled={isGeneratingKeywords || isBulkGenerating}
                     title={openRouterKeyIsConfigured ? 'Generate keywords with OpenRouter AI' : 'Generate basic placeholder keywords'}
-                    className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 transition-colors duration-200"
+                    className="w-full mt-2 flex justify-center items-center px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed disabled:text-slate-400 dark:disabled:text-slate-600 transition-colors duration-200"
                 >
                     {isGeneratingKeywords ? (
                         <><LoadingSpinner className="mr-2"/> Generating...</>
@@ -760,35 +760,35 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
         <>
             <ControlCard icon={<CsvIcon />} title="CSV Import">
                 <div>
-                    <label htmlFor="csv-upload" className="block text-sm font-medium text-slate-600 mb-1.5">Upload CSV</label>
+                    <label htmlFor="csv-upload" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Upload CSV</label>
                     <input
                         id="csv-upload"
                         type="file"
                         accept=".csv"
                         onChange={handleCsvFileSelect}
-                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-600 hover:file:bg-pink-100 cursor-pointer transition-colors duration-200"
+                        className="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 dark:file:bg-pink-900/20 file:text-pink-600 dark:file:text-pink-400 hover:file:bg-pink-100 dark:hover:file:bg-pink-900/30 cursor-pointer transition-colors duration-200"
                     />
-                    <p className="text-xs text-slate-500 mt-1.5">Needs 'Title'. 'Description' and 'Keywords' are used if available, or auto-generated if empty.</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Needs 'Title'. 'Description' and 'Keywords' are used if available, or auto-generated if empty.</p>
                 </div>
                 {csvData.length > 0 && currentRowIndex !== null && (
-                    <div className="flex items-center justify-between bg-slate-100 p-2 rounded-lg border border-slate-200">
+                    <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
                     <button
                         onClick={onPrevRow}
                         disabled={currentRowIndex === 0 || isBulkGenerating}
-                        className="p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200"
+                        className="p-2 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200"
                         aria-label="Previous Row"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1-0 011.414 0z" clipRule="evenodd" />
                         </svg>
                     </button>
-                    <span className="text-sm font-medium text-slate-800">
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
                         Row {currentRowIndex + 1} of {csvData.length}
                     </span>
                     <button
                         onClick={onNextRow}
                         disabled={currentRowIndex === csvData.length - 1 || isBulkGenerating}
-                        className="p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200"
+                        className="p-2 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200"
                         aria-label="Next Row"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -833,13 +833,13 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                         <InputField data={data} onFieldChange={onFieldChange} id="pinsPerDay" label="Pins Per Day" type="number" min="1" placeholder="e.g., 3" />
                     )}
                     <div>
-                        <label htmlFor="startDate" className="block text-sm font-medium text-slate-600 mb-1.5">Start Date</label>
+                        <label htmlFor="startDate" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Start Date</label>
                         <input
                             type="date"
                             id="startDate"
                             value={data.startDate}
                             onChange={(e) => onFieldChange('startDate', e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white text-slate-900"
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                         />
                     </div>
                 </div>
@@ -849,15 +849,15 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                         id="useRandomPinsPerDay"
                         checked={data.useRandomPinsPerDay}
                         onChange={(e) => onFieldChange('useRandomPinsPerDay', e.target.checked)}
-                        className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                        className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800"
                     />
-                    <label htmlFor="useRandomPinsPerDay" className="ml-2 block text-sm text-slate-600">
+                    <label htmlFor="useRandomPinsPerDay" className="ml-2 block text-sm text-slate-600 dark:text-slate-400">
                         Randomize daily count?
                     </label>
                 </div>
                 <div>
                     <InputField data={data} onFieldChange={onFieldChange} id="mediaUrlPrefix" label="Media URL Prefix" placeholder="e.g., http://yourwebsite.com/images/" />
-                    <p className="text-xs text-slate-500 mt-1.5">This URL will be prefixed to the generated image filenames in the CSV.</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">This URL will be prefixed to the generated image filenames in the CSV.</p>
                 </div>
                 <div className="space-y-2 mt-4">
                     {hasPausedJob ? (
@@ -929,14 +929,14 @@ export const CsvAndActionsControls: React.FC<ControlsProps> = (props) => {
                     {hasPausedJob && !isBulkGenerating && (
                          <button
                             onClick={onResetBulkGeneration}
-                            className="w-full text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 py-2 rounded-lg transition-colors"
+                            className="w-full text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 py-2 rounded-lg transition-colors"
                         >
                             Cancel and Start Over
                         </button>
                     )}
                 </div>
                 {bulkMessage && (
-                    <p className="text-sm text-center text-slate-600 bg-slate-100 p-3 rounded-lg border border-slate-200 mt-2">{bulkMessage}</p>
+                    <p className="text-sm text-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 mt-2">{bulkMessage}</p>
                 )}
                 {generatedAssets && !isBulkGenerating && (
                     <button
